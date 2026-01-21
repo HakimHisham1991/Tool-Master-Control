@@ -32,35 +32,70 @@
         <option value="">All Consumable Codes</option>
         @foreach (var code in Model.AvailableConsumableCodes)
         {
-            <option value="@code" @(Model.ConsumableCodeFilter == code ? "selected" : "")>@code</option>
+            if (Model.ConsumableCodeFilter == code)
+            {
+                <option value="@code" selected>@code</option>
+            }
+            else
+            {
+                <option value="@code">@code</option>
+            }
         }
     </select>
     <select name="diameter" id="filterDiameter" class="filter-select" onchange="applyFilters()">
         <option value="">All Diameters</option>
         @foreach (var dia in Model.AvailableDiameters)
         {
-            <option value="@dia" @(Model.DiameterFilter == dia ? "selected" : "")>@dia mm</option>
+            if (Model.DiameterFilter == dia)
+            {
+                <option value="@dia" selected>@dia mm</option>
+            }
+            else
+            {
+                <option value="@dia">@dia mm</option>
+            }
         }
     </select>
     <select name="arborCode" id="filterArborCode" class="filter-select" onchange="applyFilters()">
         <option value="">All Arbor Codes</option>
         @foreach (var code in Model.AvailableArborCodes)
         {
-            <option value="@code" @(Model.ArborCodeFilter == code ? "selected" : "")>@code</option>
+            if (Model.ArborCodeFilter == code)
+            {
+                <option value="@code" selected>@code</option>
+            }
+            else
+            {
+                <option value="@code">@code</option>
+            }
         }
     </select>
     <select name="holderExtension" id="filterHolderExtension" class="filter-select" onchange="applyFilters()">
         <option value="">All Holder/Extension</option>
         @foreach (var code in Model.AvailableHolderExtensions)
         {
-            <option value="@code" @(Model.HolderExtensionFilter == code ? "selected" : "")>@code</option>
+            if (Model.HolderExtensionFilter == code)
+            {
+                <option value="@code" selected>@code</option>
+            }
+            else
+            {
+                <option value="@code">@code</option>
+            }
         }
     </select>
     <select name="partNumber" id="filterPartNumber" class="filter-select" onchange="applyFilters()">
         <option value="">All Part Numbers</option>
         @foreach (var pn in Model.AvailablePartNumbers)
         {
-            <option value="@pn" @(Model.PartNumberFilter == pn ? "selected" : "")>@pn</option>
+            if (Model.PartNumberFilter == pn)
+            {
+                <option value="@pn" selected>@pn</option>
+            }
+            else
+            {
+                <option value="@pn">@pn</option>
+            }
         }
     </select>
     <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear Filters</button>

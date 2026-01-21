@@ -30,14 +30,20 @@ public static class DbSeeder
             context.ToolListHeaders.AddRange(toolLists);
             context.SaveChanges();
             
+            var processedCodes = new HashSet<string>();
             foreach (var header in toolLists)
             {
                 foreach (var detail in header.Details)
                 {
-                    UpdateToolMaster(context, detail);
+                    if (!string.IsNullOrWhiteSpace(detail.ConsumableCode) && 
+                        !processedCodes.Contains(detail.ConsumableCode))
+                    {
+                        UpdateToolMaster(context, detail);
+                        processedCodes.Add(detail.ConsumableCode);
+                        context.SaveChanges();
+                    }
                 }
             }
-            context.SaveChanges();
         }
     }
     
