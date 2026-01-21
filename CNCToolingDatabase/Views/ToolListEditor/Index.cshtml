@@ -1,0 +1,372 @@
+@model ToolListEditorViewModel
+@{
+    ViewData["Title"] = "Create / Edit Tool List";
+}
+
+<div class="module-header">
+    <div class="header-title-area">
+        <h2>Create / Edit Tool List</h2>
+        <span class="tool-list-name" id="toolListName">@(string.IsNullOrEmpty(Model.ToolListName) ? "New Tool List" : Model.ToolListName)</span>
+    </div>
+    @if (Model.IsReadOnly)
+    {
+        <div class="readonly-notice">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Read-only: Locked by @Model.LockedBy
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-error">@Model.ErrorMessage</div>
+}
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">@Model.SuccessMessage</div>
+}
+
+<div class="editor-toolbar">
+    <div class="toolbar-left">
+        <button type="button" class="btn btn-secondary" onclick="openToolListModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Open
+        </button>
+        @if (!Model.IsReadOnly)
+        {
+            <button type="button" class="btn btn-primary" onclick="saveToolList()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Save
+            </button>
+        }
+        <button type="button" class="btn btn-secondary" onclick="closeToolList()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Close
+        </button>
+    </div>
+    <div class="toolbar-right">
+        @if (Model.Id.HasValue)
+        {
+            <a href="/ToolListEditor/Export?id=@Model.Id&format=excel" class="btn btn-secondary btn-sm">Excel</a>
+            <a href="/ToolListEditor/Export?id=@Model.Id&format=csv" class="btn btn-secondary btn-sm">CSV</a>
+            <a href="/ToolListEditor/Export?id=@Model.Id&format=txt" class="btn btn-secondary btn-sm">TXT</a>
+        }
+    </div>
+</div>
+
+<div class="header-form">
+    <div class="form-row">
+        <div class="form-group">
+            <label for="partNumber">Part Number</label>
+            <input type="text" id="partNumber" value="@Model.PartNumber" class="form-control" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+        </div>
+        <div class="form-group">
+            <label for="operation">Operation</label>
+            <input type="text" id="operation" value="@Model.Operation" class="form-control" placeholder="e.g., OP10, OP20" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+        </div>
+        <div class="form-group">
+            <label for="revision">Revision</label>
+            <input type="text" id="revision" value="@Model.Revision" class="form-control" placeholder="e.g., REV00" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="projectCode">Project Code</label>
+            <input type="text" id="projectCode" value="@Model.ProjectCode" class="form-control" @(Model.IsReadOnly ? "readonly" : "") />
+        </div>
+        <div class="form-group">
+            <label for="machineName">Machine Name</label>
+            <input type="text" id="machineName" value="@Model.MachineName" class="form-control" @(Model.IsReadOnly ? "readonly" : "") />
+        </div>
+        <div class="form-group">
+            <label for="machineWorkcenter">Machine Workcenter</label>
+            <input type="text" id="machineWorkcenter" value="@Model.MachineWorkcenter" class="form-control" @(Model.IsReadOnly ? "readonly" : "") />
+        </div>
+    </div>
+</div>
+
+<div class="table-container editable-table">
+    <table class="data-table" id="detailsTable">
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th>Tool Number</th>
+                <th>Tool Description</th>
+                <th>Consumable Code</th>
+                <th>Supplier</th>
+                <th>Holder/Extension Code</th>
+                <th>Diameter</th>
+                <th>Flute Length</th>
+                <th>Protrusion Length</th>
+                <th>Corner Radius</th>
+                <th>Arbor Code</th>
+                @if (!Model.IsReadOnly)
+                {
+                    <th style="width: 50px;"></th>
+                }
+            </tr>
+        </thead>
+        <tbody id="detailsBody">
+            @for (int i = 0; i < Model.Details.Count; i++)
+            {
+                var detail = Model.Details[i];
+                <tr data-row-id="@detail.Id">
+                    <td class="row-number">@(i + 1)</td>
+                    <td><input type="text" class="cell-input" data-field="toolNumber" value="@detail.ToolNumber" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="text" class="cell-input" data-field="toolDescription" value="@detail.ToolDescription" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="text" class="cell-input" data-field="consumableCode" value="@detail.ConsumableCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="text" class="cell-input" data-field="supplier" value="@detail.Supplier" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="text" class="cell-input" data-field="holderExtensionCode" value="@detail.HolderExtensionCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="diameter" value="@(detail.Diameter?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="fluteLength" value="@(detail.FluteLength?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="protrusionLength" value="@(detail.ProtrusionLength?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" value="@(detail.CornerRadius?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="text" class="cell-input" data-field="arborCode" value="@detail.ArborCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    @if (!Model.IsReadOnly)
+                    {
+                        <td>
+                            <button type="button" class="btn-icon" onclick="removeRow(this)" title="Remove row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Model.IsReadOnly)
+{
+    <div class="table-actions">
+        <button type="button" class="btn btn-secondary" onclick="addRow()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Row
+        </button>
+    </div>
+}
+
+<div class="modal" id="openModal">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Open Tool List</h3>
+            <button type="button" class="btn-icon" onclick="closeModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="search-input-group">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="modalSearch" placeholder="Search tool lists..." class="search-input" oninput="searchToolLists()" />
+            </div>
+            <div class="modal-list" id="toolListList">
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="toolListId" value="@Model.Id" />
+<input type="hidden" id="isReadOnly" value="@Model.IsReadOnly.ToString().ToLower()" />
+
+@section Scripts {
+<script>
+    const toolListId = document.getElementById('toolListId').value;
+    const isReadOnly = document.getElementById('isReadOnly').value === 'true';
+    let hasUnsavedChanges = false;
+    
+    if (toolListId && !isReadOnly) {
+        setInterval(function() {
+            fetch('/ToolListEditor/Heartbeat?id=' + toolListId, { method: 'POST' });
+        }, 30000);
+    }
+    
+    document.querySelectorAll('.cell-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+            hasUnsavedChanges = true;
+        });
+    });
+    
+    function updateToolListName() {
+        const partNumber = document.getElementById('partNumber').value;
+        const operation = document.getElementById('operation').value;
+        const revision = document.getElementById('revision').value;
+        
+        if (partNumber && operation && revision) {
+            document.getElementById('toolListName').textContent = partNumber + '_' + operation + '_' + revision;
+        }
+    }
+    
+    function addRow() {
+        const tbody = document.getElementById('detailsBody');
+        const rowCount = tbody.children.length + 1;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="row-number">${rowCount}</td>
+            <td><input type="text" class="cell-input" data-field="toolNumber" /></td>
+            <td><input type="text" class="cell-input" data-field="toolDescription" /></td>
+            <td><input type="text" class="cell-input" data-field="consumableCode" /></td>
+            <td><input type="text" class="cell-input" data-field="supplier" /></td>
+            <td><input type="text" class="cell-input" data-field="holderExtensionCode" /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="diameter" /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="fluteLength" /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="protrusionLength" /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" /></td>
+            <td><input type="text" class="cell-input" data-field="arborCode" /></td>
+            <td><button type="button" class="btn-icon" onclick="removeRow(this)" title="Remove row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></td>
+        `;
+        tbody.appendChild(row);
+        hasUnsavedChanges = true;
+        row.querySelectorAll('.cell-input').forEach(input => {
+            input.addEventListener('change', () => hasUnsavedChanges = true);
+        });
+    }
+    
+    function removeRow(btn) {
+        btn.closest('tr').remove();
+        updateRowNumbers();
+        hasUnsavedChanges = true;
+    }
+    
+    function updateRowNumbers() {
+        const rows = document.querySelectorAll('#detailsBody tr');
+        rows.forEach((row, index) => {
+            row.querySelector('.row-number').textContent = index + 1;
+        });
+    }
+    
+    function getDetailsData() {
+        const rows = document.querySelectorAll('#detailsBody tr');
+        const details = [];
+        rows.forEach(row => {
+            const id = row.dataset.rowId || 0;
+            details.push({
+                id: parseInt(id) || 0,
+                toolNumber: row.querySelector('[data-field="toolNumber"]').value,
+                toolDescription: row.querySelector('[data-field="toolDescription"]').value,
+                consumableCode: row.querySelector('[data-field="consumableCode"]').value,
+                supplier: row.querySelector('[data-field="supplier"]').value,
+                holderExtensionCode: row.querySelector('[data-field="holderExtensionCode"]').value,
+                diameter: parseFloat(row.querySelector('[data-field="diameter"]').value) || null,
+                fluteLength: parseFloat(row.querySelector('[data-field="fluteLength"]').value) || null,
+                protrusionLength: parseFloat(row.querySelector('[data-field="protrusionLength"]').value) || null,
+                cornerRadius: parseFloat(row.querySelector('[data-field="cornerRadius"]').value) || null,
+                arborCode: row.querySelector('[data-field="arborCode"]').value
+            });
+        });
+        return details;
+    }
+    
+    async function saveToolList() {
+        const data = {
+            id: toolListId ? parseInt(toolListId) : null,
+            partNumber: document.getElementById('partNumber').value,
+            operation: document.getElementById('operation').value,
+            revision: document.getElementById('revision').value,
+            projectCode: document.getElementById('projectCode').value,
+            machineName: document.getElementById('machineName').value,
+            machineWorkcenter: document.getElementById('machineWorkcenter').value,
+            details: getDetailsData()
+        };
+        
+        if (!data.partNumber || !data.operation || !data.revision) {
+            alert('Part Number, Operation, and Revision are required');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/ToolListEditor/Save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                hasUnsavedChanges = false;
+                alert('Tool list saved successfully');
+                if (result.id && !toolListId) {
+                    window.location.href = '/ToolListEditor?id=' + result.id;
+                }
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            alert('Error saving tool list: ' + error.message);
+        }
+    }
+    
+    async function closeToolList() {
+        if (hasUnsavedChanges) {
+            if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
+                return;
+            }
+        }
+        
+        if (toolListId) {
+            await fetch('/ToolListEditor/Close?id=' + toolListId, { method: 'POST' });
+        }
+        
+        window.location.href = '/ToolListEditor';
+    }
+    
+    function openToolListModal() {
+        document.getElementById('openModal').classList.add('active');
+        searchToolLists();
+    }
+    
+    function closeModal() {
+        document.getElementById('openModal').classList.remove('active');
+    }
+    
+    async function searchToolLists() {
+        const search = document.getElementById('modalSearch').value;
+        const response = await fetch('/ToolListEditor/GetAvailableToolLists?search=' + encodeURIComponent(search));
+        const toolLists = await response.json();
+        
+        const container = document.getElementById('toolListList');
+        if (toolLists.length === 0) {
+            container.innerHTML = '<div class="empty-modal-state">No tool lists found</div>';
+            return;
+        }
+        
+        container.innerHTML = toolLists.map(item => `
+            <a href="/ToolListEditor?id=${item.id}" class="modal-list-item">
+                <div class="item-name">${item.toolListName}</div>
+                <div class="item-details">${item.partNumber} - ${item.operation} - ${item.revision}</div>
+            </a>
+        `).join('');
+    }
+    
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+</script>
+}
