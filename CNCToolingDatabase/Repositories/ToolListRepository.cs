@@ -115,10 +115,11 @@ public class ToolListRepository : IToolListRepository
     
     public async Task ReleaseExpiredLocksAsync(TimeSpan timeout)
     {
+        var cutoffTime = DateTime.UtcNow - timeout;
         var expiredHeaders = await _context.ToolListHeaders
             .Where(h => h.LockedBy != null && 
                         h.LastHeartbeat.HasValue && 
-                        DateTime.UtcNow - h.LastHeartbeat.Value > timeout)
+                        h.LastHeartbeat.Value < cutoffTime)
             .ToListAsync();
             
         foreach (var header in expiredHeaders)
