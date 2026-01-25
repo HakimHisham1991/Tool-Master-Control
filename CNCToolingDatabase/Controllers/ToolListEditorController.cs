@@ -37,10 +37,30 @@ public class ToolListEditorController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> Close(int id)
+    public async Task<IActionResult> Close(int? id)
     {
-        var username = HttpContext.Session.GetString("Username") ?? "";
-        await _toolListService.ReleaseToolListLockAsync(id, username);
+        // Accept id from query string, route parameter, or form data (for sendBeacon)
+        var toolListId = id ?? 0;
+        if (toolListId == 0)
+        {
+            // Try query string first
+            if (Request.Query.ContainsKey("id"))
+            {
+                int.TryParse(Request.Query["id"].ToString(), out toolListId);
+            }
+            // Then try form data (for sendBeacon with URLSearchParams)
+            else if (Request.Form.ContainsKey("id"))
+            {
+                int.TryParse(Request.Form["id"].ToString(), out toolListId);
+            }
+        }
+        
+        if (toolListId > 0)
+        {
+            var username = HttpContext.Session.GetString("Username") ?? "";
+            await _toolListService.ReleaseToolListLockAsync(toolListId, username);
+        }
+        
         return Json(new { success = true });
     }
     

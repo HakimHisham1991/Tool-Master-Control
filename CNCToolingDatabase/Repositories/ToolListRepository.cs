@@ -72,8 +72,10 @@ public class ToolListRepository : IToolListRepository
         
         if (header.LockedBy != null && header.LockedBy != username)
         {
+            // Reduced timeout from 5 minutes to 1 minute for faster lock detection
+            // Heartbeat is every 15s, so 1 minute allows for 4 missed heartbeats (network issues)
             if (header.LastHeartbeat.HasValue && 
-                DateTime.UtcNow - header.LastHeartbeat.Value < TimeSpan.FromMinutes(5))
+                DateTime.UtcNow - header.LastHeartbeat.Value < TimeSpan.FromMinutes(1))
             {
                 return false;
             }
@@ -91,7 +93,9 @@ public class ToolListRepository : IToolListRepository
         var header = await _context.ToolListHeaders.FindAsync(headerId);
         if (header == null) return false;
         
-        if (header.LockedBy == username || header.LockedBy == null)
+        // CRITICAL: Only release lock if the current user is the lock owner
+        // Never release a lock owned by another user (e.g., when viewing in read-only mode)
+        if (header.LockedBy == username)
         {
             header.LockedBy = null;
             header.LockStartTime = null;
@@ -100,6 +104,13 @@ public class ToolListRepository : IToolListRepository
             return true;
         }
         
+        // If lock is null, it's already unlocked, so return true (no-op)
+        if (header.LockedBy == null)
+        {
+            return true;
+        }
+        
+        // Lock is owned by someone else - do not release
         return false;
     }
     

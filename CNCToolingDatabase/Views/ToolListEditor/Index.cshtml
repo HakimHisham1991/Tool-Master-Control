@@ -198,11 +198,73 @@
     const toolListId = document.getElementById('toolListId').value;
     const isReadOnly = document.getElementById('isReadOnly').value === 'true';
     let hasUnsavedChanges = false;
+    let lockReleased = false;
+    let heartbeatInterval = null;
+    
+    // Function to release lock reliably
+    function releaseLock() {
+        if (lockReleased || !toolListId || isReadOnly) return;
+        
+        lockReleased = true;
+        
+        // Clear heartbeat interval first
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+        
+        // Use sendBeacon for reliable delivery even when page is unloading
+        const url = '/ToolListEditor/Close?id=' + toolListId;
+        if (navigator.sendBeacon) {
+            // sendBeacon with URLSearchParams - works reliably with POST
+            const formData = new URLSearchParams();
+            formData.append('id', toolListId);
+            navigator.sendBeacon(url, formData);
+        } else {
+            // Fallback for browsers without sendBeacon - use fetch with keepalive
+            fetch(url, { 
+                method: 'POST',
+                keepalive: true 
+            }).catch(() => {}); // Ignore errors during unload
+        }
+    }
     
     if (toolListId && !isReadOnly) {
-        setInterval(function() {
-            fetch('/ToolListEditor/Heartbeat?id=' + toolListId, { method: 'POST' });
-        }, 30000);
+        // Reduced heartbeat interval from 30s to 15s for faster detection
+        heartbeatInterval = setInterval(function() {
+            if (!lockReleased) {
+                fetch('/ToolListEditor/Heartbeat?id=' + toolListId, { method: 'POST' })
+                    .catch(() => {
+                        // If heartbeat fails, release lock
+                        releaseLock();
+                    });
+            }
+        }, 15000);
+        
+        // Release lock on page hide (fires when tab/window is closed, more reliable than beforeunload)
+        window.addEventListener('pagehide', function() {
+            releaseLock();
+        });
+        
+        // Also handle visibility change with a delay - only release if tab has been hidden for 30+ seconds
+        // This handles cases where pagehide might not fire (some mobile browsers)
+        let visibilityTimeout = null;
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && !lockReleased) {
+                // Set a timeout - if tab remains hidden for 30 seconds, release the lock
+                visibilityTimeout = setTimeout(function() {
+                    if (document.hidden && !lockReleased) {
+                        releaseLock();
+                    }
+                }, 30000);
+            } else {
+                // Tab is visible again, cancel the timeout
+                if (visibilityTimeout) {
+                    clearTimeout(visibilityTimeout);
+                    visibilityTimeout = null;
+                }
+            }
+        });
     }
     
     document.querySelectorAll('.cell-input').forEach(function(input) {
@@ -327,9 +389,11 @@
             }
         }
         
-        if (toolListId) {
-            await fetch('/ToolListEditor/Close?id=' + toolListId, { method: 'POST' });
-        }
+        // Release lock before navigating away
+        releaseLock();
+        
+        // Wait a moment for the request to complete
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         window.location.href = '/ToolListEditor';
     }
@@ -362,11 +426,25 @@
         `).join('');
     }
     
-    window.addEventListener('beforeunload', function(e) {
-        if (hasUnsavedChanges) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
-    });
+    // Only register beforeunload if user has edit access (not read-only)
+    if (toolListId && !isReadOnly) {
+        window.addEventListener('beforeunload', function(e) {
+            // Always release lock on unload, regardless of unsaved changes
+            releaseLock();
+            
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    } else {
+        // For read-only views, only check for unsaved changes (shouldn't happen, but safety check)
+        window.addEventListener('beforeunload', function(e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    }
 </script>
 }

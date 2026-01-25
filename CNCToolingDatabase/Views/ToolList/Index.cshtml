@@ -163,9 +163,10 @@
         window.location.href = '/ToolList?' + params.toString();
     }
     
+    // Refresh every 5 seconds to show lock status immediately
     setInterval(function() {
         location.reload();
-    }, 60000);
+    }, 5000);
 </script>
 }
 

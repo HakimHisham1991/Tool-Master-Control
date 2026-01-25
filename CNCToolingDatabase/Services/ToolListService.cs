@@ -23,7 +23,8 @@ public class ToolListService : IToolListService
         int pageSize,
         string currentUsername)
     {
-        await _toolListRepository.ReleaseExpiredLocksAsync(TimeSpan.FromMinutes(5));
+        // Reduced timeout from 5 minutes to 1 minute to match shorter heartbeat interval
+        await _toolListRepository.ReleaseExpiredLocksAsync(TimeSpan.FromMinutes(1));
         
         var headers = await _toolListRepository.GetAllHeadersAsync();
         
