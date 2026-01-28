@@ -143,7 +143,7 @@
                     <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" value="@(detail.CornerRadius?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     <td><input type="text" class="cell-input" data-field="arborCode" value="@detail.ArborCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     <td><input type="number" step="0.01" class="cell-input" data-field="toolPathTimeMinutes" value="@(detail.ToolPathTimeMinutes?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
-                    <td><input type="text" class="cell-input" data-field="remarks" value="@detail.Remarks" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="text" class="cell-input" data-field="remarks" value="@(detail.Remarks ?? string.Empty)" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     @if (!Model.IsReadOnly)
                     {
                         <td>
