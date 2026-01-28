@@ -35,6 +35,7 @@
                 <th onclick="sortBy('partNumber')">Part Number @Html.Raw(GetSortIcon("partNumber"))</th>
                 <th onclick="sortBy('operation')">Operation @Html.Raw(GetSortIcon("operation"))</th>
                 <th>Revision</th>
+                <th>No. of Tooling</th>
                 <th onclick="sortBy('createdBy')">Created By @Html.Raw(GetSortIcon("createdBy"))</th>
                 <th onclick="sortBy('createdDate')">Created Date @Html.Raw(GetSortIcon("createdDate"))</th>
                 <th>Status</th>
@@ -47,7 +48,7 @@
             @if (Model.ToolLists.Count == 0)
             {
                 <tr>
-                    <td colspan="10" class="empty-state">
+                    <td colspan="11" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
@@ -68,6 +69,7 @@
                         <td>@item.PartNumber</td>
                         <td>@item.Operation</td>
                         <td>@item.Revision</td>
+                        <td>@item.NumberOfTooling</td>
                         <td>@item.CreatedBy</td>
                         <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>

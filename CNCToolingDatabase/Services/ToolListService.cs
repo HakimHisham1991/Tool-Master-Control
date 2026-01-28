@@ -43,9 +43,11 @@ public class ToolListService : IToolListService
         var totalItems = headers.Count;
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
-        var toolLists = headers
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var pagedHeaders = headers.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        var headerIds = pagedHeaders.Select(h => h.Id).ToList();
+        var toolCounts = await _toolListRepository.GetToolCountsByHeaderIdsAsync(headerIds);
+        
+        var toolLists = pagedHeaders
             .Select(h => new ToolListItemViewModel
             {
                 Id = h.Id,
@@ -53,6 +55,7 @@ public class ToolListService : IToolListService
                 PartNumber = h.PartNumber,
                 Operation = h.Operation,
                 Revision = h.Revision,
+                NumberOfTooling = toolCounts.GetValueOrDefault(h.Id, 0),
                 CreatedBy = h.CreatedBy,
                 CreatedDate = h.CreatedDate,
                 LastModifiedDate = h.LastModifiedDate,

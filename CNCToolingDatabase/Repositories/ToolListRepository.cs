@@ -20,6 +20,19 @@ public class ToolListRepository : IToolListRepository
             .ToListAsync();
     }
     
+    public async Task<Dictionary<int, int>> GetToolCountsByHeaderIdsAsync(IEnumerable<int> headerIds)
+    {
+        var ids = headerIds.ToList();
+        if (ids.Count == 0) return new Dictionary<int, int>();
+        var counts = await _context.ToolListDetails
+            .Where(d => ids.Contains(d.ToolListHeaderId) &&
+                (!string.IsNullOrWhiteSpace(d.ToolNumber) || !string.IsNullOrWhiteSpace(d.ConsumableCode)))
+            .GroupBy(d => d.ToolListHeaderId)
+            .Select(g => new { HeaderId = g.Key, Count = g.Count() })
+            .ToListAsync();
+        return counts.ToDictionary(x => x.HeaderId, x => x.Count);
+    }
+    
     public async Task<ToolListHeader?> GetHeaderByIdAsync(int id)
     {
         return await _context.ToolListHeaders.FindAsync(id);

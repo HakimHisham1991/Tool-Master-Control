@@ -7,6 +7,7 @@ public class ToolListItemViewModel
     public string PartNumber { get; set; } = string.Empty;
     public string Operation { get; set; } = string.Empty;
     public string Revision { get; set; } = string.Empty;
+    public int NumberOfTooling { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; }
     public string Status { get; set; } = "Available";

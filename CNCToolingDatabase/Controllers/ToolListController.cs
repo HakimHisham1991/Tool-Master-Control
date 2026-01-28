@@ -47,7 +47,7 @@ public class ToolListController : Controller
             // Add column headers with color
             var headers = new[]
             {
-                "Tool List Name", "Part Number", "Operation", "Revision",
+                "Tool List Name", "Part Number", "Operation", "Revision", "No. of Tooling",
                 "Created By", "Created Date", "Status", "Last Modified Date"
             };
             
@@ -70,12 +70,13 @@ public class ToolListController : Controller
                 worksheet.Cells[row, 2].Value = item.PartNumber;
                 worksheet.Cells[row, 3].Value = item.Operation;
                 worksheet.Cells[row, 4].Value = item.Revision;
-                worksheet.Cells[row, 5].Value = item.CreatedBy;
-                worksheet.Cells[row, 6].Value = item.CreatedDate;
-                worksheet.Cells[row, 6].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
-                worksheet.Cells[row, 7].Value = item.Status;
-                worksheet.Cells[row, 8].Value = item.LastModifiedDate;
-                worksheet.Cells[row, 8].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
+                worksheet.Cells[row, 5].Value = item.NumberOfTooling;
+                worksheet.Cells[row, 6].Value = item.CreatedBy;
+                worksheet.Cells[row, 7].Value = item.CreatedDate;
+                worksheet.Cells[row, 7].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
+                worksheet.Cells[row, 8].Value = item.Status;
+                worksheet.Cells[row, 9].Value = item.LastModifiedDate;
+                worksheet.Cells[row, 9].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
                 row++;
             }
             
@@ -105,7 +106,7 @@ public class ToolListController : Controller
         
         content.AppendLine(string.Join(separator, new[]
         {
-            "Tool List Name", "Part Number", "Operation", "Revision",
+            "Tool List Name", "Part Number", "Operation", "Revision", "No. of Tooling",
             "Created By", "Created Date", "Status", "Last Modified Date"
         }));
         
@@ -117,6 +118,7 @@ public class ToolListController : Controller
                 EscapeField(item.PartNumber, separator),
                 EscapeField(item.Operation, separator),
                 EscapeField(item.Revision, separator),
+                item.NumberOfTooling.ToString(),
                 EscapeField(item.CreatedBy, separator),
                 item.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
                 EscapeField(item.Status, separator),
