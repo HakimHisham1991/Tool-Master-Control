@@ -60,9 +60,9 @@ public class ToolCodeController : Controller
             // Add column headers with color
             var headers = new[]
             {
-                "Tool Number", "Tool Description", "Consumable Code", "Supplier",
-                "Holder/Extension Code", "Diameter", "Flute Length", "Protrusion Length",
-                "Corner Radius", "Arbor Code", "Part Number", "Operation", "Revision",
+                "Tool No.", "Tool Name", "Consumable Tool Description", "Tool Supplier",
+                "Tool Holder", "Tool Diameter (D1)", "Flute Length (L1)", "Tool Ext. Length (L2)",
+                "Tool Corner Radius", "Arbor Description (or equivalent specs)", "Part Number", "Operation", "Revision",
                 "Tool List Name", "Project Code", "Machine Name", "Machine Workcenter",
                 "Created By", "Created Date", "Last Modified"
             };
@@ -131,9 +131,9 @@ public class ToolCodeController : Controller
         
         content.AppendLine(string.Join(separator, new[]
         {
-            "Tool Number", "Tool Description", "Consumable Code", "Supplier",
-            "Holder/Extension Code", "Diameter", "Flute Length", "Protrusion Length",
-            "Corner Radius", "Arbor Code", "Part Number", "Operation", "Revision",
+            "Tool No.", "Tool Name", "Consumable Tool Description", "Tool Supplier",
+            "Tool Holder", "Tool Diameter (D1)", "Flute Length (L1)", "Tool Ext. Length (L2)",
+            "Tool Corner Radius", "Arbor Description (or equivalent specs)", "Part Number", "Operation", "Revision",
             "Tool List Name", "Project Code", "Machine Name", "Machine Workcenter",
             "Created By", "Created Date", "Last Modified"
         }));
