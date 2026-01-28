@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ProjectCode> ProjectCodes { get; set; }
     public DbSet<MachineName> MachineNames { get; set; }
     public DbSet<MachineWorkcenter> MachineWorkcenters { get; set; }
+    public DbSet<MachineModel> MachineModels { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,6 +65,12 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Workcenter).IsUnique();
+        });
+        
+        modelBuilder.Entity<MachineModel>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Model).IsUnique();
         });
     }
 }

@@ -382,4 +382,95 @@ public class SettingsController : Controller
         
         return Json(new { success = true, message = "Machine workcenter deleted successfully" });
     }
+    
+    // Machine Model Management
+    public async Task<IActionResult> MachineModel(string? search, int page = 1, int pageSize = 50)
+    {
+        var query = _context.MachineModels.AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(m => 
+                m.Model.ToLower().Contains(term) ||
+                (m.Description != null && m.Description.ToLower().Contains(term)));
+        }
+        
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        
+        var models = await query
+            .OrderBy(m => m.Model)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        
+        ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.PageSize = pageSize;
+        
+        return View(models);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> CreateMachineModel(string model, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+        {
+            return Json(new { success = false, message = "Model is required" });
+        }
+        
+        if (await _context.MachineModels.AnyAsync(m => m.Model == model))
+        {
+            return Json(new { success = false, message = "Machine model already exists" });
+        }
+        
+        var machineModel = new MachineModel
+        {
+            Model = model,
+            Description = description,
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = HttpContext.Session.GetString("Username") ?? "",
+            IsActive = true
+        };
+        
+        _context.MachineModels.Add(machineModel);
+        await _context.SaveChangesAsync();
+        
+        return Json(new { success = true, message = "Machine model created successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdateMachineModel(int id, string? description, bool? isActive)
+    {
+        var machineModel = await _context.MachineModels.FindAsync(id);
+        if (machineModel == null)
+        {
+            return Json(new { success = false, message = "Machine model not found" });
+        }
+        
+        if (description != null) machineModel.Description = description;
+        if (isActive.HasValue) machineModel.IsActive = isActive.Value;
+        
+        await _context.SaveChangesAsync();
+        
+        return Json(new { success = true, message = "Machine model updated successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> DeleteMachineModel(int id)
+    {
+        var machineModel = await _context.MachineModels.FindAsync(id);
+        if (machineModel == null)
+        {
+            return Json(new { success = false, message = "Machine model not found" });
+        }
+        
+        _context.MachineModels.Remove(machineModel);
+        await _context.SaveChangesAsync();
+        
+        return Json(new { success = true, message = "Machine model deleted successfully" });
+    }
 }

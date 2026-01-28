@@ -119,6 +119,17 @@ public class ToolListEditorController : Controller
     }
     
     [HttpGet]
+    public async Task<IActionResult> GetMachineModels()
+    {
+        var models = await _context.MachineModels
+            .Where(m => m.IsActive)
+            .OrderBy(m => m.Model)
+            .Select(m => new { value = m.Model, text = m.Model })
+            .ToListAsync();
+        return Json(models);
+    }
+    
+    [HttpGet]
     public async Task<IActionResult> Export(int id, string format)
     {
         var username = HttpContext.Session.GetString("Username") ?? "";
@@ -155,6 +166,9 @@ public class ToolListEditorController : Controller
             row++;
             worksheet.Cells[row, 1].Value = "Workcenter:";
             worksheet.Cells[row, 2].Value = viewModel.MachineWorkcenter;
+            row++;
+            worksheet.Cells[row, 1].Value = "Machine Model:";
+            worksheet.Cells[row, 2].Value = viewModel.MachineModel;
             row += 2;
             
             // Add column headers with color
@@ -229,6 +243,7 @@ public class ToolListEditorController : Controller
         content.AppendLine($"Project Code: {viewModel.ProjectCode}");
         content.AppendLine($"Machine: {viewModel.MachineName}");
         content.AppendLine($"Workcenter: {viewModel.MachineWorkcenter}");
+        content.AppendLine($"Machine Model: {viewModel.MachineModel}");
         content.AppendLine();
         
         content.AppendLine(string.Join(separator, new[]

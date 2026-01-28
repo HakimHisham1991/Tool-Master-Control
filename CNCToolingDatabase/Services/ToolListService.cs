@@ -120,6 +120,7 @@ public class ToolListService : IToolListService
             ProjectCode = header.ProjectCode,
             MachineName = header.MachineName,
             MachineWorkcenter = header.MachineWorkcenter,
+            MachineModel = header.MachineModel,
             Details = details,
             IsReadOnly = isReadOnly,
             LockedBy = isReadOnly ? header.LockedBy : null
@@ -163,6 +164,7 @@ public class ToolListService : IToolListService
                 header.ProjectCode = request.ProjectCode;
                 header.MachineName = request.MachineName;
                 header.MachineWorkcenter = request.MachineWorkcenter;
+                header.MachineModel = request.MachineModel;
                 
                 await _toolListRepository.UpdateHeaderAsync(header);
             }
@@ -176,6 +178,7 @@ public class ToolListService : IToolListService
                     ProjectCode = request.ProjectCode,
                     MachineName = request.MachineName,
                     MachineWorkcenter = request.MachineWorkcenter,
+                    MachineModel = request.MachineModel,
                     CreatedBy = username,
                     CreatedDate = DateTime.UtcNow
                 };

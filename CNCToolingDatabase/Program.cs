@@ -44,6 +44,11 @@ using (var scope = app.Services.CreateScope())
         context.Database.ExecuteSqlRaw("ALTER TABLE ToolListDetails ADD COLUMN Remarks TEXT NOT NULL DEFAULT '';");
     }
     catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase)) { }
+    try
+    {
+        context.Database.ExecuteSqlRaw("ALTER TABLE ToolListHeaders ADD COLUMN MachineModel TEXT NOT NULL DEFAULT '';");
+    }
+    catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase)) { }
     DbSeeder.Seed(context);
 }
 

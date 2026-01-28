@@ -44,9 +44,19 @@ public static class DbSeeder
                         IsActive INTEGER NOT NULL DEFAULT 1
                     );
                     
+                    CREATE TABLE IF NOT EXISTS MachineModels (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Model TEXT NOT NULL UNIQUE,
+                        Description TEXT,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1
+                    );
+                    
                     CREATE INDEX IF NOT EXISTS IX_ProjectCodes_Code ON ProjectCodes(Code);
                     CREATE INDEX IF NOT EXISTS IX_MachineNames_Name ON MachineNames(Name);
                     CREATE INDEX IF NOT EXISTS IX_MachineWorkcenters_Workcenter ON MachineWorkcenters(Workcenter);
+                    CREATE INDEX IF NOT EXISTS IX_MachineModels_Model ON MachineModels(Model);
                 ";
                 command.ExecuteNonQuery();
             }
@@ -114,15 +124,31 @@ public static class DbSeeder
         }
         catch { }
         
+        try
+        {
+            if (context.MachineModels != null)
+            {
+                context.MachineModels.RemoveRange(context.MachineModels.ToList());
+                context.SaveChanges();
+                var models = "AERO-426|CMX1100V|DMC1150V|DMC60H|DMC80 U duoBLOCK|DMU50|DMU60 Evo|DMU65 monoBLOCK|DMU95 monoBLOCK|DNM500HS|DNM750L-II|E17040-V2|FANUC Robodrill a-T21iFb|DVD5200 Dual Spindle|HCN4000 II|HCN4000 III|HCN6000 C|HCN6000 II|HiREX-4000|HTC 4000-II|Integrex i-200|Integrex i-630V|Integrex j-200|Integrex j-200s|MYNX 9500|NLX1500|NVX5060|NVX5060 HT|NVX5100 (3X + Indexer)|NVX7000 (3X + Indexer)|PFH4800|QT200|QTC200MSY L|QTE200|QTN100|QTN100-II MSY|QTN150|QTN200|SIRIUS-650|TMV1600A|TMV1600A (Indexer)|TMV510A-II (Indexer)|TMV1500A (3X + Indexer)|Tornos Delta 38-5A|UM Dual Spindle Machine|UM500DH|UM500DH (3X + Indexer)|UM-V500|VCN410A|VCN410A Indexer|VCN410A-II|VCN430A-II HS|VCN510C|VCN510C-II|VCN515C|VCN530C-HS (3X + Indexer)|VCN535|VCN700D (3X + Indexer)|VCS430A|Victor|Vortex i-630V/6|VRX500|VRX730-5X II|VRXi-500|VTC200C".Split('|');
+                foreach (var m in models)
+                {
+                    context.MachineModels.Add(new MachineModel { Model = m, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                }
+                context.SaveChanges();
+            }
+        }
+        catch { }
+        
         if (!context.ToolListHeaders.Any())
         {
             var toolLists = new List<ToolListHeader>
             {
-                CreateToolListWithDetails("PART-001", "OP10", "REV00", "AG01", "S001", "2X-01", "hakim.hisham"),
-                CreateToolListWithDetails("PART-001", "OP20", "REV00", "AG01", "S001", "2X-01", "hakim.hisham"),
-                CreateToolListWithDetails("PART-002", "OP10", "REV00", "AG02", "SP11", "5X-01", "adib.jamil"),
-                CreateToolListWithDetails("PART-003", "OP10", "REV00", "AL01", "K5-42", "3X-07", "faiq.faizul"),
-                CreateToolListWithDetails("PART-003", "OP20", "REV00", "AL01", "K5-42", "3X-07", "faiq.faizul"),
+                CreateToolListWithDetails("PART-001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham"),
+                CreateToolListWithDetails("PART-001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham"),
+                CreateToolListWithDetails("PART-002", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil"),
+                CreateToolListWithDetails("PART-003", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul"),
+                CreateToolListWithDetails("PART-003", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul"),
             };
             
             context.ToolListHeaders.AddRange(toolLists);
@@ -146,7 +172,7 @@ public static class DbSeeder
     }
     
     private static ToolListHeader CreateToolListWithDetails(string partNumber, string operation, string revision, 
-        string projectCode, string machineName, string workcenter, string createdBy)
+        string projectCode, string machineName, string workcenter, string machineModel, string createdBy)
     {
         var header = new ToolListHeader
         {
@@ -156,6 +182,7 @@ public static class DbSeeder
             ProjectCode = projectCode,
             MachineName = machineName,
             MachineWorkcenter = workcenter,
+            MachineModel = machineModel,
             CreatedBy = createdBy,
             CreatedDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 30)),
             LastModifiedDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(0, 10))

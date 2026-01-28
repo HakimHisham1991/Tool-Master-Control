@@ -10,6 +10,7 @@ public class ToolListHeader
     public string ProjectCode { get; set; } = string.Empty;
     public string MachineName { get; set; } = string.Empty;
     public string MachineWorkcenter { get; set; } = string.Empty;
+    public string MachineModel { get; set; } = string.Empty;
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public DateTime LastModifiedDate { get; set; } = DateTime.UtcNow;
