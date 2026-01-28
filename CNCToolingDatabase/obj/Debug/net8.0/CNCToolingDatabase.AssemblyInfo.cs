@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CNCToolingDatabase")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+85a2fc63716fcc0ab83186d50497fd59c251ecba")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9c8200623b415159b7efd9781f239116e6d7d273")]
 [assembly: System.Reflection.AssemblyProductAttribute("CNCToolingDatabase")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CNCToolingDatabase")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
