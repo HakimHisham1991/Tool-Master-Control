@@ -256,3 +256,14 @@ C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net8.0\CNCToolingDatabase.pdb
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net8.0\CNCToolingDatabase.genruntimeconfig.cache
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net8.0\ref\CNCToolingDatabase.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\EPPlus.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\EPPlus.Interfaces.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\EPPlus.System.Drawing.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.Extensions.Configuration.FileExtensions.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Json.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.IO.RecyclableMemoryStream.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\System.Drawing.Common.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\System.Security.Cryptography.Pkcs.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\win\lib\net8.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Security.Cryptography.Pkcs.dll
