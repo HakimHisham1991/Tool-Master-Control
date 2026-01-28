@@ -63,7 +63,8 @@ public class ToolCodeController : Controller
                 "Tool Number", "Tool Description", "Consumable Code", "Supplier",
                 "Holder/Extension Code", "Diameter", "Flute Length", "Protrusion Length",
                 "Corner Radius", "Arbor Code", "Part Number", "Operation", "Revision",
-                "Project Code", "Machine Name", "Machine Workcenter"
+                "Tool List Name", "Project Code", "Machine Name", "Machine Workcenter",
+                "Created By", "Created Date", "Last Modified"
             };
             
             int row = 1;
@@ -94,9 +95,13 @@ public class ToolCodeController : Controller
                 worksheet.Cells[row, 11].Value = tool.PartNumber;
                 worksheet.Cells[row, 12].Value = tool.Operation;
                 worksheet.Cells[row, 13].Value = tool.Revision;
-                worksheet.Cells[row, 14].Value = tool.ProjectCode;
-                worksheet.Cells[row, 15].Value = tool.MachineName;
-                worksheet.Cells[row, 16].Value = tool.MachineWorkcenter;
+                worksheet.Cells[row, 14].Value = tool.ToolListName;
+                worksheet.Cells[row, 15].Value = tool.ProjectCode;
+                worksheet.Cells[row, 16].Value = tool.MachineName;
+                worksheet.Cells[row, 17].Value = tool.MachineWorkcenter;
+                worksheet.Cells[row, 18].Value = tool.CreatedBy;
+                worksheet.Cells[row, 19].Value = tool.CreatedDate.ToString("yyyy-MM-dd HH:mm");
+                worksheet.Cells[row, 20].Value = tool.LastModifiedDate.ToString("yyyy-MM-dd HH:mm");
                 row++;
             }
             
@@ -129,7 +134,8 @@ public class ToolCodeController : Controller
             "Tool Number", "Tool Description", "Consumable Code", "Supplier",
             "Holder/Extension Code", "Diameter", "Flute Length", "Protrusion Length",
             "Corner Radius", "Arbor Code", "Part Number", "Operation", "Revision",
-            "Project Code", "Machine Name", "Machine Workcenter"
+            "Tool List Name", "Project Code", "Machine Name", "Machine Workcenter",
+            "Created By", "Created Date", "Last Modified"
         }));
         
         foreach (var tool in viewModel.Tools)
@@ -149,9 +155,13 @@ public class ToolCodeController : Controller
                 EscapeField(tool.PartNumber, separator),
                 EscapeField(tool.Operation, separator),
                 EscapeField(tool.Revision, separator),
+                EscapeField(tool.ToolListName, separator),
                 EscapeField(tool.ProjectCode, separator),
                 EscapeField(tool.MachineName, separator),
-                EscapeField(tool.MachineWorkcenter, separator)
+                EscapeField(tool.MachineWorkcenter, separator),
+                EscapeField(tool.CreatedBy, separator),
+                tool.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
+                tool.LastModifiedDate.ToString("yyyy-MM-dd HH:mm")
             }));
         }
         

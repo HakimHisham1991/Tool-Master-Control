@@ -42,9 +42,13 @@ public class ToolCodeService : IToolCodeService
                         PartNumber = header.PartNumber,
                         Operation = header.Operation,
                         Revision = header.Revision,
+                        ToolListName = header.ToolListName,
                         ProjectCode = header.ProjectCode,
                         MachineName = header.MachineName,
-                        MachineWorkcenter = header.MachineWorkcenter
+                        MachineWorkcenter = header.MachineWorkcenter,
+                        CreatedBy = header.CreatedBy,
+                        CreatedDate = header.CreatedDate,
+                        LastModifiedDate = header.LastModifiedDate
                     };
         
         if (!string.IsNullOrWhiteSpace(searchTerm))

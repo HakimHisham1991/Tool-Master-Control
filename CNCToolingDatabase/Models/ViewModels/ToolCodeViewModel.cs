@@ -15,9 +15,13 @@ public class ToolCodeViewModel
     public string PartNumber { get; set; } = string.Empty;
     public string Operation { get; set; } = string.Empty;
     public string Revision { get; set; } = string.Empty;
+    public string ToolListName { get; set; } = string.Empty;
     public string ProjectCode { get; set; } = string.Empty;
     public string MachineName { get; set; } = string.Empty;
     public string MachineWorkcenter { get; set; } = string.Empty;
+    public string CreatedBy { get; set; } = string.Empty;
+    public DateTime CreatedDate { get; set; }
+    public DateTime LastModifiedDate { get; set; }
 }
 
 public class ToolCodeListViewModel

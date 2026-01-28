@@ -118,16 +118,20 @@
                 <th onclick="sortBy('partNumber')">Part Number @Html.Raw(GetSortIcon("partNumber"))</th>
                 <th onclick="sortBy('operation')">Operation @Html.Raw(GetSortIcon("operation"))</th>
                 <th>Revision</th>
+                <th>Tool List Name</th>
                 <th>Project Code</th>
                 <th>Machine Name</th>
                 <th>Machine Workcenter</th>
+                <th>Created By</th>
+                <th>Created Date</th>
+                <th>Last Modified</th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Tools.Count == 0)
             {
                 <tr>
-                    <td colspan="16" class="empty-state">
+                    <td colspan="19" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -155,9 +159,13 @@
                         <td>@tool.PartNumber</td>
                         <td>@tool.Operation</td>
                         <td>@tool.Revision</td>
+                        <td>@tool.ToolListName</td>
                         <td>@tool.ProjectCode</td>
                         <td>@tool.MachineName</td>
                         <td>@tool.MachineWorkcenter</td>
+                        <td>@tool.CreatedBy</td>
+                        <td>@tool.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@tool.LastModifiedDate.ToString("yyyy-MM-dd HH:mm")</td>
                     </tr>
                 }
             }
