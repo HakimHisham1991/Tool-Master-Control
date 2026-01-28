@@ -37,8 +37,8 @@ public class ToolListService : IToolListService
                 h.Operation.ToLower().Contains(term) ||
                 h.CreatedBy.ToLower().Contains(term)).ToList();
         }
-        
-        headers = ApplySort(headers, sortColumn, sortDirection);
+
+        headers = await ApplySortAsync(headers, sortColumn, sortDirection);
         
         var totalItems = headers.Count;
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
@@ -256,29 +256,88 @@ public class ToolListService : IToolListService
         }).ToList();
     }
     
-    private List<ToolListHeader> ApplySort(List<ToolListHeader> headers, string? column, string? direction)
+    private async Task<List<ToolListHeader>> ApplySortAsync(List<ToolListHeader> headers, string? column, string? direction)
     {
         var isDescending = direction?.ToLower() == "desc";
-        
-        return column?.ToLower() switch
+
+        var columnLower = column?.ToLower();
+
+        // Special cases need data beyond the basic header fields
+        if (columnLower == "numberoftooling")
         {
-            "toollistname" => isDescending 
-                ? headers.OrderByDescending(h => h.ToolListName).ToList() 
+            // Need counts for all headers to sort correctly before paging
+            var allHeaderIds = headers.Select(h => h.Id).ToList();
+            var toolCounts = await _toolListRepository.GetToolCountsByHeaderIdsAsync(allHeaderIds);
+
+            return isDescending
+                ? headers.OrderByDescending(h => toolCounts.GetValueOrDefault(h.Id, 0)).ThenByDescending(h => h.LastModifiedDate).ToList()
+                : headers.OrderBy(h => toolCounts.GetValueOrDefault(h.Id, 0)).ThenByDescending(h => h.LastModifiedDate).ToList();
+        }
+
+        if (columnLower == "status")
+        {
+            // Available (Unlocked) vs Locked; secondarily sort by who locked it.
+            // Put locked entries first when descending, available first when ascending.
+            if (isDescending)
+            {
+                return headers
+                    .OrderByDescending(h => h.LockedBy != null)
+                    .ThenBy(h => h.LockedBy ?? string.Empty)
+                    .ThenByDescending(h => h.LastModifiedDate)
+                    .ToList();
+            }
+
+            return headers
+                .OrderBy(h => h.LockedBy != null)
+                .ThenBy(h => h.LockedBy ?? string.Empty)
+                .ThenByDescending(h => h.LastModifiedDate)
+                .ToList();
+        }
+
+        if (columnLower == "editingduration")
+        {
+            // Duration is based on LockStartTime (null => not currently being edited).
+            // Keep unlocked rows at the end, regardless of direction.
+            var now = DateTime.UtcNow;
+
+            Func<ToolListHeader, double> durationSeconds = h =>
+                h.LockStartTime.HasValue ? (now - h.LockStartTime.Value).TotalSeconds : 0d;
+
+            return isDescending
+                ? headers
+                    .OrderBy(h => !h.LockStartTime.HasValue)
+                    .ThenByDescending(durationSeconds)
+                    .ThenByDescending(h => h.LastModifiedDate)
+                    .ToList()
+                : headers
+                    .OrderBy(h => !h.LockStartTime.HasValue)
+                    .ThenBy(durationSeconds)
+                    .ThenByDescending(h => h.LastModifiedDate)
+                    .ToList();
+        }
+
+        return columnLower switch
+        {
+            "toollistname" => isDescending
+                ? headers.OrderByDescending(h => h.ToolListName).ToList()
                 : headers.OrderBy(h => h.ToolListName).ToList(),
-            "partnumber" => isDescending 
-                ? headers.OrderByDescending(h => h.PartNumber).ToList() 
+            "partnumber" => isDescending
+                ? headers.OrderByDescending(h => h.PartNumber).ToList()
                 : headers.OrderBy(h => h.PartNumber).ToList(),
-            "operation" => isDescending 
-                ? headers.OrderByDescending(h => h.Operation).ToList() 
+            "operation" => isDescending
+                ? headers.OrderByDescending(h => h.Operation).ToList()
                 : headers.OrderBy(h => h.Operation).ToList(),
-            "createdby" => isDescending 
-                ? headers.OrderByDescending(h => h.CreatedBy).ToList() 
+            "revision" => isDescending
+                ? headers.OrderByDescending(h => h.Revision).ToList()
+                : headers.OrderBy(h => h.Revision).ToList(),
+            "createdby" => isDescending
+                ? headers.OrderByDescending(h => h.CreatedBy).ToList()
                 : headers.OrderBy(h => h.CreatedBy).ToList(),
-            "createddate" => isDescending 
-                ? headers.OrderByDescending(h => h.CreatedDate).ToList() 
+            "createddate" => isDescending
+                ? headers.OrderByDescending(h => h.CreatedDate).ToList()
                 : headers.OrderBy(h => h.CreatedDate).ToList(),
-            "lastmodifieddate" => isDescending 
-                ? headers.OrderByDescending(h => h.LastModifiedDate).ToList() 
+            "lastmodifieddate" => isDescending
+                ? headers.OrderByDescending(h => h.LastModifiedDate).ToList()
                 : headers.OrderBy(h => h.LastModifiedDate).ToList(),
             _ => headers.OrderByDescending(h => h.LastModifiedDate).ToList()
         };
