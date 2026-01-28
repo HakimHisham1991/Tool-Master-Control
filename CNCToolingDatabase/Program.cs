@@ -33,6 +33,17 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     context.Database.EnsureCreated();
+    // Add new columns if DB existed before they were added (EnsureCreated does not alter tables)
+    try
+    {
+        context.Database.ExecuteSqlRaw("ALTER TABLE ToolListDetails ADD COLUMN ToolPathTimeMinutes REAL NOT NULL DEFAULT 0;");
+    }
+    catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase)) { }
+    try
+    {
+        context.Database.ExecuteSqlRaw("ALTER TABLE ToolListDetails ADD COLUMN Remarks TEXT NOT NULL DEFAULT '';");
+    }
+    catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase)) { }
     DbSeeder.Seed(context);
 }
 

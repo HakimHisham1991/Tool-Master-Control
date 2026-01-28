@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using CNCToolingDatabase.Services;
 using System.Text;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 
 namespace CNCToolingDatabase.Controllers;
 
@@ -46,8 +48,81 @@ public class ToolCodeController : Controller
             search, consumableCode, diameter, arborCode,
             holderExtension, partNumber, null, null, 1, int.MaxValue);
         
+        var formatLower = format.ToLower();
+        
+        // Handle Excel format with EPPlus
+        if (formatLower == "excel")
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("Tool Codes");
+            
+            // Add column headers with color
+            var headers = new[]
+            {
+                "Tool Number", "Tool Description", "Consumable Code", "Supplier",
+                "Holder/Extension Code", "Diameter", "Flute Length", "Protrusion Length",
+                "Corner Radius", "Arbor Code", "Part Number", "Operation", "Revision",
+                "Project Code", "Machine Name", "Machine Workcenter"
+            };
+            
+            int row = 1;
+            int colCount = headers.Length;
+            for (int col = 1; col <= colCount; col++)
+            {
+                var cell = worksheet.Cells[row, col];
+                cell.Value = headers[col - 1];
+                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(204, 255, 255)); // RGB(204,255,255) = #CCFFFF
+                cell.Style.Font.Bold = true;
+            }
+            row++;
+            
+            // Add data rows
+            foreach (var tool in viewModel.Tools)
+            {
+                worksheet.Cells[row, 1].Value = tool.ToolNumber;
+                worksheet.Cells[row, 2].Value = tool.ToolDescription;
+                worksheet.Cells[row, 3].Value = tool.ConsumableCode;
+                worksheet.Cells[row, 4].Value = tool.Supplier;
+                worksheet.Cells[row, 5].Value = tool.HolderExtensionCode;
+                worksheet.Cells[row, 6].Value = tool.Diameter;
+                worksheet.Cells[row, 7].Value = tool.FluteLength;
+                worksheet.Cells[row, 8].Value = tool.ProtrusionLength;
+                worksheet.Cells[row, 9].Value = tool.CornerRadius;
+                worksheet.Cells[row, 10].Value = tool.ArborCode;
+                worksheet.Cells[row, 11].Value = tool.PartNumber;
+                worksheet.Cells[row, 12].Value = tool.Operation;
+                worksheet.Cells[row, 13].Value = tool.Revision;
+                worksheet.Cells[row, 14].Value = tool.ProjectCode;
+                worksheet.Cells[row, 15].Value = tool.MachineName;
+                worksheet.Cells[row, 16].Value = tool.MachineWorkcenter;
+                row++;
+            }
+            
+            int tableEndRow = row - 1;
+            // All borders on table (headers + data)
+            for (int r = 1; r <= tableEndRow; r++)
+                for (int c = 1; c <= colCount; c++)
+                {
+                    var cell = worksheet.Cells[r, c];
+                    cell.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                    cell.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                    cell.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                    cell.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                }
+            
+            // Auto-fit columns
+            worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+            
+            var fileName = $"ToolCodes_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            var fileBytes = package.GetAsByteArray();
+            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+        
+        // Handle CSV and TXT formats
         var content = new StringBuilder();
-        var separator = format.ToLower() == "csv" ? "," : "\t";
+        var separator = formatLower == "csv" ? "," : "\t";
         
         content.AppendLine(string.Join(separator, new[]
         {
@@ -80,21 +155,21 @@ public class ToolCodeController : Controller
             }));
         }
         
-        var fileName = $"ToolCodes_{DateTime.Now:yyyyMMdd_HHmmss}";
-        var contentType = format.ToLower() switch
+        var fileNameText = $"ToolCodes_{DateTime.Now:yyyyMMdd_HHmmss}";
+        var contentType = formatLower switch
         {
             "csv" => "text/csv",
             "txt" => "text/plain",
             _ => "application/vnd.ms-excel"
         };
-        var extension = format.ToLower() switch
+        var extension = formatLower switch
         {
             "csv" => ".csv",
             "txt" => ".txt",
             _ => ".xls"
         };
         
-        return File(Encoding.UTF8.GetBytes(content.ToString()), contentType, fileName + extension);
+        return File(Encoding.UTF8.GetBytes(content.ToString()), contentType, fileNameText + extension);
     }
     
     private string EscapeField(string? value, string separator)

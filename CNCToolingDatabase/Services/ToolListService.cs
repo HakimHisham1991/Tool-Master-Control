@@ -100,7 +100,9 @@ public class ToolListService : IToolListService
             FluteLength = d.FluteLength,
             ProtrusionLength = d.ProtrusionLength,
             CornerRadius = d.CornerRadius,
-            ArborCode = d.ArborCode
+            ArborCode = d.ArborCode,
+            ToolPathTimeMinutes = d.ToolPathTimeMinutes,
+            Remarks = d.Remarks
         }).ToList();
         
         while (details.Count < 5)
@@ -196,7 +198,9 @@ public class ToolListService : IToolListService
                     FluteLength = d.FluteLength ?? 0,
                     ProtrusionLength = d.ProtrusionLength ?? 0,
                     CornerRadius = d.CornerRadius ?? 0,
-                    ArborCode = d.ArborCode
+                    ArborCode = d.ArborCode,
+                    ToolPathTimeMinutes = d.ToolPathTimeMinutes ?? 0,
+                    Remarks = d.Remarks ?? string.Empty
                 }).ToList();
             
             await _toolListRepository.SaveDetailsAsync(header.Id, validDetails);

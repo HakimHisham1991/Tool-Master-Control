@@ -1,4 +1,6 @@
 using CNCToolingDatabase.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CNCToolingDatabase.Data;
 
@@ -6,6 +8,58 @@ public static class DbSeeder
 {
     public static void Seed(ApplicationDbContext context)
     {
+        // Ensure new tables exist (for databases created before these models were added)
+        try
+        {
+            var connection = context.Database.GetDbConnection();
+            connection.Open();
+            try
+            {
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    CREATE TABLE IF NOT EXISTS ProjectCodes (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Code TEXT NOT NULL UNIQUE,
+                        Description TEXT,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS MachineNames (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL UNIQUE,
+                        Description TEXT,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS MachineWorkcenters (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Workcenter TEXT NOT NULL UNIQUE,
+                        Description TEXT,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1
+                    );
+                    
+                    CREATE INDEX IF NOT EXISTS IX_ProjectCodes_Code ON ProjectCodes(Code);
+                    CREATE INDEX IF NOT EXISTS IX_MachineNames_Name ON MachineNames(Name);
+                    CREATE INDEX IF NOT EXISTS IX_MachineWorkcenters_Workcenter ON MachineWorkcenters(Workcenter);
+                ";
+                command.ExecuteNonQuery();
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+        catch
+        {
+            // Tables might already exist or be created by EF, ignore
+        }
+        
         if (!context.Users.Any())
         {
             context.Users.AddRange(
@@ -14,6 +68,100 @@ public static class DbSeeder
                 new User { Username = "kim", Password = "123", DisplayName = "Kim Lee" }
             );
             context.SaveChanges();
+        }
+        
+        // Seed Project Codes
+        try
+        {
+            if (context.ProjectCodes != null && !context.ProjectCodes.Any())
+            {
+            var projectCodes = new[]
+            {
+                "AG01", "AG02", "AG03", "AG07", "AG09",
+                "AH03", "AH05", "AL02", "AL07", "AM03"
+            };
+            
+            foreach (var code in projectCodes)
+            {
+                context.ProjectCodes.Add(new ProjectCode
+                {
+                    Code = code,
+                    Description = null,
+                    CreatedDate = DateTime.UtcNow,
+                    CreatedBy = "system",
+                    IsActive = true
+                });
+            }
+            context.SaveChanges();
+            }
+        }
+        catch
+        {
+            // Table might not exist yet, skip seeding
+        }
+        
+        // Seed Machine Names
+        try
+        {
+            if (context.MachineNames != null && !context.MachineNames.Any())
+            {
+            var machineNames = new[]
+            {
+                "J1-25", "SP11", "S001", "SP19", "K5-42",
+                "K5-43", "SP20", "SP21", "H1-42", "FC11",
+                "FC12", "FC17", "FC18", "H3-52", "A8-32",
+                "A2-52", "A3-52", "A4-53", "A5-53", "B1-51"
+            };
+            
+            foreach (var name in machineNames)
+            {
+                context.MachineNames.Add(new MachineName
+                {
+                    Name = name,
+                    Description = null,
+                    CreatedDate = DateTime.UtcNow,
+                    CreatedBy = "system",
+                    IsActive = true
+                });
+            }
+            context.SaveChanges();
+            }
+        }
+        catch
+        {
+            // Table might not exist yet, skip seeding
+        }
+        
+        // Seed Machine Workcenters
+        try
+        {
+            if (context.MachineWorkcenters != null && !context.MachineWorkcenters.Any())
+            {
+            var workcenters = new[]
+            {
+                "2X-01", "2X-02", "2X-03", "3X-03", "3X-07",
+                "5X-01", "5X-02", "5X-03", "5X-04", "5X-05",
+                "5X-06", "5X-07", "5X-08", "3X-26", "3X-27",
+                "3X-28", "3X-29", "3X-30", "5X-14", "5X-15"
+            };
+            
+            foreach (var workcenter in workcenters)
+            {
+                context.MachineWorkcenters.Add(new MachineWorkcenter
+                {
+                    Workcenter = workcenter,
+                    Description = null,
+                    CreatedDate = DateTime.UtcNow,
+                    CreatedBy = "system",
+                    IsActive = true
+                });
+            }
+            context.SaveChanges();
+            }
+        }
+        catch
+        {
+            // Table might not exist yet, skip seeding
         }
         
         if (!context.ToolListHeaders.Any())
@@ -101,7 +249,9 @@ public static class DbSeeder
                 ProtrusionLength = tool.protrusion,
                 CornerRadius = tool.radius,
                 HolderExtensionCode = tool.holder,
-                ArborCode = tool.arbor
+                ArborCode = tool.arbor,
+                ToolPathTimeMinutes = 0,
+                Remarks = ""
             });
         }
         

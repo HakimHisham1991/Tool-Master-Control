@@ -13,6 +13,8 @@ public class ToolListDetailRow
     public decimal? ProtrusionLength { get; set; }
     public decimal? CornerRadius { get; set; }
     public string ArborCode { get; set; } = string.Empty;
+    public decimal? ToolPathTimeMinutes { get; set; }
+    public string Remarks { get; set; } = string.Empty;
 }
 
 public class ToolListEditorViewModel

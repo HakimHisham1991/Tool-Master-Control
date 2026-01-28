@@ -13,6 +13,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<ToolListHeader> ToolListHeaders { get; set; }
     public DbSet<ToolListDetail> ToolListDetails { get; set; }
     public DbSet<ToolMaster> ToolMasters { get; set; }
+    public DbSet<ProjectCode> ProjectCodes { get; set; }
+    public DbSet<MachineName> MachineNames { get; set; }
+    public DbSet<MachineWorkcenter> MachineWorkcenters { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,6 +46,24 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.ConsumableCode).IsUnique();
+        });
+        
+        modelBuilder.Entity<ProjectCode>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Code).IsUnique();
+        });
+        
+        modelBuilder.Entity<MachineName>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+        
+        modelBuilder.Entity<MachineWorkcenter>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Workcenter).IsUnique();
         });
     }
 }
