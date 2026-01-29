@@ -120,7 +120,8 @@ public class SettingsController : Controller
             var term = search.ToLower();
             query = query.Where(p => 
                 p.Code.ToLower().Contains(term) ||
-                (p.Description != null && p.Description.ToLower().Contains(term)));
+                (p.Description != null && p.Description.ToLower().Contains(term)) ||
+                (p.Project != null && p.Project.ToLower().Contains(term)));
         }
         
         var totalItems = await query.CountAsync();
@@ -142,7 +143,7 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> CreateProjectCode(string code, string? description)
+    public async Task<IActionResult> CreateProjectCode(string code, string? description, string? project)
     {
         if (string.IsNullOrWhiteSpace(code))
         {
@@ -158,6 +159,7 @@ public class SettingsController : Controller
         {
             Code = code,
             Description = description,
+            Project = project,
             CreatedDate = DateTime.UtcNow,
             CreatedBy = HttpContext.Session.GetString("Username") ?? "",
             IsActive = true
@@ -170,7 +172,7 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> UpdateProjectCode(int id, string? description, bool? isActive)
+    public async Task<IActionResult> UpdateProjectCode(int id, string? description, string? project, bool? isActive)
     {
         var projectCode = await _context.ProjectCodes.FindAsync(id);
         if (projectCode == null)
@@ -179,6 +181,7 @@ public class SettingsController : Controller
         }
         
         if (description != null) projectCode.Description = description;
+        projectCode.Project = string.IsNullOrEmpty(project) ? null : project;
         if (isActive.HasValue) projectCode.IsActive = isActive.Value;
         
         await _context.SaveChangesAsync();

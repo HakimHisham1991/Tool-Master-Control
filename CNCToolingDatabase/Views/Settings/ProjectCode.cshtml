@@ -21,7 +21,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search project codes or customers..." class="search-input" id="searchInput" />
+            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search project codes, customers, or projects..." class="search-input" id="searchInput" />
         </div>
     </form>
 </div>
@@ -32,6 +32,7 @@
             <tr>
                 <th>Code</th>
                 <th>Customer</th>
+                <th>Project</th>
                 <th>Created By</th>
                 <th>Created Date</th>
                 <th>Status</th>
@@ -42,7 +43,7 @@
             @if (Model.Count == 0)
             {
                 <tr>
-                    <td colspan="6" class="empty-state">
+                    <td colspan="7" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
@@ -58,6 +59,7 @@
                     <tr>
                         <td>@item.Code</td>
                         <td>@(item.Description ?? "-")</td>
+                        <td>@(item.Project ?? "-")</td>
                         <td>@item.CreatedBy</td>
                         <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
@@ -71,8 +73,8 @@
                             }
                         </td>
                         <td>
-                            @{ var custJs = (item.Description ?? "").Replace("\\", "\\\\").Replace("'", "\\'"); var codeJs = (item.Code ?? "").Replace("\\", "\\\\").Replace("'", "\\'"); }
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@Html.Raw(codeJs)', '@Html.Raw(custJs)', @item.IsActive.ToString().ToLower())">Edit</button>
+                            @{ var custJs = (item.Description ?? "").Replace("\\", "\\\\").Replace("'", "\\'"); var codeJs = (item.Code ?? "").Replace("\\", "\\\\").Replace("'", "\\'"); var projJs = (item.Project ?? "").Replace("\\", "\\\\").Replace("'", "\\'"); }
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@Html.Raw(codeJs)', '@Html.Raw(custJs)', '@Html.Raw(projJs)', @item.IsActive.ToString().ToLower())">Edit</button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(@item.Id, '@item.Code')">Delete</button>
                         </td>
                     </tr>
@@ -121,12 +123,18 @@
                 <input type="hidden" id="itemId" />
                 <div class="form-group">
                     <label for="code">Code *</label>
-                    <input type="text" id="code" class="form-control" required />
+                    <input type="text" id="code" class="form-control" required oninput="maybeAutoFillProject()" onchange="maybeAutoFillProject()" />
                 </div>
                 <div class="form-group">
                     <label for="customer">Customer</label>
                     <select id="customer" class="form-control">
                         <option value="">-- Select Customer --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="project">Project</label>
+                    <select id="project" class="form-control">
+                        <option value="">-- Select Project --</option>
                     </select>
                 </div>
                 <div class="form-group" id="isActiveGroup" style="display: none;">
@@ -163,6 +171,22 @@
         'UTAS / CTRM', 'UTAS US'
     ];
     
+    const CODE_PROJECT = {
+        'AB03': 'UTAS A350 Component', 'AD01': 'MCS-C', 'AD02': 'MSS-F', 'AD03': 'MABS A',
+        'AE01': 'Honeywell', 'AE02': 'Celestica Localisation', 'AE03': 'DU1080', 'AE04': 'Plexus', 'AE05': 'VMI PULL',
+        'AG01': 'A350 XWB', 'AG02': 'A320 FTB-6B', 'AG03': 'Spirit Subang A320 6C', 'AG04': 'SPIRIT EPIPHRON TTI & CR',
+        'AG05': 'Spirit Wave 4', 'AG06': 'WAVE 5', 'AG07': 'A321 XLR',
+        'AH01': 'Goodrich', 'AH02': '787 Fan Cowl', 'AH03': 'A350 Fan Cowl', 'AH04': 'Motor Controller Plates', 'AH05': 'C-Series & MRJ Fan Cowl',
+        'AJ01': 'Celestica HS',
+        'AL01': 'A350 SOGERMA', 'AL02': 'A321 S14A SOGERMA', 'AL03': 'Celeste Seat', 'AL04': 'A350 MLGB', 'AL05': 'Celeste Seat 2nd Package',
+        'AL06': 'AIRBUS D2P SBMSA', 'AL07': 'STELIA D2P SBMSA', 'AL10': 'Airbus Atlantic NPI & SB76',
+        'AM01': 'MC130 & MC133', 'AM03': 'GKN A350 TE',
+        'AP02': 'FHI-SAT Fitting',
+        'SA01': 'SSP A320 Neo & C-Series Flanges', 'SB01': 'Senior Ermeto'
+    };
+    
+    const PROJECTS = [...new Set(Object.values(CODE_PROJECT))].sort();
+    
     function fillCustomerOptions(selectedValue) {
         const sel = document.getElementById('customer');
         sel.innerHTML = '<option value="">-- Select Customer --</option>';
@@ -176,22 +200,46 @@
         sel.value = selectedValue || '';
     }
     
+    function fillProjectOptions(selectedValue) {
+        const sel = document.getElementById('project');
+        sel.innerHTML = '<option value="">-- Select Project --</option>';
+        for (const p of PROJECTS) {
+            sel.appendChild(new Option(p, p));
+        }
+        if (selectedValue && !PROJECTS.includes(selectedValue)) {
+            sel.appendChild(new Option(selectedValue, selectedValue));
+        }
+        sel.value = selectedValue || '';
+    }
+    
+    function maybeAutoFillProject() {
+        const codeEl = document.getElementById('code');
+        if (codeEl.disabled) return;
+        const code = codeEl.value.trim().toUpperCase();
+        const proj = document.getElementById('project');
+        if (code && CODE_PROJECT[code] && (!proj.value || proj.value === CODE_PROJECT[code])) {
+            proj.value = CODE_PROJECT[code];
+        }
+    }
+    
     function openCreateModal() {
         document.getElementById('modalTitle').textContent = 'Add Project Code';
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('code').disabled = false;
         fillCustomerOptions('');
+        fillProjectOptions('');
         document.getElementById('isActiveGroup').style.display = 'none';
         document.getElementById('itemModal').classList.add('active');
     }
     
-    function editItem(id, code, customer, isActive) {
+    function editItem(id, code, customer, project, isActive) {
         document.getElementById('modalTitle').textContent = 'Edit Project Code';
         document.getElementById('itemId').value = id;
         document.getElementById('code').value = code;
         document.getElementById('code').disabled = true;
         fillCustomerOptions(customer || '');
+        fillProjectOptions(project || '');
         document.getElementById('isActive').checked = isActive;
         document.getElementById('isActiveGroup').style.display = 'block';
         document.getElementById('itemModal').classList.add('active');
@@ -225,20 +273,23 @@
         document.getElementById('code').disabled = false;
     }
     
+    document.getElementById('code').addEventListener('blur', maybeAutoFillProject);
+    
     document.getElementById('itemForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const itemId = document.getElementById('itemId').value;
         const code = document.getElementById('code').value;
         const customer = document.getElementById('customer').value;
+        const project = document.getElementById('project').value;
         const isActive = document.getElementById('isActive').checked;
         
         let url = '/Settings/CreateProjectCode';
-        let body = `code=${encodeURIComponent(code)}&description=${encodeURIComponent(customer)}`;
+        let body = `code=${encodeURIComponent(code)}&description=${encodeURIComponent(customer)}&project=${encodeURIComponent(project)}`;
         
         if (itemId) {
             url = '/Settings/UpdateProjectCode';
-            body = `id=${itemId}&description=${encodeURIComponent(customer)}&isActive=${isActive}`;
+            body = `id=${itemId}&description=${encodeURIComponent(customer)}&project=${encodeURIComponent(project)}&isActive=${isActive}`;
         }
         
         try {
