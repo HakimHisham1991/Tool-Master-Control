@@ -129,6 +129,28 @@ public class ToolListEditorController : Controller
         return Json(models);
     }
     
+    [HttpGet]
+    public async Task<IActionResult> GetCamLeaders()
+    {
+        var leaders = await _context.CamLeaders
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.Name)
+            .Select(c => new { value = c.Name, text = c.Name })
+            .ToListAsync();
+        return Json(leaders);
+    }
+    
+    [HttpGet]
+    public async Task<IActionResult> GetCamProgrammers()
+    {
+        var programmers = await _context.CamProgrammers
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.Name)
+            .Select(c => new { value = c.Name, text = c.Name })
+            .ToListAsync();
+        return Json(programmers);
+    }
+    
     /// <summary>Consumable Tool Descriptions from Master Tool Code Database only. Used for dropdown in Create/Edit Tool List.</summary>
     [HttpGet]
     public async Task<IActionResult> GetConsumableToolDescriptions()
@@ -197,6 +219,12 @@ public class ToolListEditorController : Controller
             row++;
             worksheet.Cells[row, 1].Value = "Machine Model:";
             worksheet.Cells[row, 2].Value = viewModel.MachineModel;
+            row++;
+            worksheet.Cells[row, 1].Value = "Approved By:";
+            worksheet.Cells[row, 2].Value = viewModel.ApprovedBy;
+            row++;
+            worksheet.Cells[row, 1].Value = "CAM Programmer:";
+            worksheet.Cells[row, 2].Value = viewModel.CamProgrammer;
             row += 2;
             
             // Add column headers with color

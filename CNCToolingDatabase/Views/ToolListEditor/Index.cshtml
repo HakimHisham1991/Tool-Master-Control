@@ -106,6 +106,18 @@
                 <option value="">-- Select Machine Model --</option>
             </select>
         </div>
+        <div class="form-group">
+            <label for="approvedBy">Approved By</label>
+            <select id="approvedBy" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+                <option value="">-- Select CAM Leader --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="camProgrammer">CAM Programmer</label>
+            <select id="camProgrammer" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+                <option value="">-- Select CAM Programmer --</option>
+            </select>
+        </div>
     </div>
 </div>
 
@@ -227,6 +239,8 @@
     const currentMachineName = '@Model.MachineName';
     const currentMachineWorkcenter = '@Model.MachineWorkcenter';
     const currentMachineModel = '@((Model.MachineModel ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    const currentApprovedBy = '@((Model.ApprovedBy ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    const currentCamProgrammer = '@((Model.CamProgrammer ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     let hasUnsavedChanges = false;
     let lockReleased = false;
     let heartbeatInterval = null;
@@ -303,6 +317,42 @@
             });
         } catch (error) {
             console.error('Error loading machine models:', error);
+        }
+        
+        // Populate Approved By (CAM Leader)
+        try {
+            const leadersResponse = await fetch('/ToolListEditor/GetCamLeaders');
+            const leaders = await leadersResponse.json();
+            const approvedBySelect = document.getElementById('approvedBy');
+            leaders.forEach(l => {
+                const option = document.createElement('option');
+                option.value = l.value;
+                option.textContent = l.text;
+                if (l.value === currentApprovedBy) {
+                    option.selected = true;
+                }
+                approvedBySelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading CAM leaders:', error);
+        }
+        
+        // Populate CAM Programmer
+        try {
+            const programmersResponse = await fetch('/ToolListEditor/GetCamProgrammers');
+            const programmers = await programmersResponse.json();
+            const camProgrammerSelect = document.getElementById('camProgrammer');
+            programmers.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.value;
+                option.textContent = p.text;
+                if (p.value === currentCamProgrammer) {
+                    option.selected = true;
+                }
+                camProgrammerSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading CAM programmers:', error);
         }
         
         // Consumable Tool Description (Master Tool Code Database only)
@@ -458,6 +508,15 @@
     document.getElementById('machineWorkcenter').addEventListener('change', function() {
         hasUnsavedChanges = true;
     });
+    document.getElementById('machineModel').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+    });
+    document.getElementById('approvedBy').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+    });
+    document.getElementById('camProgrammer').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+    });
     
     function updateToolListName() {
         const partNumber = document.getElementById('partNumber').value;
@@ -545,6 +604,8 @@
             machineName: document.getElementById('machineName').value,
             machineWorkcenter: document.getElementById('machineWorkcenter').value,
             machineModel: document.getElementById('machineModel').value,
+            approvedBy: document.getElementById('approvedBy').value,
+            camProgrammer: document.getElementById('camProgrammer').value,
             details: getDetailsData()
         };
         

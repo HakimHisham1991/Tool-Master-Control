@@ -63,6 +63,8 @@ using (var scope = app.Services.CreateScope())
         EnsureColumn(conn, "ToolListDetails", "ToolPathTimeMinutes", "REAL NOT NULL DEFAULT 0");
         EnsureColumn(conn, "ToolListDetails", "Remarks", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(conn, "ToolListHeaders", "MachineModel", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(conn, "ToolListHeaders", "ApprovedBy", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(conn, "ToolListHeaders", "CamProgrammer", "TEXT NOT NULL DEFAULT ''");
     }
     finally
     {

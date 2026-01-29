@@ -473,4 +473,158 @@ public class SettingsController : Controller
         
         return Json(new { success = true, message = "Machine model deleted successfully" });
     }
+    
+    // CAM Leader Management
+    public async Task<IActionResult> CamLeader(string? search, int page = 1, int pageSize = 50)
+    {
+        var query = _context.CamLeaders.AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(c => 
+                c.Name.ToLower().Contains(term) ||
+                (c.Description != null && c.Description.ToLower().Contains(term)));
+        }
+        
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        
+        var list = await query
+            .OrderBy(c => c.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        
+        ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.PageSize = pageSize;
+        
+        return View(list);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> CreateCamLeader(string name, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Json(new { success = false, message = "Name is required" });
+        
+        if (await _context.CamLeaders.AnyAsync(c => c.Name == name))
+            return Json(new { success = false, message = "CAM leader already exists" });
+        
+        _context.CamLeaders.Add(new CamLeader
+        {
+            Name = name,
+            Description = description,
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = HttpContext.Session.GetString("Username") ?? "",
+            IsActive = true
+        });
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "CAM leader created successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdateCamLeader(int id, string? description, bool? isActive)
+    {
+        var item = await _context.CamLeaders.FindAsync(id);
+        if (item == null)
+            return Json(new { success = false, message = "CAM leader not found" });
+        
+        if (description != null) item.Description = description;
+        if (isActive.HasValue) item.IsActive = isActive.Value;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "CAM leader updated successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> DeleteCamLeader(int id)
+    {
+        var item = await _context.CamLeaders.FindAsync(id);
+        if (item == null)
+            return Json(new { success = false, message = "CAM leader not found" });
+        
+        _context.CamLeaders.Remove(item);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "CAM leader deleted successfully" });
+    }
+    
+    // CAM Programmer Management
+    public async Task<IActionResult> CamProgrammer(string? search, int page = 1, int pageSize = 50)
+    {
+        var query = _context.CamProgrammers.AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(c => 
+                c.Name.ToLower().Contains(term) ||
+                (c.Description != null && c.Description.ToLower().Contains(term)));
+        }
+        
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        
+        var list = await query
+            .OrderBy(c => c.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        
+        ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.PageSize = pageSize;
+        
+        return View(list);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> CreateCamProgrammer(string name, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Json(new { success = false, message = "Name is required" });
+        
+        if (await _context.CamProgrammers.AnyAsync(c => c.Name == name))
+            return Json(new { success = false, message = "CAM programmer already exists" });
+        
+        _context.CamProgrammers.Add(new CamProgrammer
+        {
+            Name = name,
+            Description = description,
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = HttpContext.Session.GetString("Username") ?? "",
+            IsActive = true
+        });
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "CAM programmer created successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdateCamProgrammer(int id, string? description, bool? isActive)
+    {
+        var item = await _context.CamProgrammers.FindAsync(id);
+        if (item == null)
+            return Json(new { success = false, message = "CAM programmer not found" });
+        
+        if (description != null) item.Description = description;
+        if (isActive.HasValue) item.IsActive = isActive.Value;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "CAM programmer updated successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> DeleteCamProgrammer(int id)
+    {
+        var item = await _context.CamProgrammers.FindAsync(id);
+        if (item == null)
+            return Json(new { success = false, message = "CAM programmer not found" });
+        
+        _context.CamProgrammers.Remove(item);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "CAM programmer deleted successfully" });
+    }
 }

@@ -55,6 +55,22 @@ public static class DbSeeder
                         IsActive INTEGER NOT NULL DEFAULT 1
                     );
                     
+                    CREATE TABLE IF NOT EXISTS CamLeaders (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL UNIQUE,
+                        Description TEXT,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1
+                    );
+                    CREATE TABLE IF NOT EXISTS CamProgrammers (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL UNIQUE,
+                        Description TEXT,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1
+                    );
                     CREATE TABLE IF NOT EXISTS ToolCodeUniques (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
                         SystemToolName TEXT NOT NULL,
@@ -76,6 +92,8 @@ public static class DbSeeder
                     CREATE INDEX IF NOT EXISTS IX_MachineNames_Name ON MachineNames(Name);
                     CREATE INDEX IF NOT EXISTS IX_MachineWorkcenters_Workcenter ON MachineWorkcenters(Workcenter);
                     CREATE INDEX IF NOT EXISTS IX_MachineModels_Model ON MachineModels(Model);
+                    CREATE INDEX IF NOT EXISTS IX_CamLeaders_Name ON CamLeaders(Name);
+                    CREATE INDEX IF NOT EXISTS IX_CamProgrammers_Name ON CamProgrammers(Name);
                 ";
                 command.ExecuteNonQuery();
             }
@@ -153,6 +171,36 @@ public static class DbSeeder
                 foreach (var m in models)
                 {
                     context.MachineModels.Add(new MachineModel { Model = m, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                }
+                context.SaveChanges();
+            }
+        }
+        catch { }
+        
+        try
+        {
+            if (context.CamLeaders != null)
+            {
+                context.CamLeaders.RemoveRange(context.CamLeaders.ToList());
+                context.SaveChanges();
+                foreach (var name in new[] { "Venkatesan", "Desmond", "Adib Jamil" })
+                {
+                    context.CamLeaders.Add(new CamLeader { Name = name, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                }
+                context.SaveChanges();
+            }
+        }
+        catch { }
+        
+        try
+        {
+            if (context.CamProgrammers != null)
+            {
+                context.CamProgrammers.RemoveRange(context.CamProgrammers.ToList());
+                context.SaveChanges();
+                foreach (var name in new[] { "Adib Jamil", "Bakhari Hussin", "Faiq Faizul", "Hakim Hisham", "Hakim Ramaly", "Ismail Jahrin", "Low Boon Bao", "Nik Faiszal Abdullah", "Tan Chee Wei" })
+                {
+                    context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }

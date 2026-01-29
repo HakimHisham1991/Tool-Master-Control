@@ -28,6 +28,8 @@ public class ToolListEditorViewModel
     public string MachineName { get; set; } = string.Empty;
     public string MachineWorkcenter { get; set; } = string.Empty;
     public string MachineModel { get; set; } = string.Empty;
+    public string ApprovedBy { get; set; } = string.Empty;
+    public string CamProgrammer { get; set; } = string.Empty;
     public List<ToolListDetailRow> Details { get; set; } = new();
     public bool IsReadOnly { get; set; }
     public string? LockedBy { get; set; }
@@ -51,5 +53,7 @@ public class SaveToolListRequest
     public string MachineName { get; set; } = string.Empty;
     public string MachineWorkcenter { get; set; } = string.Empty;
     public string MachineModel { get; set; } = string.Empty;
+    public string ApprovedBy { get; set; } = string.Empty;
+    public string CamProgrammer { get; set; } = string.Empty;
     public List<ToolListDetailRow> Details { get; set; } = new();
 }
