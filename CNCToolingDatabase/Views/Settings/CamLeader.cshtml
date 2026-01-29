@@ -1,0 +1,239 @@
+@model List<CNCToolingDatabase.Models.CamLeader>
+@{
+    ViewData["Title"] = "Settings - CAM Leader";
+}
+
+<div class="module-header">
+    <h2>CAM Leader Management</h2>
+    <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add CAM Leader
+    </button>
+</div>
+
+<div class="search-bar">
+    <form method="get" id="searchForm">
+        <div class="search-input-group">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search CAM leaders..." class="search-input" id="searchInput" />
+        </div>
+    </form>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Created By</th>
+                <th>Created Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <p>No CAM leaders found</p>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Name</td>
+                        <td>@(item.Description ?? "-")</td>
+                        <td>@item.CreatedBy</td>
+                        <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="status-badge status-available">Active</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge status-locked">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@(item.Name.Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Description ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', @item.IsActive.ToString().ToLower())">Edit</button>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(@item.Id, '@(item.Name.Replace("'", "\\'").Replace("\"", "&quot;"))')">Delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (ViewBag.TotalPages > 1)
+{
+    <div class="pagination">
+        <span class="page-info">Showing @((ViewBag.CurrentPage - 1) * ViewBag.PageSize + 1) - @Math.Min(ViewBag.CurrentPage * ViewBag.PageSize, ViewBag.TotalItems) of @ViewBag.TotalItems</span>
+        <div class="page-buttons">
+            @if (ViewBag.CurrentPage > 1)
+            {
+                <a href="?page=@(ViewBag.CurrentPage - 1)&search=@ViewBag.Search" class="btn btn-secondary btn-sm">Previous</a>
+            }
+            @for (int i = Math.Max(1, ViewBag.CurrentPage - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2); i++)
+            {
+                <a href="?page=@i&search=@ViewBag.Search" class="btn @(i == ViewBag.CurrentPage ? "btn-primary" : "btn-secondary") btn-sm">@i</a>
+            }
+            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+            {
+                <a href="?page=@(ViewBag.CurrentPage + 1)&search=@ViewBag.Search" class="btn btn-secondary btn-sm">Next</a>
+            }
+        </div>
+    </div>
+}
+
+<!-- Create/Edit Modal -->
+<div class="modal" id="itemModal">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add CAM Leader</h3>
+            <button type="button" class="btn-icon" onclick="closeModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="itemForm">
+                <input type="hidden" id="itemId" />
+                <div class="form-group">
+                    <label for="nameValue">Name *</label>
+                    <input type="text" id="nameValue" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <input type="text" id="description" class="form-control" />
+                </div>
+                <div class="form-group" id="isActiveGroup" style="display: none;">
+                    <label>
+                        <input type="checkbox" id="isActive" /> Active
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            document.getElementById('searchForm').submit();
+        }, 300);
+    });
+    
+    function openCreateModal() {
+        document.getElementById('modalTitle').textContent = 'Add CAM Leader';
+        document.getElementById('itemForm').reset();
+        document.getElementById('itemId').value = '';
+        document.getElementById('nameValue').disabled = false;
+        document.getElementById('isActiveGroup').style.display = 'none';
+        document.getElementById('itemModal').classList.add('active');
+    }
+    
+    function editItem(id, nameVal, description, isActive) {
+        document.getElementById('modalTitle').textContent = 'Edit CAM Leader';
+        document.getElementById('itemId').value = id;
+        document.getElementById('nameValue').value = nameVal.replace(/&quot;/g, '"');
+        document.getElementById('nameValue').disabled = true;
+        document.getElementById('description').value = (description || '').replace(/&quot;/g, '"');
+        document.getElementById('isActive').checked = isActive;
+        document.getElementById('isActiveGroup').style.display = 'block';
+        document.getElementById('itemModal').classList.add('active');
+    }
+    
+    function deleteItem(id, nameVal) {
+        const n = (nameVal || '').replace(/&quot;/g, '"');
+        if (!confirm('Are you sure you want to delete CAM leader "' + n + '"?')) {
+            return;
+        }
+        
+        fetch('/Settings/DeleteCamLeader', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + id
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+    
+    function closeModal() {
+        document.getElementById('itemModal').classList.remove('active');
+        document.getElementById('nameValue').disabled = false;
+    }
+    
+    document.getElementById('itemForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const itemId = document.getElementById('itemId').value;
+        const nameVal = document.getElementById('nameValue').value;
+        const description = document.getElementById('description').value;
+        const isActive = document.getElementById('isActive').checked;
+        
+        let url = '/Settings/CreateCamLeader';
+        let body = 'name=' + encodeURIComponent(nameVal) + '&description=' + encodeURIComponent(description);
+        
+        if (itemId) {
+            url = '/Settings/UpdateCamLeader';
+            body = 'id=' + itemId + '&description=' + encodeURIComponent(description) + '&isActive=' + isActive;
+        }
+        
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                closeModal();
+                location.reload();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    });
+</script>
+}
