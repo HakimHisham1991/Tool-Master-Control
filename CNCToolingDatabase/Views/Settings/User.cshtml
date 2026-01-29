@@ -30,6 +30,7 @@
     <table class="data-table">
         <thead>
             <tr>
+                <th>No.</th>
                 <th>Username</th>
                 <th>Display Name</th>
                 <th>Created Date</th>
@@ -41,7 +42,7 @@
             @if (Model.Count == 0)
             {
                 <tr>
-                    <td colspan="5" class="empty-state">
+                    <td colspan="6" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
@@ -52,9 +53,12 @@
             }
             else
             {
-                @foreach (var user in Model)
+                @for (int i = 0; i < Model.Count; i++)
                 {
+                    var user = Model[i];
+                    var no = ((int)(ViewBag.CurrentPage ?? 1) - 1) * (int)(ViewBag.PageSize ?? 50) + i + 1;
                     <tr>
+                        <td>@no</td>
                         <td>@user.Username</td>
                         <td>@user.DisplayName</td>
                         <td>@user.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>

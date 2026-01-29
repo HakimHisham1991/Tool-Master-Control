@@ -30,6 +30,7 @@
     <table class="data-table">
         <thead>
             <tr>
+                <th>No.</th>
                 <th>Workcenter</th>
                 <th>Description</th>
                 <th>Created By</th>
@@ -42,7 +43,7 @@
             @if (Model.Count == 0)
             {
                 <tr>
-                    <td colspan="6" class="empty-state">
+                    <td colspan="7" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
@@ -53,9 +54,12 @@
             }
             else
             {
-                @foreach (var item in Model)
+                @for (int i = 0; i < Model.Count; i++)
                 {
+                    var item = Model[i];
+                    var no = ((int)(ViewBag.CurrentPage ?? 1) - 1) * (int)(ViewBag.PageSize ?? 50) + i + 1;
                     <tr>
+                        <td>@no</td>
                         <td>@item.Workcenter</td>
                         <td>@(item.Description ?? "-")</td>
                         <td>@item.CreatedBy</td>
