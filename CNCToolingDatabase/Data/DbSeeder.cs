@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using CNCToolingDatabase.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -65,6 +67,11 @@ public static class DbSeeder
                         LastModifiedDate TEXT NOT NULL
                     );
                     
+                    CREATE TABLE IF NOT EXISTS RunOnce (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Key TEXT NOT NULL UNIQUE,
+                        DoneAt TEXT NOT NULL
+                    );
                     CREATE INDEX IF NOT EXISTS IX_ProjectCodes_Code ON ProjectCodes(Code);
                     CREATE INDEX IF NOT EXISTS IX_MachineNames_Name ON MachineNames(Name);
                     CREATE INDEX IF NOT EXISTS IX_MachineWorkcenters_Workcenter ON MachineWorkcenters(Workcenter);
@@ -185,8 +192,9 @@ public static class DbSeeder
         if (context.ToolCodeUniques != null && !context.ToolCodeUniques.Any())
         {
             var baseTime = DateTime.UtcNow.AddDays(-60);
-            foreach (var (systemName, consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
+            foreach (var (consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
             {
+                var systemName = DeriveSystemToolName(consumable, dia, radius);
                 var created = baseTime.AddDays(Random.Shared.Next(0, 50));
                 var modified = created.AddDays(Random.Shared.Next(0, 20));
                 context.ToolCodeUniques.Add(new ToolCodeUnique
@@ -203,64 +211,152 @@ public static class DbSeeder
             }
             context.SaveChanges();
         }
+
+        // One-time repopulate SystemToolName for existing ToolCodeUniques (Facemill/Endmill/Drill format)
+        const string runOnceKey = "ToolCodeUnique_SystemName_Repopulated";
+        if (context.ToolCodeUniques != null && context.ToolCodeUniques.Any())
+        {
+            try
+            {
+                var conn = context.Database.GetDbConnection();
+                conn.Open();
+                try
+                {
+                    using var cmd = conn.CreateCommand();
+                    cmd.CommandText = "SELECT COUNT(*) FROM RunOnce WHERE Key = @k";
+                    var p = cmd.CreateParameter();
+                    p.ParameterName = "@k";
+                    p.Value = runOnceKey;
+                    cmd.Parameters.Add(p);
+                    var count = Convert.ToInt32(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
+                    if (count > 0) return;
+                }
+                finally { conn.Close(); }
+                foreach (var t in context.ToolCodeUniques.ToList())
+                    t.SystemToolName = DeriveSystemToolName(t.ConsumableCode, t.Diameter, t.CornerRadius);
+                context.SaveChanges();
+                conn.Open();
+                try
+                {
+                    using var cmd = conn.CreateCommand();
+                    cmd.CommandText = "INSERT INTO RunOnce (Key, DoneAt) VALUES (@k, @d)";
+                    var pk = cmd.CreateParameter();
+                    pk.ParameterName = "@k";
+                    pk.Value = runOnceKey;
+                    var pd = cmd.CreateParameter();
+                    pd.ParameterName = "@d";
+                    pd.Value = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+                    cmd.Parameters.Add(pk);
+                    cmd.Parameters.Add(pd);
+                    cmd.ExecuteNonQuery();
+                }
+                finally { conn.Close(); }
+            }
+            catch
+            {
+                // RunOnce table may not exist yet; ignore
+            }
+        }
     }
-    
-    private static List<(string SystemName, string Consumable, string Supplier, decimal Dia, decimal Flute, decimal Radius)> GetToolCodeUniqueSeedData()
+
+    /// <summary>
+    /// Derives System Tool Name from consumable code and dimensions.
+    /// Examples: "Facemill Ø80 R6.0 x 6-Flute", "Endmill Ø16 R0.0 x 3-Flute", "Drill Ø3.2 x 140°".
+    /// </summary>
+    private static string DeriveSystemToolName(string consumableCode, decimal diameter, decimal cornerRadius)
     {
-        var data = new List<(string, string, string, decimal, decimal, decimal)>();
+        var c = consumableCode ?? "";
+        var flutes = ParseFlutesFromConsumable(c);
+        var isDrill = c.Contains("VXP", StringComparison.OrdinalIgnoreCase);
+        var drillAngle = ParseDrillAngleFromConsumable(c);
+
+        if (isDrill)
+            return $"Drill Ø{FormatDim(diameter)} x {drillAngle}°";
+
+        var isFacemill = c.Contains("VXD", StringComparison.OrdinalIgnoreCase) || diameter >= 40m;
+        var n = flutes > 0 ? flutes : (isFacemill ? 6 : 3);
+        var r = FormatDim(cornerRadius);
+        return isFacemill
+            ? $"Facemill Ø{FormatDim(diameter)} R{r} x {n}-Flute"
+            : $"Endmill Ø{FormatDim(diameter)} R{r} x {n}-Flute";
+    }
+
+    private static string FormatDim(decimal d)
+    {
+        return d == Math.Floor(d) ? ((int)d).ToString(CultureInfo.InvariantCulture) : d.ToString("0.##", CultureInfo.InvariantCulture);
+    }
+
+    private static int ParseFlutesFromConsumable(string c)
+    {
+        var m = Regex.Match(c, @"Z(\d+)", RegexOptions.IgnoreCase);
+        return m.Success && int.TryParse(m.Groups[1].Value, out var n) ? n : 0;
+    }
+
+    private static int ParseDrillAngleFromConsumable(string c)
+    {
+        if (Regex.IsMatch(c, @"R180(?!\d)|180°")) return 180;
+        if (Regex.IsMatch(c, @"R160(?!\d)|160°")) return 160;
+        if (Regex.IsMatch(c, @"R140(?!\d)|140°")) return 140;
+        if (Regex.IsMatch(c, @"R118(?!\d)|118°")) return 118;
+        return 140;
+    }
+
+    private static List<(string Consumable, string Supplier, decimal Dia, decimal Flute, decimal Radius)> GetToolCodeUniqueSeedData()
+    {
+        var data = new List<(string, string, decimal, decimal, decimal)>();
         var pairs = new[]
         {
-            ("553120Z3.0 SIRON A", "553120Z3.0-SIRON-A", "SECO", 12.0m, 28.0m, 0m),
-            ("553160R050 SIRON A", "553160R050Z3.0-SIRON-A", "SECO", 16.0m, 32.0m, 0.5m),
-            ("553080 SIRON A", "553080Z3.0-SIRON-A", "SECO", 8.0m, 22.0m, 0m),
-            ("553100R250 SIRON A", "553100R250Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0.25m),
-            ("553100 SIRON A", "553100Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0m),
-            ("A3389DPL 9.8", "A3389DPL-9.8", "WALTER", 9.8m, 24.0m, 0m),
-            ("A3389DPL 12", "A3389DPL-12", "WALTER", 12.0m, 30.0m, 0m),
-            ("A3389AML 2.55", "A3389AML-2.55", "WALTER", 2.55m, 8.0m, 0m),
-            ("A3389DPL 6.1", "A3389DPL-6.1", "WALTER", 6.1m, 18.0m, 0m),
-            ("A3389DPL 8.5", "A3389DPL-8.5", "WALTER", 8.5m, 22.0m, 0m),
-            ("7792VXP06 CA016 Z2R140", "7792VXP06CA016Z2R140", "KENNAMETAL", 16.0m, 45.0m, 1.4m),
-            ("7792VXD09 WA032 Z3R", "7792VXD09WA032Z3R", "KENNAMETAL", 32.0m, 55.0m, 3.0m),
-            ("7792VXD12 A052 Z5R", "7792VXD12-A052Z5R", "KENNAMETAL", 52.0m, 65.0m, 5.0m),
-            ("7792VXD12 A080 Z8R", "7792VXD12-A080Z8R", "KENNAMETAL", 80.0m, 85.0m, 8.0m),
-            ("553040 SIRON A", "553040Z3.0-SIRON-A", "SECO", 4.0m, 14.0m, 0m),
-            ("553060 SIRON A", "553060Z3.0-SIRON-A", "SECO", 6.0m, 18.0m, 0m),
-            ("553140 SIRON A", "553140Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0m),
-            ("553180R100 SIRON A", "553180R100Z3.0-SIRON-A", "SECO", 18.0m, 38.0m, 1.0m),
-            ("553200 SIRON A", "553200Z3.0-SIRON-A", "SECO", 20.0m, 42.0m, 0m),
-            ("553250 SIRON A", "553250Z3.0-SIRON-A", "SECO", 25.0m, 50.0m, 0m),
-            ("553120R025 SIRON A", "553120R025Z3.0-SIRON-A", "SECO", 12.0m, 28.0m, 0.25m),
-            ("553140R050 SIRON A", "553140R050Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0.5m),
-            ("553160 SIRON A", "553160Z3.0-SIRON-A", "SECO", 16.0m, 36.0m, 0m),
-            ("553100R200 SIRON A", "553100R200Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0.2m),
-            ("553080R050 SIRON A", "553080R050Z3.0-SIRON-A", "SECO", 8.0m, 22.0m, 0.5m),
-            ("553220 SIRON A", "553220Z3.0-SIRON-A", "SECO", 22.0m, 46.0m, 0m),
-            ("553300 SIRON A", "553300Z3.0-SIRON-A", "SECO", 30.0m, 58.0m, 0m),
-            ("553160R100 SIRON A", "553160R100Z3.0-SIRON-A", "SECO", 16.0m, 36.0m, 1.0m),
-            ("553060R025 SIRON A", "553060R025Z3.0-SIRON-A", "SECO", 6.0m, 18.0m, 0.25m),
-            ("553140R025 SIRON A", "553140R025Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0.25m),
-            ("553180 SIRON A", "553180Z3.0-SIRON-A", "SECO", 18.0m, 38.0m, 0m),
-            ("A3389DPL 10", "A3389DPL-10", "WALTER", 10.0m, 26.0m, 0m),
-            ("A3389DPL 11", "A3389DPL-11", "WALTER", 11.0m, 28.0m, 0m),
-            ("A3389AML 3.0", "A3389AML-3.0", "WALTER", 3.0m, 10.0m, 0m),
-            ("A3389AML 4.0", "A3389AML-4.0", "WALTER", 4.0m, 12.0m, 0m),
-            ("A3389DPL 7.0", "A3389DPL-7.0", "WALTER", 7.0m, 20.0m, 0m),
-            ("A3389AML 2.0", "A3389AML-2.0", "WALTER", 2.0m, 6.0m, 0m),
-            ("A3389DPL 5.0", "A3389DPL-5.0", "WALTER", 5.0m, 16.0m, 0m),
-            ("A3389DPL 14", "A3389DPL-14", "WALTER", 14.0m, 34.0m, 0m),
-            ("A3389AML 5.0", "A3389AML-5.0", "WALTER", 5.0m, 14.0m, 0m),
-            ("A3389DPL 15", "A3389DPL-15", "WALTER", 15.0m, 36.0m, 0m),
-            ("7792VXD10 A040 Z4R", "7792VXD10-A040Z4R", "KENNAMETAL", 40.0m, 60.0m, 4.0m),
-            ("7792VXD16 A100 Z10R", "7792VXD16-A100Z10R", "KENNAMETAL", 100.0m, 110.0m, 10.0m),
-            ("7792VXP08 CA020 Z2R160", "7792VXP08CA020Z2R160", "KENNAMETAL", 20.0m, 55.0m, 1.6m),
-            ("7792VXD12 A063 Z6R", "7792VXD12-A063Z6R", "KENNAMETAL", 63.0m, 75.0m, 6.0m),
-            ("7792VXD12 A050 Z5R", "7792VXD12-A050Z5R", "KENNAMETAL", 50.0m, 62.0m, 5.0m),
-            ("7792VXD14 A070 Z7R", "7792VXD14-A070Z7R", "KENNAMETAL", 70.0m, 82.0m, 7.0m),
-            ("7792VXD08 A032 Z3R", "7792VXD08-A032Z3R", "KENNAMETAL", 32.0m, 48.0m, 3.0m),
-            ("7792VXP10 CA024 Z2R180", "7792VXP10CA024Z2R180", "KENNAMETAL", 24.0m, 60.0m, 1.8m),
-            ("7792VXD20 A120 Z12R", "7792VXD20-A120Z12R", "KENNAMETAL", 120.0m, 130.0m, 12.0m),
-            ("7792VXD12 A090 Z9R", "7792VXD12-A090Z9R", "KENNAMETAL", 90.0m, 100.0m, 9.0m),
+            ("553120Z3.0-SIRON-A", "SECO", 12.0m, 28.0m, 0m),
+            ("553160R050Z3.0-SIRON-A", "SECO", 16.0m, 32.0m, 0.5m),
+            ("553080Z3.0-SIRON-A", "SECO", 8.0m, 22.0m, 0m),
+            ("553100R250Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0.25m),
+            ("553100Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0m),
+            ("A3389DPL-9.8", "WALTER", 9.8m, 24.0m, 0m),
+            ("A3389DPL-12", "WALTER", 12.0m, 30.0m, 0m),
+            ("A3389AML-2.55", "WALTER", 2.55m, 8.0m, 0m),
+            ("A3389DPL-6.1", "WALTER", 6.1m, 18.0m, 0m),
+            ("A3389DPL-8.5", "WALTER", 8.5m, 22.0m, 0m),
+            ("7792VXP06CA016Z2R140", "KENNAMETAL", 16.0m, 45.0m, 1.4m),
+            ("7792VXD09WA032Z3R", "KENNAMETAL", 32.0m, 55.0m, 3.0m),
+            ("7792VXD12-A052Z5R", "KENNAMETAL", 52.0m, 65.0m, 5.0m),
+            ("7792VXD12-A080Z8R", "KENNAMETAL", 80.0m, 85.0m, 8.0m),
+            ("553040Z3.0-SIRON-A", "SECO", 4.0m, 14.0m, 0m),
+            ("553060Z3.0-SIRON-A", "SECO", 6.0m, 18.0m, 0m),
+            ("553140Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0m),
+            ("553180R100Z3.0-SIRON-A", "SECO", 18.0m, 38.0m, 1.0m),
+            ("553200Z3.0-SIRON-A", "SECO", 20.0m, 42.0m, 0m),
+            ("553250Z3.0-SIRON-A", "SECO", 25.0m, 50.0m, 0m),
+            ("553120R025Z3.0-SIRON-A", "SECO", 12.0m, 28.0m, 0.25m),
+            ("553140R050Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0.5m),
+            ("553160Z3.0-SIRON-A", "SECO", 16.0m, 36.0m, 0m),
+            ("553100R200Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0.2m),
+            ("553080R050Z3.0-SIRON-A", "SECO", 8.0m, 22.0m, 0.5m),
+            ("553220Z3.0-SIRON-A", "SECO", 22.0m, 46.0m, 0m),
+            ("553300Z3.0-SIRON-A", "SECO", 30.0m, 58.0m, 0m),
+            ("553160R100Z3.0-SIRON-A", "SECO", 16.0m, 36.0m, 1.0m),
+            ("553060R025Z3.0-SIRON-A", "SECO", 6.0m, 18.0m, 0.25m),
+            ("553140R025Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0.25m),
+            ("553180Z3.0-SIRON-A", "SECO", 18.0m, 38.0m, 0m),
+            ("A3389DPL-10", "WALTER", 10.0m, 26.0m, 0m),
+            ("A3389DPL-11", "WALTER", 11.0m, 28.0m, 0m),
+            ("A3389AML-3.0", "WALTER", 3.0m, 10.0m, 0m),
+            ("A3389AML-4.0", "WALTER", 4.0m, 12.0m, 0m),
+            ("A3389DPL-7.0", "WALTER", 7.0m, 20.0m, 0m),
+            ("A3389AML-2.0", "WALTER", 2.0m, 6.0m, 0m),
+            ("A3389DPL-5.0", "WALTER", 5.0m, 16.0m, 0m),
+            ("A3389DPL-14", "WALTER", 14.0m, 34.0m, 0m),
+            ("A3389AML-5.0", "WALTER", 5.0m, 14.0m, 0m),
+            ("A3389DPL-15", "WALTER", 15.0m, 36.0m, 0m),
+            ("7792VXD10-A040Z4R", "KENNAMETAL", 40.0m, 60.0m, 4.0m),
+            ("7792VXD16-A100Z10R", "KENNAMETAL", 100.0m, 110.0m, 10.0m),
+            ("7792VXP08CA020Z2R160", "KENNAMETAL", 20.0m, 55.0m, 1.6m),
+            ("7792VXD12-A063Z6R", "KENNAMETAL", 63.0m, 75.0m, 6.0m),
+            ("7792VXD12-A050Z5R", "KENNAMETAL", 50.0m, 62.0m, 5.0m),
+            ("7792VXD14-A070Z7R", "KENNAMETAL", 70.0m, 82.0m, 7.0m),
+            ("7792VXD08-A032Z3R", "KENNAMETAL", 32.0m, 48.0m, 3.0m),
+            ("7792VXP10CA024Z2R180", "KENNAMETAL", 24.0m, 60.0m, 1.8m),
+            ("7792VXD20-A120Z12R", "KENNAMETAL", 120.0m, 130.0m, 12.0m),
+            ("7792VXD12-A090Z9R", "KENNAMETAL", 90.0m, 100.0m, 9.0m),
         };
         foreach (var t in pairs)
             data.Add(t);
