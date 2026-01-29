@@ -6,6 +6,10 @@
 <div class="module-header">
     <h2>Tool Code Database - Unique</h2>
     <div class="export-buttons">
+        <a href="/ToolCodeUniqueEditor" class="btn btn-primary btn-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Create new code
+        </a>
         <a href="/ToolCodeUnique/Export?format=excel&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter" class="btn btn-secondary btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Excel
@@ -64,13 +68,14 @@
                 <th onclick="sortBy('cornerRadius')">Tool Corner Radius @Html.Raw(GetSortIcon("cornerRadius"))</th>
                 <th onclick="sortBy('createdDate')">Created Date @Html.Raw(GetSortIcon("createdDate"))</th>
                 <th onclick="sortBy('lastModifiedDate')">Last Modified @Html.Raw(GetSortIcon("lastModifiedDate"))</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Tools.Count == 0)
             {
                 <tr>
-                    <td colspan="9" class="empty-state">
+                    <td colspan="10" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -94,6 +99,7 @@
                         <td>@t.CornerRadius.ToString("0.##")</td>
                         <td>@t.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>@t.LastModifiedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td><a href="/ToolCodeUniqueEditor?id=@t.No" class="btn btn-primary btn-sm">Edit</a></td>
                     </tr>
                 }
             }

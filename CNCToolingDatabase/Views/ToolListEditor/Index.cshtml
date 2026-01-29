@@ -150,12 +150,12 @@
                             <select class="cell-input cell-select" data-field="consumableCode" data-current="@detail.ConsumableCode" data-supplier="@detail.Supplier"></select>
                         }
                     </td>
-                    <td><input type="text" class="cell-input" data-field="supplier" value="@detail.Supplier" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="text" class="cell-input" data-field="supplier" value="@detail.Supplier" readonly /></td>
                     <td><input type="text" class="cell-input" data-field="holderExtensionCode" value="@detail.HolderExtensionCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
-                    <td><input type="number" step="0.01" class="cell-input" data-field="diameter" value="@(detail.Diameter?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
-                    <td><input type="number" step="0.01" class="cell-input" data-field="fluteLength" value="@(detail.FluteLength?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="diameter" value="@(detail.Diameter?.ToString("0.##") ?? "")" readonly /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="fluteLength" value="@(detail.FluteLength?.ToString("0.##") ?? "")" readonly /></td>
                     <td><input type="number" step="0.01" class="cell-input" data-field="protrusionLength" value="@(detail.ProtrusionLength?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
-                    <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" value="@(detail.CornerRadius?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" value="@(detail.CornerRadius?.ToString("0.##") ?? "")" readonly /></td>
                     <td><input type="text" class="cell-input" data-field="arborCode" value="@detail.ArborCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     <td><input type="number" step="0.01" class="cell-input" data-field="toolPathTimeMinutes" value="@(detail.ToolPathTimeMinutes?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     <td><input type="text" class="cell-input" data-field="remarks" value="@(detail.Remarks ?? string.Empty)" @(Model.IsReadOnly ? "readonly" : "") /></td>
@@ -478,12 +478,12 @@
             <td><input type="text" class="cell-input" data-field="toolNumber" /></td>
             <td><input type="text" class="cell-input" data-field="toolDescription" /></td>
             <td class="consumable-cell"><select class="cell-input cell-select" data-field="consumableCode"></select></td>
-            <td><input type="text" class="cell-input" data-field="supplier" /></td>
+            <td><input type="text" class="cell-input" data-field="supplier" readonly /></td>
             <td><input type="text" class="cell-input" data-field="holderExtensionCode" /></td>
-            <td><input type="number" step="0.01" class="cell-input" data-field="diameter" /></td>
-            <td><input type="number" step="0.01" class="cell-input" data-field="fluteLength" /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="diameter" readonly /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="fluteLength" readonly /></td>
             <td><input type="number" step="0.01" class="cell-input" data-field="protrusionLength" /></td>
-            <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" readonly /></td>
             <td><input type="text" class="cell-input" data-field="arborCode" /></td>
             <td><input type="number" step="0.01" class="cell-input" data-field="toolPathTimeMinutes" /></td>
             <td><input type="text" class="cell-input" data-field="remarks" /></td>
