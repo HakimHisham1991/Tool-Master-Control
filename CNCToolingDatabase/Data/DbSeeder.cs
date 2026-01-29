@@ -120,6 +120,8 @@ public static class DbSeeder
                 try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN DrawingRev TEXT;"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN MaterialSpecId INTEGER REFERENCES MaterialSpecs(Id);"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN RefDrawing TEXT;"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE MachineModels ADD COLUMN Type TEXT;"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE MachineModels ADD COLUMN Controller TEXT;"; command.ExecuteNonQuery(); } catch { }
             }
             finally
             {
@@ -228,10 +230,85 @@ public static class DbSeeder
             {
                 context.MachineModels.RemoveRange(context.MachineModels.ToList());
                 context.SaveChanges();
-                var models = "AERO-426|CMX1100V|DMC1150V|DMC60H|DMC80 U duoBLOCK|DMU50|DMU60 Evo|DMU65 monoBLOCK|DMU95 monoBLOCK|DNM500HS|DNM750L-II|E17040-V2|FANUC Robodrill a-T21iFb|DVD5200 Dual Spindle|HCN4000 II|HCN4000 III|HCN6000 C|HCN6000 II|HiREX-4000|HTC 4000-II|Integrex i-200|Integrex i-630V|Integrex j-200|Integrex j-200s|MYNX 9500|NLX1500|NVX5060|NVX5060 HT|NVX5100 (3X + Indexer)|NVX7000 (3X + Indexer)|PFH4800|QT200|QTC200MSY L|QTE200|QTN100|QTN100-II MSY|QTN150|QTN200|SIRIUS-650|TMV1600A|TMV1600A (Indexer)|TMV510A-II (Indexer)|TMV1500A (3X + Indexer)|Tornos Delta 38-5A|UM Dual Spindle Machine|UM500DH|UM500DH (3X + Indexer)|UM-V500|VCN410A|VCN410A Indexer|VCN410A-II|VCN430A-II HS|VCN510C|VCN510C-II|VCN515C|VCN530C-HS (3X + Indexer)|VCN535|VCN700D (3X + Indexer)|VCS430A|Victor|Vortex i-630V/6|VRX500|VRX730-5X II|VRXi-500|VTC200C".Split('|');
-                foreach (var m in models)
+                var machineModelSeed = new[] {
+                    ("AERO-426", "Hartford", "Heidenhain", "Mill"),
+                    ("CMX1100V", "DMG", "Fanuc", "Mill"),
+                    ("DMC1150V", "DMG", "Heidenhain", "Mill"),
+                    ("DMC60H", "DMG", "Heidenhain", "Mill"),
+                    ("DMC80 U duoBLOCK", "DMG", "Heidenhain", "Mill"),
+                    ("DMU50", "DMG", "Heidenhain", "Mill"),
+                    ("DMU60 Evo", "DMG", "Heidenhain", "Mill"),
+                    ("DMU65 monoBLOCK", "DMG", "Heidenhain", "Mill"),
+                    ("DMU95 monoBLOCK", "DMG", "Heidenhain", "Mill"),
+                    ("DNM500HS", "Doosan", "Fanuc", "Mill"),
+                    ("DNM750L-II", "Doosan", "Fanuc", "Mill"),
+                    ("E17040-V2", "Ares Seiki", "Siemens", "Mill"),
+                    ("FANUC Robodrill a-T21iFb", "Fanuc", "Fanuc", "Mill"),
+                    ("DVD5200 Dual Spindle", "FFG DMC", "Fanuc", "Mill"),
+                    ("HCN4000 II", "Mazak", "Mazatrol", "Mill"),
+                    ("HCN4000 III", "Mazak", "Mazatrol", "Mill"),
+                    ("HCN6000 C", "Mazak", "Mazatrol", "Mill"),
+                    ("HCN6000 II", "Mazak", "Mazatrol", "Mill"),
+                    ("HiREX-4000", "Hwacheon", "Fanuc", "Mill"),
+                    ("HTC 4000-II", "Mazak", "Mazatrol", "Mill"),
+                    ("Integrex i-200", "Mazak", "Mazatrol", "MillTurn"),
+                    ("Integrex i-630V", "Mazak", "Mazatrol", "MillTurn"),
+                    ("Integrex j-200", "Mazak", "Mazatrol", "MillTurn"),
+                    ("Integrex j-200s", "Mazak", "Mazatrol", "MillTurn"),
+                    ("MYNX 9500", "Doosan", "Heidenhain", "Mill"),
+                    ("NLX1500", "DMG", "Celos", "MillTurn"),
+                    ("NVX5060", "DMG", "Celos", "Mill"),
+                    ("NVX5060 HT", "DMG", "Celos", "Mill"),
+                    ("NVX5100 (3X + Indexer)", "DMG", "Celos", "Mill"),
+                    ("NVX7000 (3X + Indexer)", "DMG", "Celos", "Mill"),
+                    ("PFH4800", "Mazak", "Mazatrol", "Mill"),
+                    ("QT200", "Mazak", "Mazatrol", "Lathe"),
+                    ("QTC200MSY L", "Mazak", "Mazatrol", "Lathe"),
+                    ("QTE200", "Mazak", "Mazatrol", "Lathe"),
+                    ("QTN100", "Mazak", "Mazatrol", "Lathe"),
+                    ("QTN100-II MSY", "Mazak", "Mazatrol", "Lathe"),
+                    ("QTN150", "Mazak", "Mazatrol", "Lathe"),
+                    ("QTN200", "Mazak", "Mazatrol", "Lathe"),
+                    ("SIRIUS-650", "Hwacheon", "Fanuc", "Mill"),
+                    ("TMV1600A", "TongTai", "Fanuc", "Mill"),
+                    ("TMV1600A (Indexer)", "TongTai", "Fanuc", "Mill"),
+                    ("TMV510A-II (Indexer)", "TongTai", "Fanuc", "Mill"),
+                    ("TMV1500A (3X + Indexer)", "TongTai", "Fanuc", "Mill"),
+                    ("Tornos Delta 38-5A", "Tornos", "Fanuc", "Lathe"),
+                    ("UM Dual Spindle Machine", "UGINT", "Mitsubishi", "Mill"),
+                    ("UM500DH", "UGINT", "Mitsubishi", "Mill"),
+                    ("UM500DH (3X + Indexer)", "UGINT", "Mitsubishi", "Mill"),
+                    ("UM-V500", "UGINT", "Mitsubishi", "Mill"),
+                    ("VCN410A", "Mazak", "Mazatrol", "Mill"),
+                    ("VCN410A Indexer", "Mazak", "Mazatrol", "Mill"),
+                    ("VCN410A-II", "Mazak", "Mazatrol", "Mill"),
+                    ("VCN430A-II HS", "Mazak", "Mazatrol", "Mill"),
+                    ("VCN510C", "Mazak", "Mazatrol", "Mill"),
+                    ("VCN510C-II", "Mazak", "Mazatrol", "Mill"),
+                    ("VCN515C", "Mazak", "Mazatrol", "Mill"),
+                    ("VCN530C-HS (3X + Indexer)", "Mazak", "Mazatrol", "Mill"),
+                    ("VCN535", "Mazak", "Mazatrol", "Mill"),
+                    ("VCN700D (3X + Indexer)", "Mazak", "Mazatrol", "Mill"),
+                    ("VCS430A", "Mazak", "Mazatrol", "Mill"),
+                    ("Victor Turning", "Victor", "Fanuc", "Lathe"),
+                    ("Vortex i-630V/6", "Mazak", "Mazatrol", "Mill"),
+                    ("VRX500", "Mazak", "Mazatrol", "Mill"),
+                    ("VRX730-5X II", "Mazak", "Mazatrol", "Mill"),
+                    ("VRXi-500", "Mazak", "Mazatrol", "Mill"),
+                    ("VTC200C", "Mazak", "Mazatrol", "Mill"),
+                };
+                foreach (var (model, builder, controller, type) in machineModelSeed)
                 {
-                    context.MachineModels.Add(new MachineModel { Model = m, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    context.MachineModels.Add(new MachineModel
+                    {
+                        Model = model,
+                        Description = builder,
+                        Type = type,
+                        Controller = controller,
+                        CreatedDate = DateTime.UtcNow,
+                        CreatedBy = "system",
+                        IsActive = true
+                    });
                 }
                 context.SaveChanges();
             }

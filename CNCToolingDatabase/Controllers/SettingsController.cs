@@ -396,7 +396,9 @@ public class SettingsController : Controller
             var term = search.ToLower();
             query = query.Where(m => 
                 m.Model.ToLower().Contains(term) ||
-                (m.Description != null && m.Description.ToLower().Contains(term)));
+                (m.Description != null && m.Description.ToLower().Contains(term)) ||
+                (m.Type != null && m.Type.ToLower().Contains(term)) ||
+                (m.Controller != null && m.Controller.ToLower().Contains(term)));
         }
         
         var totalItems = await query.CountAsync();
@@ -418,47 +420,40 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> CreateMachineModel(string model, string? description)
+    public async Task<IActionResult> CreateMachineModel(string model, string? machineBuilder, string? type, string? controller)
     {
         if (string.IsNullOrWhiteSpace(model))
-        {
             return Json(new { success = false, message = "Model is required" });
-        }
         
         if (await _context.MachineModels.AnyAsync(m => m.Model == model))
-        {
             return Json(new { success = false, message = "Machine model already exists" });
-        }
         
-        var machineModel = new MachineModel
+        _context.MachineModels.Add(new MachineModel
         {
             Model = model,
-            Description = description,
+            Description = string.IsNullOrWhiteSpace(machineBuilder) ? null : machineBuilder,
+            Type = string.IsNullOrWhiteSpace(type) ? null : type,
+            Controller = string.IsNullOrWhiteSpace(controller) ? null : controller,
             CreatedDate = DateTime.UtcNow,
             CreatedBy = HttpContext.Session.GetString("Username") ?? "",
             IsActive = true
-        };
-        
-        _context.MachineModels.Add(machineModel);
+        });
         await _context.SaveChangesAsync();
-        
         return Json(new { success = true, message = "Machine model created successfully" });
     }
     
     [HttpPost]
-    public async Task<IActionResult> UpdateMachineModel(int id, string? description, bool? isActive)
+    public async Task<IActionResult> UpdateMachineModel(int id, string? machineBuilder, string? type, string? controller, bool? isActive)
     {
         var machineModel = await _context.MachineModels.FindAsync(id);
         if (machineModel == null)
-        {
             return Json(new { success = false, message = "Machine model not found" });
-        }
         
-        if (description != null) machineModel.Description = description;
+        machineModel.Description = string.IsNullOrWhiteSpace(machineBuilder) ? null : machineBuilder;
+        machineModel.Type = string.IsNullOrWhiteSpace(type) ? null : type;
+        machineModel.Controller = string.IsNullOrWhiteSpace(controller) ? null : controller;
         if (isActive.HasValue) machineModel.IsActive = isActive.Value;
-        
         await _context.SaveChangesAsync();
-        
         return Json(new { success = true, message = "Machine model updated successfully" });
     }
     
