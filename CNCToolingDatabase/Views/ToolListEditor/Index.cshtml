@@ -70,7 +70,9 @@
     <div class="form-row">
         <div class="form-group">
             <label for="partNumber">Part Number</label>
-            <input type="text" id="partNumber" value="@Model.PartNumber" class="form-control" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+            <select id="partNumber" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+                <option value="">-- Select Part Number --</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="operation">Operation</label>
@@ -247,6 +249,24 @@
     
     // Populate dropdowns on page load
     async function populateDropdowns() {
+        // Populate Part Numbers
+        try {
+            const partNumbersResponse = await fetch('/ToolListEditor/GetPartNumbers');
+            const partNumbers = await partNumbersResponse.json();
+            const partNumberSelect = document.getElementById('partNumber');
+            partNumbers.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.value;
+                option.textContent = p.text;
+                if (p.value === currentPartNumber) {
+                    option.selected = true;
+                }
+                partNumberSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading part numbers:', error);
+        }
+        
         // Populate Project Codes
         try {
             const projectCodesResponse = await fetch('/ToolListEditor/GetProjectCodes');
@@ -516,6 +536,10 @@
     });
     document.getElementById('camProgrammer').addEventListener('change', function() {
         hasUnsavedChanges = true;
+    });
+    document.getElementById('partNumber').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+        updateToolListName();
     });
     
     function updateToolListName() {

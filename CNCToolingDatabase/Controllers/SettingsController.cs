@@ -627,4 +627,81 @@ public class SettingsController : Controller
         await _context.SaveChangesAsync();
         return Json(new { success = true, message = "CAM programmer deleted successfully" });
     }
+    
+    // Part Number Management
+    public async Task<IActionResult> PartNumber(string? search, int page = 1, int pageSize = 50)
+    {
+        var query = _context.PartNumbers.AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(p => 
+                p.Name.ToLower().Contains(term) ||
+                (p.Description != null && p.Description.ToLower().Contains(term)));
+        }
+        
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        
+        var list = await query
+            .OrderBy(p => p.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        
+        ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.PageSize = pageSize;
+        
+        return View(list);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> CreatePartNumber(string name, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Json(new { success = false, message = "Part number is required" });
+        
+        if (await _context.PartNumbers.AnyAsync(p => p.Name == name))
+            return Json(new { success = false, message = "Part number already exists" });
+        
+        _context.PartNumbers.Add(new PartNumber
+        {
+            Name = name,
+            Description = description,
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = HttpContext.Session.GetString("Username") ?? "",
+            IsActive = true
+        });
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Part number created successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdatePartNumber(int id, string? description, bool? isActive)
+    {
+        var item = await _context.PartNumbers.FindAsync(id);
+        if (item == null)
+            return Json(new { success = false, message = "Part number not found" });
+        
+        if (description != null) item.Description = description;
+        if (isActive.HasValue) item.IsActive = isActive.Value;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Part number updated successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> DeletePartNumber(int id)
+    {
+        var item = await _context.PartNumbers.FindAsync(id);
+        if (item == null)
+            return Json(new { success = false, message = "Part number not found" });
+        
+        _context.PartNumbers.Remove(item);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Part number deleted successfully" });
+    }
 }

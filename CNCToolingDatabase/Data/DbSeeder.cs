@@ -71,6 +71,14 @@ public static class DbSeeder
                         CreatedBy TEXT NOT NULL,
                         IsActive INTEGER NOT NULL DEFAULT 1
                     );
+                    CREATE TABLE IF NOT EXISTS PartNumbers (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL UNIQUE,
+                        Description TEXT,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1
+                    );
                     CREATE TABLE IF NOT EXISTS ToolCodeUniques (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
                         SystemToolName TEXT NOT NULL,
@@ -94,6 +102,7 @@ public static class DbSeeder
                     CREATE INDEX IF NOT EXISTS IX_MachineModels_Model ON MachineModels(Model);
                     CREATE INDEX IF NOT EXISTS IX_CamLeaders_Name ON CamLeaders(Name);
                     CREATE INDEX IF NOT EXISTS IX_CamProgrammers_Name ON CamProgrammers(Name);
+                    CREATE INDEX IF NOT EXISTS IX_PartNumbers_Name ON PartNumbers(Name);
                 ";
                 command.ExecuteNonQuery();
             }
@@ -201,6 +210,21 @@ public static class DbSeeder
                 foreach (var name in new[] { "Adib Jamil", "Bakhari Hussin", "Faiq Faizul", "Hakim Hisham", "Hakim Ramaly", "Ismail Jahrin", "Low Boon Bao", "Nik Faiszal Abdullah", "Tan Chee Wei" })
                 {
                     context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                }
+                context.SaveChanges();
+            }
+        }
+        catch { }
+        
+        try
+        {
+            if (context.PartNumbers != null)
+            {
+                context.PartNumbers.RemoveRange(context.PartNumbers.ToList());
+                context.SaveChanges();
+                foreach (var name in new[] { "351-2123-13", "351-2123-14", "351-2123-15", "351-2123-16", "351-2123-21", "351-2123-22", "351-2123-23", "351-2123-24", "351-2123-25", "351-2123-26", "351-2123-27", "351-2123-29" })
+                {
+                    context.PartNumbers.Add(new PartNumber { Name = name, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }

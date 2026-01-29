@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<MachineModel> MachineModels { get; set; }
     public DbSet<CamLeader> CamLeaders { get; set; }
     public DbSet<CamProgrammer> CamProgrammers { get; set; }
+    public DbSet<PartNumber> PartNumbers { get; set; }
     public DbSet<ToolCodeUnique> ToolCodeUniques { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -83,6 +84,12 @@ public class ApplicationDbContext : DbContext
         });
         
         modelBuilder.Entity<CamProgrammer>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+        
+        modelBuilder.Entity<PartNumber>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Name).IsUnique();

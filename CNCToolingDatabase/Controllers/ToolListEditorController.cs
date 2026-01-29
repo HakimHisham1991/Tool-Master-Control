@@ -86,6 +86,17 @@ public class ToolListEditorController : Controller
     }
     
     [HttpGet]
+    public async Task<IActionResult> GetPartNumbers()
+    {
+        var partNumbers = await _context.PartNumbers
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.Name)
+            .Select(p => new { value = p.Name, text = p.Name })
+            .ToListAsync();
+        return Json(partNumbers);
+    }
+    
+    [HttpGet]
     public async Task<IActionResult> GetProjectCodes()
     {
         var codes = await _context.ProjectCodes
