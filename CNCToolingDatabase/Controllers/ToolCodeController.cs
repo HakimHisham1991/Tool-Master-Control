@@ -22,13 +22,14 @@ public class ToolCodeController : Controller
         string? arborCode,
         string? holderExtension,
         string? partNumber,
+        string? toolListName,
         string? sortColumn,
         string? sortDirection,
         int page = 1)
     {
         var viewModel = await _toolCodeService.GetToolCodesAsync(
             search, consumableCode, diameter, arborCode, 
-            holderExtension, partNumber, sortColumn, sortDirection, 
+            holderExtension, partNumber, toolListName, sortColumn, sortDirection, 
             page, 100);
         
         return View(viewModel);
@@ -42,11 +43,12 @@ public class ToolCodeController : Controller
         string? diameter,
         string? arborCode,
         string? holderExtension,
-        string? partNumber)
+        string? partNumber,
+        string? toolListName)
     {
         var viewModel = await _toolCodeService.GetToolCodesAsync(
             search, consumableCode, diameter, arborCode,
-            holderExtension, partNumber, null, null, 1, int.MaxValue);
+            holderExtension, partNumber, toolListName, null, null, 1, int.MaxValue);
         
         var formatLower = format.ToLower();
         

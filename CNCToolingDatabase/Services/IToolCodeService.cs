@@ -11,6 +11,7 @@ public interface IToolCodeService
         string? arborCodeFilter,
         string? holderExtensionFilter,
         string? partNumberFilter,
+        string? toolListNameFilter,
         string? sortColumn,
         string? sortDirection,
         int page,

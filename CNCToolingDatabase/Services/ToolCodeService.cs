@@ -20,6 +20,7 @@ public class ToolCodeService : IToolCodeService
         string? arborCodeFilter,
         string? holderExtensionFilter,
         string? partNumberFilter,
+        string? toolListNameFilter,
         string? sortColumn,
         string? sortDirection,
         int page,
@@ -77,6 +78,9 @@ public class ToolCodeService : IToolCodeService
         if (!string.IsNullOrWhiteSpace(partNumberFilter))
             query = query.Where(t => t.PartNumber == partNumberFilter);
         
+        if (!string.IsNullOrWhiteSpace(toolListNameFilter))
+            query = query.Where(t => t.ToolListName == toolListNameFilter);
+        
         query = ApplySort(query, sortColumn, sortDirection);
         
         var totalItems = await query.CountAsync();
@@ -99,6 +103,7 @@ public class ToolCodeService : IToolCodeService
             ArborCodeFilter = arborCodeFilter,
             HolderExtensionFilter = holderExtensionFilter,
             PartNumberFilter = partNumberFilter,
+            ToolListNameFilter = toolListNameFilter,
             SortColumn = sortColumn,
             SortDirection = sortDirection,
             CurrentPage = page,

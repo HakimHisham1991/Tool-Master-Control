@@ -570,6 +570,15 @@ select.form-control {
     text-decoration: underline;
 }
 
+.cell-link {
+    color: var(--link-color, #0d6efd);
+    text-decoration: underline;
+}
+
+.cell-link:hover {
+    text-decoration: underline;
+}
+
 .modal {
     position: fixed;
     top: 0;

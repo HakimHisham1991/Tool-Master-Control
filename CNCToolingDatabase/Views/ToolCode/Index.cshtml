@@ -6,12 +6,12 @@
 <div class="module-header">
     <h2>Tool Code Database with Tool List</h2>
     <div class="export-buttons">
-        <a href="/ToolCode/Export?format=excel&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter" class="btn btn-secondary btn-sm">
+        <a href="/ToolCode/Export?format=excel&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")" class="btn btn-secondary btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Excel
         </a>
-        <a href="/ToolCode/Export?format=csv&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter" class="btn btn-secondary btn-sm">CSV</a>
-        <a href="/ToolCode/Export?format=txt&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter" class="btn btn-secondary btn-sm">TXT</a>
+        <a href="/ToolCode/Export?format=csv&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")" class="btn btn-secondary btn-sm">CSV</a>
+        <a href="/ToolCode/Export?format=txt&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")" class="btn btn-secondary btn-sm">TXT</a>
     </div>
 </div>
 
@@ -98,6 +98,7 @@
             }
         }
     </select>
+    <input type="hidden" id="filterToolListName" value="@(Model.ToolListNameFilter ?? "")" />
     <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear Filters</button>
 </div>
 
@@ -148,7 +149,7 @@
                     <tr>
                         <td>@tool.ToolNumber</td>
                         <td>@tool.ToolDescription</td>
-                        <td>@tool.ConsumableCode</td>
+                        <td><a href="@BuildFilterUrl(tool.ConsumableCode, null)" class="cell-link">@tool.ConsumableCode</a></td>
                         <td>@tool.Supplier</td>
                         <td>@tool.HolderExtensionCode</td>
                         <td>@tool.Diameter.ToString("0.##")</td>
@@ -159,7 +160,7 @@
                         <td>@tool.PartNumber</td>
                         <td>@tool.Operation</td>
                         <td>@tool.Revision</td>
-                        <td>@tool.ToolListName</td>
+                        <td><a href="@BuildFilterUrl(null, tool.ToolListName)" class="cell-link">@tool.ToolListName</a></td>
                         <td>@tool.ProjectCode</td>
                         <td>@tool.MachineName</td>
                         <td>@tool.MachineWorkcenter</td>
@@ -180,16 +181,16 @@
         <div class="page-buttons">
             @if (Model.CurrentPage > 1)
             {
-                <a href="?page=@(Model.CurrentPage - 1)&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" class="btn btn-secondary btn-sm">Previous</a>
+                <a href="?page=@(Model.CurrentPage - 1)&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" class="btn btn-secondary btn-sm">Previous</a>
             }
             @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
             {
-                <a href="?page=@i&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" 
+                <a href="?page=@i&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" 
                    class="btn @(i == Model.CurrentPage ? "btn-primary" : "btn-secondary") btn-sm">@i</a>
             }
             @if (Model.CurrentPage < Model.TotalPages)
             {
-                <a href="?page=@(Model.CurrentPage + 1)&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" class="btn btn-secondary btn-sm">Next</a>
+                <a href="?page=@(Model.CurrentPage + 1)&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" class="btn btn-secondary btn-sm">Next</a>
             }
         </div>
     </div>
@@ -215,6 +216,7 @@
         const arborCode = document.getElementById('filterArborCode').value;
         const holderExtension = document.getElementById('filterHolderExtension').value;
         const partNumber = document.getElementById('filterPartNumber').value;
+        const toolListName = document.getElementById('filterToolListName').value;
         
         if (search) params.set('search', search);
         if (consumableCode) params.set('consumableCode', consumableCode);
@@ -222,6 +224,7 @@
         if (arborCode) params.set('arborCode', arborCode);
         if (holderExtension) params.set('holderExtension', holderExtension);
         if (partNumber) params.set('partNumber', partNumber);
+        if (toolListName) params.set('toolListName', toolListName);
         
         window.location.href = '/ToolCode?' + params.toString();
     }
@@ -254,5 +257,23 @@
                 : "<span class='sort-icon'>&#9650;</span>";
         }
         return "<span class='sort-icon sort-inactive'>&#9650;&#9660;</span>";
+    }
+
+    string BuildFilterUrl(string? overrideConsumable, string? overrideToolListName)
+    {
+        var q = new List<string>();
+        var consumable = overrideConsumable ?? Model.ConsumableCodeFilter;
+        var toolListName = overrideToolListName ?? Model.ToolListNameFilter;
+        if (!string.IsNullOrEmpty(consumable)) q.Add("consumableCode=" + Uri.EscapeDataString(consumable));
+        if (!string.IsNullOrEmpty(Model.SearchTerm)) q.Add("search=" + Uri.EscapeDataString(Model.SearchTerm));
+        if (!string.IsNullOrEmpty(Model.DiameterFilter)) q.Add("diameter=" + Uri.EscapeDataString(Model.DiameterFilter));
+        if (!string.IsNullOrEmpty(Model.ArborCodeFilter)) q.Add("arborCode=" + Uri.EscapeDataString(Model.ArborCodeFilter));
+        if (!string.IsNullOrEmpty(Model.HolderExtensionFilter)) q.Add("holderExtension=" + Uri.EscapeDataString(Model.HolderExtensionFilter));
+        if (!string.IsNullOrEmpty(Model.PartNumberFilter)) q.Add("partNumber=" + Uri.EscapeDataString(Model.PartNumberFilter));
+        if (!string.IsNullOrEmpty(toolListName)) q.Add("toolListName=" + Uri.EscapeDataString(toolListName));
+        if (!string.IsNullOrEmpty(Model.SortColumn)) q.Add("sortColumn=" + Uri.EscapeDataString(Model.SortColumn));
+        if (!string.IsNullOrEmpty(Model.SortDirection)) q.Add("sortDirection=" + Uri.EscapeDataString(Model.SortDirection));
+        q.Add("page=1");
+        return "/ToolCode?" + string.Join("&", q);
     }
 }

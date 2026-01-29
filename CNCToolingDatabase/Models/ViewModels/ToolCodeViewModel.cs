@@ -33,6 +33,7 @@ public class ToolCodeListViewModel
     public string? ArborCodeFilter { get; set; }
     public string? HolderExtensionFilter { get; set; }
     public string? PartNumberFilter { get; set; }
+    public string? ToolListNameFilter { get; set; }
     public string? SortColumn { get; set; }
     public string? SortDirection { get; set; }
     public int CurrentPage { get; set; } = 1;
