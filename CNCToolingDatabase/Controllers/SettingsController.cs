@@ -631,17 +631,48 @@ public class SettingsController : Controller
         return Json(new { success = true, message = "CAM programmer deleted successfully" });
     }
     
+    [HttpGet]
+    public async Task<IActionResult> GetProjectCodesForPartNumberDropdown()
+    {
+        var list = await _context.ProjectCodes
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.Code)
+            .Select(p => new { id = p.Id, code = p.Code, project = p.Project ?? "", customer = p.Description ?? "" })
+            .ToListAsync();
+        return Json(list);
+    }
+    
+    [HttpGet]
+    public async Task<IActionResult> GetMaterialSpecsForPartNumberDropdown()
+    {
+        var list = await _context.MaterialSpecs
+            .Where(m => m.IsActive)
+            .OrderBy(m => m.Spec)
+            .ThenBy(m => m.Material)
+            .Select(m => new { id = m.Id, spec = m.Spec, material = m.Material })
+            .ToListAsync();
+        return Json(list);
+    }
+    
     // Part Number Management
     public async Task<IActionResult> PartNumber(string? search, int page = 1, int pageSize = 50)
     {
-        var query = _context.PartNumbers.AsQueryable();
+        var query = _context.PartNumbers
+            .Include(p => p.ProjectCode)
+            .Include(p => p.MaterialSpec)
+            .AsQueryable();
         
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.ToLower();
             query = query.Where(p => 
                 p.Name.ToLower().Contains(term) ||
-                (p.Description != null && p.Description.ToLower().Contains(term)));
+                (p.Description != null && p.Description.ToLower().Contains(term)) ||
+                (p.PartRev != null && p.PartRev.ToLower().Contains(term)) ||
+                (p.DrawingRev != null && p.DrawingRev.ToLower().Contains(term)) ||
+                (p.RefDrawing != null && p.RefDrawing.ToLower().Contains(term)) ||
+                (p.ProjectCode != null && (p.ProjectCode.Code.ToLower().Contains(term) || (p.ProjectCode.Project != null && p.ProjectCode.Project.ToLower().Contains(term)) || (p.ProjectCode.Description != null && p.ProjectCode.Description.ToLower().Contains(term)))) ||
+                (p.MaterialSpec != null && (p.MaterialSpec.Spec.ToLower().Contains(term) || p.MaterialSpec.Material.ToLower().Contains(term))));
         }
         
         var totalItems = await query.CountAsync();
@@ -663,7 +694,7 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> CreatePartNumber(string name, string? description)
+    public async Task<IActionResult> CreatePartNumber(string name, string? description, int? projectCodeId, int? materialSpecId, string? partRev, string? drawingRev, string? refDrawing)
     {
         if (string.IsNullOrWhiteSpace(name))
             return Json(new { success = false, message = "Part number is required" });
@@ -675,6 +706,11 @@ public class SettingsController : Controller
         {
             Name = name,
             Description = description,
+            ProjectCodeId = projectCodeId > 0 ? projectCodeId : null,
+            MaterialSpecId = materialSpecId > 0 ? materialSpecId : null,
+            PartRev = partRev,
+            DrawingRev = drawingRev,
+            RefDrawing = refDrawing,
             CreatedDate = DateTime.UtcNow,
             CreatedBy = HttpContext.Session.GetString("Username") ?? "",
             IsActive = true
@@ -684,13 +720,18 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> UpdatePartNumber(int id, string? description, bool? isActive)
+    public async Task<IActionResult> UpdatePartNumber(int id, string? description, int? projectCodeId, int? materialSpecId, string? partRev, string? drawingRev, string? refDrawing, bool? isActive)
     {
         var item = await _context.PartNumbers.FindAsync(id);
         if (item == null)
             return Json(new { success = false, message = "Part number not found" });
         
         if (description != null) item.Description = description;
+        item.ProjectCodeId = projectCodeId > 0 ? projectCodeId : null;
+        item.MaterialSpecId = materialSpecId > 0 ? materialSpecId : null;
+        item.PartRev = string.IsNullOrWhiteSpace(partRev) ? null : partRev;
+        item.DrawingRev = string.IsNullOrWhiteSpace(drawingRev) ? null : drawingRev;
+        item.RefDrawing = string.IsNullOrWhiteSpace(refDrawing) ? null : refDrawing;
         if (isActive.HasValue) item.IsActive = isActive.Value;
         await _context.SaveChangesAsync();
         return Json(new { success = true, message = "Part number updated successfully" });

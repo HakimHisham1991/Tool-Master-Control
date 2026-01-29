@@ -115,6 +115,11 @@ public static class DbSeeder
                 ";
                 command.ExecuteNonQuery();
                 try { command.CommandText = "ALTER TABLE ProjectCodes ADD COLUMN Project TEXT;"; command.ExecuteNonQuery(); } catch { /* column may exist */ }
+                try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN ProjectCodeId INTEGER REFERENCES ProjectCodes(Id);"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN PartRev TEXT;"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN DrawingRev TEXT;"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN MaterialSpecId INTEGER REFERENCES MaterialSpecs(Id);"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN RefDrawing TEXT;"; command.ExecuteNonQuery(); } catch { }
             }
             finally
             {
@@ -241,21 +246,6 @@ public static class DbSeeder
         
         try
         {
-            if (context.PartNumbers != null)
-            {
-                context.PartNumbers.RemoveRange(context.PartNumbers.ToList());
-                context.SaveChanges();
-                foreach (var name in new[] { "351-2123-13", "351-2123-14", "351-2123-15", "351-2123-16", "351-2123-21", "351-2123-22", "351-2123-23", "351-2123-24", "351-2123-25", "351-2123-26", "351-2123-27", "351-2123-29" })
-                {
-                    context.PartNumbers.Add(new PartNumber { Name = name, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
-                }
-                context.SaveChanges();
-            }
-        }
-        catch { }
-        
-        try
-        {
             if (context.MaterialSpecs != null)
             {
                 context.MaterialSpecs.RemoveRange(context.MaterialSpecs.ToList());
@@ -280,6 +270,53 @@ public static class DbSeeder
                 foreach (var (spec, material) in materialSpecPairs)
                 {
                     context.MaterialSpecs.Add(new MaterialSpec { Spec = spec, Material = material, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                }
+                context.SaveChanges();
+            }
+        }
+        catch { }
+        
+        try
+        {
+            if (context.PartNumbers != null)
+            {
+                context.PartNumbers.RemoveRange(context.PartNumbers.ToList());
+                context.SaveChanges();
+                var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
+                var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
+                var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
+                var partSeed = new[]
+                {
+                    ("351-2123-13", "HINGES-LH", "A00", "A00", "V12345", "AG01", "ABP3-2101"),
+                    ("351-2123-14", "BRACKET RH", "B00", "B00", "351-2261", "AG02", "ABP3-2304"),
+                    ("351-2123-15", "LINK LH", "A", "A", "D123456", "AG03", "ABP3-4001"),
+                    ("351-2123-16", "HINGES-RH", "NA", "NA", "V12346", "AH01", "ABP3-7101"),
+                    ("351-2123-21", "BRACKET LH", "A00", "B00", "351-2262", "AL01", "BMS7-304"),
+                    ("351-2123-22", "LINK RH", "B00", "A00", "D123457", "AL02", "AMS4928"),
+                    ("351-2123-23", "FITTING", "A", "NA", "V12347", "AM01", "AMS5643"),
+                    ("351-2123-24", "PLATE ASSY", "NA", "A", "351-2263", "AP02", "AMS5662"),
+                    ("351-2123-25", "BRACKET ASSY", "A00", "A00", "D123458", "SA01", "BMS7-331"),
+                    ("351-2123-26", "HINGES-CENTER", "B00", "B00", "V12348", "SB01", "BMS7-380"),
+                    ("351-2123-27", "LINK ASSY", "A", "A", "351-2264", "AG04", "BMS7-430"),
+                    ("351-2123-29", "FITTING LH", "NA", "NA", "D123459", "AE01", "ABP3-2304"),
+                };
+                foreach (var (name, desc, partRev, drawRev, refDraw, pcCode, msSpec) in partSeed)
+                {
+                    var pcId = projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
+                    var msId = matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
+                    context.PartNumbers.Add(new PartNumber
+                    {
+                        Name = name,
+                        Description = desc,
+                        ProjectCodeId = pcId,
+                        PartRev = partRev,
+                        DrawingRev = drawRev,
+                        MaterialSpecId = msId,
+                        RefDrawing = refDraw,
+                        CreatedDate = DateTime.UtcNow,
+                        CreatedBy = "system",
+                        IsActive = true
+                    });
                 }
                 context.SaveChanges();
             }

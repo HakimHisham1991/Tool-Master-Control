@@ -94,6 +94,14 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Name).IsUnique();
+            entity.HasOne(e => e.ProjectCode)
+                .WithMany()
+                .HasForeignKey(e => e.ProjectCodeId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.MaterialSpec)
+                .WithMany()
+                .HasForeignKey(e => e.MaterialSpecId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
         
         modelBuilder.Entity<MaterialSpec>(entity =>
