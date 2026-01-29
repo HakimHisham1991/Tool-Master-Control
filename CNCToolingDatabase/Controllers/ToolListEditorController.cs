@@ -88,12 +88,44 @@ public class ToolListEditorController : Controller
     [HttpGet]
     public async Task<IActionResult> GetPartNumbers()
     {
-        var partNumbers = await _context.PartNumbers
-            .Where(p => p.IsActive)
-            .OrderBy(p => p.Name)
-            .Select(p => new { value = p.Name, text = p.Name })
+        var partNumberSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        // From PartNumbers settings table (if it exists and has data)
+        try
+        {
+            var fromTable = await _context.PartNumbers
+                .Where(p => p.IsActive)
+                .Select(p => p.Name)
+                .ToListAsync();
+            foreach (var name in fromTable)
+            {
+                if (!string.IsNullOrWhiteSpace(name))
+                    partNumberSet.Add(name);
+            }
+        }
+        catch
+        {
+            // PartNumbers table may not exist, continue
+        }
+        
+        // Also include distinct part numbers from existing tool list headers
+        var fromHeaders = await _context.ToolListHeaders
+            .Select(h => h.PartNumber)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct()
             .ToListAsync();
-        return Json(partNumbers);
+        foreach (var name in fromHeaders)
+        {
+            if (!string.IsNullOrWhiteSpace(name))
+                partNumberSet.Add(name);
+        }
+        
+        var result = partNumberSet
+            .OrderBy(s => s)
+            .Select(name => new { value = name, text = name })
+            .ToList();
+        
+        return Json(result);
     }
     
     [HttpGet]

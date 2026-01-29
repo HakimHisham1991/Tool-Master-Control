@@ -237,6 +237,7 @@
 <script>
     const toolListId = document.getElementById('toolListId').value;
     const isReadOnly = document.getElementById('isReadOnly').value === 'true';
+    const currentPartNumber = '@((Model.PartNumber ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentProjectCode = '@Model.ProjectCode';
     const currentMachineName = '@Model.MachineName';
     const currentMachineWorkcenter = '@Model.MachineWorkcenter';
