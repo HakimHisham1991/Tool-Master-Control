@@ -704,4 +704,100 @@ public class SettingsController : Controller
         await _context.SaveChangesAsync();
         return Json(new { success = true, message = "Part number deleted successfully" });
     }
+    
+    // Material Spec. Management
+    public async Task<IActionResult> MaterialSpec(string? search, int page = 1, int pageSize = 50)
+    {
+        var query = _context.MaterialSpecs.AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(m => 
+                m.Spec.ToLower().Contains(term) ||
+                m.Material.ToLower().Contains(term));
+        }
+        
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        
+        var items = await query
+            .OrderBy(m => m.Spec)
+            .ThenBy(m => m.Material)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        
+        ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.PageSize = pageSize;
+        
+        return View(items);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> CreateMaterialSpec(string spec, string material)
+    {
+        if (string.IsNullOrWhiteSpace(spec))
+        {
+            return Json(new { success = false, message = "Material Spec. is required" });
+        }
+        if (string.IsNullOrWhiteSpace(material))
+        {
+            return Json(new { success = false, message = "Material is required" });
+        }
+        
+        if (await _context.MaterialSpecs.AnyAsync(m => m.Spec == spec && m.Material == material))
+        {
+            return Json(new { success = false, message = "This Spec / Material pair already exists" });
+        }
+        
+        var item = new MaterialSpec
+        {
+            Spec = spec,
+            Material = material,
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = HttpContext.Session.GetString("Username") ?? "",
+            IsActive = true
+        };
+        
+        _context.MaterialSpecs.Add(item);
+        await _context.SaveChangesAsync();
+        
+        return Json(new { success = true, message = "Material Spec. created successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdateMaterialSpec(int id, string? material, bool? isActive)
+    {
+        var item = await _context.MaterialSpecs.FindAsync(id);
+        if (item == null)
+        {
+            return Json(new { success = false, message = "Material Spec. not found" });
+        }
+        
+        if (material != null) item.Material = material;
+        if (isActive.HasValue) item.IsActive = isActive.Value;
+        
+        await _context.SaveChangesAsync();
+        
+        return Json(new { success = true, message = "Material Spec. updated successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> DeleteMaterialSpec(int id)
+    {
+        var item = await _context.MaterialSpecs.FindAsync(id);
+        if (item == null)
+        {
+            return Json(new { success = false, message = "Material Spec. not found" });
+        }
+        
+        _context.MaterialSpecs.Remove(item);
+        await _context.SaveChangesAsync();
+        
+        return Json(new { success = true, message = "Material Spec. deleted successfully" });
+    }
 }

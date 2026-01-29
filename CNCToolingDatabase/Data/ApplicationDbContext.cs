@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<CamLeader> CamLeaders { get; set; }
     public DbSet<CamProgrammer> CamProgrammers { get; set; }
     public DbSet<PartNumber> PartNumbers { get; set; }
+    public DbSet<MaterialSpec> MaterialSpecs { get; set; }
     public DbSet<ToolCodeUnique> ToolCodeUniques { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -93,6 +94,12 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Name).IsUnique();
+        });
+        
+        modelBuilder.Entity<MaterialSpec>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.Spec, e.Material }).IsUnique();
         });
         
         modelBuilder.Entity<ToolCodeUnique>(entity =>
