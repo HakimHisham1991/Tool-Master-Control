@@ -114,6 +114,7 @@ public static class DbSeeder
                     CREATE UNIQUE INDEX IF NOT EXISTS IX_MaterialSpecs_Spec_Material ON MaterialSpecs(Spec, Material);
                 ";
                 command.ExecuteNonQuery();
+                try { command.CommandText = "ALTER TABLE ProjectCodes ADD COLUMN Project TEXT;"; command.ExecuteNonQuery(); } catch { /* column may exist */ }
             }
             finally
             {
@@ -140,9 +141,22 @@ public static class DbSeeder
             {
                 context.ProjectCodes.RemoveRange(context.ProjectCodes.ToList());
                 context.SaveChanges();
-                foreach (var code in "AG01|AG02|AG03|AG04|AG07|AG08|AG09|AH02|AH03|AH05|AL01|AL02|AL04|AL06|AL07|AL08|AL09|AL10|AL11|AM01|AM03|AM04|AOG|AP02|AQ01|SA01|SB01".Split('|'))
+                var codeProjectPairs = new[] {
+                    ("AB03", "UTAS A350 Component"), ("AD01", "MCS-C"), ("AD02", "MSS-F"), ("AD03", "MABS A"),
+                    ("AE01", "Honeywell"), ("AE02", "Celestica Localisation"), ("AE03", "DU1080"), ("AE04", "Plexus"), ("AE05", "VMI PULL"),
+                    ("AG01", "A350 XWB"), ("AG02", "A320 FTB-6B"), ("AG03", "Spirit Subang A320 6C"), ("AG04", "SPIRIT EPIPHRON TTI & CR"),
+                    ("AG05", "Spirit Wave 4"), ("AG06", "WAVE 5"), ("AG07", "A321 XLR"),
+                    ("AH01", "Goodrich"), ("AH02", "787 Fan Cowl"), ("AH03", "A350 Fan Cowl"), ("AH04", "Motor Controller Plates"), ("AH05", "C-Series & MRJ Fan Cowl"),
+                    ("AJ01", "Celestica HS"),
+                    ("AL01", "A350 SOGERMA"), ("AL02", "A321 S14A SOGERMA"), ("AL03", "Celeste Seat"), ("AL04", "A350 MLGB"), ("AL05", "Celeste Seat 2nd Package"),
+                    ("AL06", "AIRBUS D2P SBMSA"), ("AL07", "STELIA D2P SBMSA"), ("AL10", "Airbus Atlantic NPI & SB76"),
+                    ("AM01", "MC130 & MC133"), ("AM03", "GKN A350 TE"),
+                    ("AP02", "FHI-SAT Fitting"),
+                    ("SA01", "SSP A320 Neo & C-Series Flanges"), ("SB01", "Senior Ermeto")
+                };
+                foreach (var (code, project) in codeProjectPairs)
                 {
-                    context.ProjectCodes.Add(new ProjectCode { Code = code, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    context.ProjectCodes.Add(new ProjectCode { Code = code, Description = null, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }
