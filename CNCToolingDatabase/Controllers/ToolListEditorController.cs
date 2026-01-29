@@ -136,11 +136,23 @@ public class ToolListEditorController : Controller
         var rows = await _context.ToolCodeUniques
             .AsNoTracking()
             .OrderBy(t => t.ConsumableCode)
-            .Select(t => new { value = t.ConsumableCode, text = t.ConsumableCode, supplier = t.Supplier })
+            .Select(t => new
+            {
+                value = t.ConsumableCode,
+                text = t.ConsumableCode,
+                supplier = t.Supplier,
+                diameter = t.Diameter,
+                fluteLength = t.FluteLength,
+                cornerRadius = t.CornerRadius
+            })
             .ToListAsync();
         var distinct = rows
             .GroupBy(x => x.value)
-            .Select(g => new { value = g.Key, text = g.Key, supplier = g.First().supplier })
+            .Select(g =>
+            {
+                var f = g.First();
+                return new { value = g.Key, text = g.Key, supplier = f.supplier, diameter = f.diameter, fluteLength = f.fluteLength, cornerRadius = f.cornerRadius };
+            })
             .ToList();
         return Json(distinct);
     }

@@ -334,7 +334,10 @@
             const opt = document.createElement('option');
             opt.value = o.value;
             opt.textContent = o.text;
-            opt.dataset.supplier = o.supplier || '';
+            opt.dataset.supplier = o.supplier != null ? String(o.supplier) : '';
+            opt.dataset.diameter = o.diameter != null ? String(o.diameter) : '';
+            opt.dataset.fluteLength = o.fluteLength != null ? String(o.fluteLength) : '';
+            opt.dataset.cornerRadius = o.cornerRadius != null ? String(o.cornerRadius) : '';
             sel.appendChild(opt);
         });
         if (currentVal && !values.has(currentVal)) {
@@ -349,11 +352,24 @@
     function bindConsumableChange(row) {
         const sel = row.querySelector('select[data-field="consumableCode"]');
         const sup = row.querySelector('[data-field="supplier"]');
-        if (!sel || !sup) return;
+        const dia = row.querySelector('[data-field="diameter"]');
+        const flute = row.querySelector('[data-field="fluteLength"]');
+        const radius = row.querySelector('[data-field="cornerRadius"]');
+        if (!sel) return;
         sel.addEventListener('change', function() {
             hasUnsavedChanges = true;
             const chosen = sel.options[sel.selectedIndex];
-            sup.value = (chosen && chosen.dataset.supplier) ? chosen.dataset.supplier : '';
+            if (chosen && chosen.value) {
+                if (sup) sup.value = chosen.dataset.supplier || '';
+                if (dia) dia.value = chosen.dataset.diameter || '';
+                if (flute) flute.value = chosen.dataset.fluteLength || '';
+                if (radius) radius.value = chosen.dataset.cornerRadius || '';
+            } else {
+                if (sup) sup.value = '';
+                if (dia) dia.value = '';
+                if (flute) flute.value = '';
+                if (radius) radius.value = '';
+            }
         });
     }
     
