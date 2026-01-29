@@ -129,7 +129,7 @@ public class ToolListEditorController : Controller
         return Json(models);
     }
     
-    /// <summary>Consumable Tool Descriptions from Tool Code Database - Unique only. Used for dropdown in Create/Edit Tool List.</summary>
+    /// <summary>Consumable Tool Descriptions from Master Tool Code Database only. Used for dropdown in Create/Edit Tool List.</summary>
     [HttpGet]
     public async Task<IActionResult> GetConsumableToolDescriptions()
     {

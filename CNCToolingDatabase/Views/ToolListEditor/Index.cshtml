@@ -186,7 +186,7 @@
             </svg>
             Add Row
         </button>
-        <span class="table-actions-hint">Register new consumable codes in <a href="/ToolCodeUnique" target="_blank">Tool Code Database - Unique</a>.</span>
+        <span class="table-actions-hint">Register new consumable codes in <a href="/ToolCodeUnique" target="_blank">Master Tool Code Database</a>.</span>
     </div>
 }
 
@@ -305,7 +305,7 @@
             console.error('Error loading machine models:', error);
         }
         
-        // Consumable Tool Description (Tool Code Database - Unique only)
+        // Consumable Tool Description (Master Tool Code Database only)
         try {
             const r = await fetch('/ToolListEditor/GetConsumableToolDescriptions');
             consumableOptions = await r.json();

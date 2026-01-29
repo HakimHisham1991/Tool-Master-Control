@@ -6,7 +6,7 @@
 <div class="module-header">
     <h2>@(Model.Id.HasValue ? "Edit Tool Code" : "Create Tool Code")</h2>
     <div class="export-buttons">
-        <a href="/ToolCodeUnique" class="btn btn-secondary btn-sm">Back to Tool Code Database - Unique</a>
+        <a href="/ToolCodeUnique" class="btn btn-secondary btn-sm">Back to Master Tool Code Database</a>
     </div>
 </div>
 
@@ -70,8 +70,9 @@
 </div>
 
 <div class="table-actions">
+    <a href="/ToolCodeUnique" class="btn btn-secondary">Open</a>
     <button type="button" class="btn btn-primary" onclick="saveToolCode()">Save</button>
-    <a href="/ToolCodeUnique" class="btn btn-secondary">Cancel</a>
+    <a href="/ToolCodeUnique" class="btn btn-secondary">Close</a>
 </div>
 
 <input type="hidden" id="toolCodeId" value="@(Model.Id.HasValue ? Model.Id.Value.ToString() : "")" />
