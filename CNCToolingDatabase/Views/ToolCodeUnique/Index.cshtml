@@ -1,0 +1,170 @@
+@model ToolCodeUniqueListViewModel
+@{
+    ViewData["Title"] = "Tool Code Database - Unique";
+}
+
+<div class="module-header">
+    <h2>Tool Code Database - Unique</h2>
+    <div class="export-buttons">
+        <a href="/ToolCodeUnique/Export?format=excel&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter" class="btn btn-secondary btn-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Excel
+        </a>
+        <a href="/ToolCodeUnique/Export?format=csv&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter" class="btn btn-secondary btn-sm">CSV</a>
+        <a href="/ToolCodeUnique/Export?format=txt&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter" class="btn btn-secondary btn-sm">TXT</a>
+    </div>
+</div>
+
+<div class="search-bar">
+    <form method="get" id="searchForm">
+        <div class="search-input-group">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" name="search" value="@Model.SearchTerm" placeholder="Search tool codes..." class="search-input" id="searchInput" />
+        </div>
+    </form>
+</div>
+
+<div class="filter-row">
+    <select name="consumableCode" id="filterConsumableCode" class="filter-select" onchange="applyFilters()">
+        <option value="">All Consumable Tool Descriptions</option>
+        @foreach (var code in Model.AvailableConsumableCodes)
+        {
+            if (Model.ConsumableCodeFilter == code)
+            { <option value="@code" selected>@code</option> }
+            else
+            { <option value="@code">@code</option> }
+        }
+    </select>
+    <select name="supplier" id="filterSupplier" class="filter-select" onchange="applyFilters()">
+        <option value="">All Tool Suppliers</option>
+        @foreach (var s in Model.AvailableSuppliers)
+        {
+            if (Model.SupplierFilter == s)
+            { <option value="@s" selected>@s</option> }
+            else
+            { <option value="@s">@s</option> }
+        }
+    </select>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear Filters</button>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th onclick="sortBy('no')">No. @Html.Raw(GetSortIcon("no"))</th>
+                <th onclick="sortBy('systemToolName')">System Tool Name @Html.Raw(GetSortIcon("systemToolName"))</th>
+                <th onclick="sortBy('consumableCode')">Consumable Tool Description @Html.Raw(GetSortIcon("consumableCode"))</th>
+                <th onclick="sortBy('supplier')">Tool Supplier @Html.Raw(GetSortIcon("supplier"))</th>
+                <th onclick="sortBy('diameter')">Tool Diameter (D1) @Html.Raw(GetSortIcon("diameter"))</th>
+                <th onclick="sortBy('fluteLength')">Flute Length (L1) @Html.Raw(GetSortIcon("fluteLength"))</th>
+                <th onclick="sortBy('cornerRadius')">Tool Corner Radius @Html.Raw(GetSortIcon("cornerRadius"))</th>
+                <th onclick="sortBy('createdDate')">Created Date @Html.Raw(GetSortIcon("createdDate"))</th>
+                <th onclick="sortBy('lastModifiedDate')">Last Modified @Html.Raw(GetSortIcon("lastModifiedDate"))</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Tools.Count == 0)
+            {
+                <tr>
+                    <td colspan="9" class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <p>No tool codes match your filters</p>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="clearFilters()">Reset Filters</button>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var t in Model.Tools)
+                {
+                    <tr>
+                        <td>@t.No</td>
+                        <td>@t.SystemToolName</td>
+                        <td>@t.ConsumableCode</td>
+                        <td>@t.Supplier</td>
+                        <td>@t.Diameter.ToString("0.##")</td>
+                        <td>@t.FluteLength.ToString("0.##")</td>
+                        <td>@t.CornerRadius.ToString("0.##")</td>
+                        <td>@t.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@t.LastModifiedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination">
+        <span class="page-info">Showing @((Model.CurrentPage - 1) * Model.PageSize + 1) - @Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems) of @Model.TotalItems</span>
+        <div class="page-buttons">
+            @if (Model.CurrentPage > 1)
+            {
+                <a href="?page=@(Model.CurrentPage - 1)&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" class="btn btn-secondary btn-sm">Previous</a>
+            }
+            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+            {
+                <a href="?page=@i&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection"
+                   class="btn @(i == Model.CurrentPage ? "btn-primary" : "btn-secondary") btn-sm">@i</a>
+            }
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <a href="?page=@(Model.CurrentPage + 1)&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" class="btn btn-secondary btn-sm">Next</a>
+            }
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() { applyFilters(); }, 300);
+    });
+    searchForm.addEventListener('submit', function(e) { e.preventDefault(); applyFilters(); });
+    function applyFilters() {
+        const params = new URLSearchParams();
+        const search = document.getElementById('searchInput').value;
+        const consumableCode = document.getElementById('filterConsumableCode').value;
+        const supplier = document.getElementById('filterSupplier').value;
+        if (search) params.set('search', search);
+        if (consumableCode) params.set('consumableCode', consumableCode);
+        if (supplier) params.set('supplier', supplier);
+        window.location.href = '/ToolCodeUnique?' + params.toString();
+    }
+    function clearFilters() { window.location.href = '/ToolCodeUnique'; }
+    function sortBy(column) {
+        const params = new URLSearchParams(window.location.search);
+        const currentSort = params.get('sortColumn');
+        const currentDir = params.get('sortDirection');
+        params.set('sortColumn', column);
+        params.set('sortDirection', (currentSort === column && currentDir === 'asc') ? 'desc' : 'asc');
+        params.set('page', '1');
+        window.location.href = '/ToolCodeUnique?' + params.toString();
+    }
+</script>
+}
+
+@functions {
+    string GetSortIcon(string column)
+    {
+        if (Model.SortColumn?.ToLower() == column.ToLower())
+        {
+            return Model.SortDirection?.ToLower() == "desc"
+                ? "<span class='sort-icon'>&#9660;</span>"
+                : "<span class='sort-icon'>&#9650;</span>";
+        }
+        return "<span class='sort-icon sort-inactive'>&#9650;&#9660;</span>";
+    }
+}

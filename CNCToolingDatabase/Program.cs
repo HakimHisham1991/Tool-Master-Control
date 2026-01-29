@@ -25,6 +25,7 @@ builder.Services.AddScoped<IToolMasterRepository, ToolMasterRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IToolCodeService, ToolCodeService>();
+builder.Services.AddScoped<IToolCodeUniqueService, ToolCodeUniqueService>();
 builder.Services.AddScoped<IToolListService, ToolListService>();
 
 var app = builder.Build();
