@@ -73,7 +73,7 @@
                             }
                         </td>
                         <td>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="editUser(@user.Id, '@user.DisplayName', @user.IsActive.ToString().ToLower())">Edit</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="editUser(@user.Id, '@(user.Username.Replace("'", "\\'").Replace("\"", "&quot;"))', '@(user.DisplayName.Replace("'", "\\'").Replace("\"", "&quot;"))', @user.IsActive.ToString().ToLower())">Edit</button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="deleteUser(@user.Id, '@user.Username')">Delete</button>
                         </td>
                     </tr>
@@ -162,18 +162,19 @@
         document.getElementById('modalTitle').textContent = 'Add User';
         document.getElementById('userForm').reset();
         document.getElementById('userId').value = '';
+        document.getElementById('username').disabled = false;
         document.getElementById('passwordGroup').style.display = 'block';
         document.getElementById('isActiveGroup').style.display = 'none';
         document.getElementById('userModal').classList.add('active');
     }
     
-    function editUser(id, displayName, isActive) {
+    function editUser(id, username, displayName, isActive) {
         document.getElementById('modalTitle').textContent = 'Edit User';
         document.getElementById('userId').value = id;
-        document.getElementById('displayName').value = displayName;
-        document.getElementById('isActive').checked = isActive;
-        document.getElementById('username').value = '';
+        document.getElementById('username').value = (username || '').replace(/&quot;/g, '"');
         document.getElementById('username').disabled = true;
+        document.getElementById('displayName').value = (displayName || '').replace(/&quot;/g, '"');
+        document.getElementById('isActive').checked = isActive;
         document.getElementById('passwordGroup').style.display = 'none';
         document.getElementById('isActiveGroup').style.display = 'block';
         document.getElementById('userModal').classList.add('active');

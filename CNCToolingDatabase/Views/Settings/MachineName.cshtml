@@ -32,7 +32,7 @@
             <tr>
                 <th>No.</th>
                 <th>Name</th>
-                <th>Description</th>
+                <th>Serial Number</th>
                 <th>Created By</th>
                 <th>Created Date</th>
                 <th>Status</th>
@@ -75,7 +75,7 @@
                             }
                         </td>
                         <td>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@item.Name', '@(item.Description ?? "")', @item.IsActive.ToString().ToLower())">Edit</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@(item.Name.Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Description ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', @item.IsActive.ToString().ToLower())">Edit</button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(@item.Id, '@item.Name')">Delete</button>
                         </td>
                     </tr>
@@ -127,8 +127,8 @@
                     <input type="text" id="name" class="form-control" required />
                 </div>
                 <div class="form-group">
-                    <label for="description">Description</label>
-                    <input type="text" id="description" class="form-control" />
+                    <label for="serialNumber">Serial Number</label>
+                    <input type="text" id="serialNumber" class="form-control" placeholder="e.g. E123546WR, 102222ED" />
                 </div>
                 <div class="form-group" id="isActiveGroup" style="display: none;">
                     <label>
@@ -161,16 +161,17 @@
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('name').disabled = false;
+        document.getElementById('serialNumber').value = '';
         document.getElementById('isActiveGroup').style.display = 'none';
         document.getElementById('itemModal').classList.add('active');
     }
     
-    function editItem(id, name, description, isActive) {
+    function editItem(id, name, serialNumber, isActive) {
         document.getElementById('modalTitle').textContent = 'Edit Machine Name';
         document.getElementById('itemId').value = id;
-        document.getElementById('name').value = name;
+        document.getElementById('name').value = (name || '').replace(/&quot;/g, '"');
         document.getElementById('name').disabled = true;
-        document.getElementById('description').value = description;
+        document.getElementById('serialNumber').value = (serialNumber || '').replace(/&quot;/g, '"');
         document.getElementById('isActive').checked = isActive;
         document.getElementById('isActiveGroup').style.display = 'block';
         document.getElementById('itemModal').classList.add('active');
@@ -209,15 +210,15 @@
         
         const itemId = document.getElementById('itemId').value;
         const name = document.getElementById('name').value;
-        const description = document.getElementById('description').value;
+        const serialNumber = document.getElementById('serialNumber').value;
         const isActive = document.getElementById('isActive').checked;
         
         let url = '/Settings/CreateMachineName';
-        let body = `name=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}`;
+        let body = `name=${encodeURIComponent(name)}&description=${encodeURIComponent(serialNumber)}`;
         
         if (itemId) {
             url = '/Settings/UpdateMachineName';
-            body = `id=${itemId}&description=${encodeURIComponent(description)}&isActive=${isActive}`;
+            body = `id=${itemId}&description=${encodeURIComponent(serialNumber)}&isActive=${isActive}`;
         }
         
         try {

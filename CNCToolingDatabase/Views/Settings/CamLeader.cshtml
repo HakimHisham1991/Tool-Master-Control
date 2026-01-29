@@ -32,7 +32,7 @@
             <tr>
                 <th>No.</th>
                 <th>Name</th>
-                <th>Description</th>
+                <th>Position</th>
                 <th>Created By</th>
                 <th>Created Date</th>
                 <th>Status</th>
@@ -127,8 +127,14 @@
                     <input type="text" id="nameValue" class="form-control" required />
                 </div>
                 <div class="form-group">
-                    <label for="description">Description</label>
-                    <input type="text" id="description" class="form-control" />
+                    <label for="position">Position</label>
+                    <select id="position" class="form-control">
+                        <option value="">-- Select Position --</option>
+                        <option value="Director">Director</option>
+                        <option value="HOD">HOD</option>
+                        <option value="CAM Manager">CAM Manager</option>
+                        <option value="Design Manager">Design Manager</option>
+                    </select>
                 </div>
                 <div class="form-group" id="isActiveGroup" style="display: none;">
                     <label>
@@ -161,16 +167,17 @@
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('nameValue').disabled = false;
+        document.getElementById('position').value = '';
         document.getElementById('isActiveGroup').style.display = 'none';
         document.getElementById('itemModal').classList.add('active');
     }
     
-    function editItem(id, nameVal, description, isActive) {
+    function editItem(id, nameVal, position, isActive) {
         document.getElementById('modalTitle').textContent = 'Edit CAM Leader';
         document.getElementById('itemId').value = id;
-        document.getElementById('nameValue').value = nameVal.replace(/&quot;/g, '"');
+        document.getElementById('nameValue').value = (nameVal || '').replace(/&quot;/g, '"');
         document.getElementById('nameValue').disabled = true;
-        document.getElementById('description').value = (description || '').replace(/&quot;/g, '"');
+        document.getElementById('position').value = (position || '').replace(/&quot;/g, '"');
         document.getElementById('isActive').checked = isActive;
         document.getElementById('isActiveGroup').style.display = 'block';
         document.getElementById('itemModal').classList.add('active');
@@ -210,15 +217,15 @@
         
         const itemId = document.getElementById('itemId').value;
         const nameVal = document.getElementById('nameValue').value;
-        const description = document.getElementById('description').value;
+        const position = document.getElementById('position').value;
         const isActive = document.getElementById('isActive').checked;
         
         let url = '/Settings/CreateCamLeader';
-        let body = 'name=' + encodeURIComponent(nameVal) + '&description=' + encodeURIComponent(description);
+        let body = 'name=' + encodeURIComponent(nameVal) + '&description=' + encodeURIComponent(position);
         
         if (itemId) {
             url = '/Settings/UpdateCamLeader';
-            body = 'id=' + itemId + '&description=' + encodeURIComponent(description) + '&isActive=' + isActive;
+            body = 'id=' + itemId + '&description=' + encodeURIComponent(position) + '&isActive=' + isActive;
         }
         
         try {

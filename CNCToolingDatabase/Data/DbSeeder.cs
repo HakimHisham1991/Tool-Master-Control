@@ -197,9 +197,13 @@ public static class DbSeeder
         {
             if (context.MachineNames != null && !context.MachineNames.Any())
             {
-                foreach (var name in "A002|A003|A004|A006|A007|A008|A009|A010|A011|A012|A013|A014|A015|A016|A017|A018|A019|A020|A021|A022|A023|A024|A025|A026|A1-31|A1-33|A1-52|A2-31|A2-52|A2-53|A3-31|A3-52|A4-31|A4-31a|A4-32|A4-53|A5-31|A5-31A|A5-42|A5-42A|A5-53|A6-31|A6-31a|A6-32|A6-32A|A6-34|A6-35|A6-53|A7-31|A7-32|A7-53|A8-31|A8-32|A8-53|AV06|AV07|AV08|AV09|AV11|AV12|B1-32|B1-33|B1-34|B1-45|B1-51|B1-53|B2-32|B2-32a|B2-33|B2-34|B2-35|B2-51|B3-41|B3-52|BR01|C-32|C-33|C-34|C-51|C-52|FC01|FC02|FC03|FC04|FC05|FC06|FC07|FC08|FC09|FC10|FC11|FC12|FC13|FC13a|FC14|FC15|FC16|FC17|FC18|GK01|GK02|GR01|GR02|GR03|GR04|H1-21|H1-42|H1-43|H1-44|H2-31|H2-51|H2-52|H2-53|H2-54|H3-31|H3-34|H3-35|H3-36|H3-51|H3-52|H3-53|HW01|HW02|HW03|HW05|HW06|HW07|HW08|HW09|HW12|HW14|HW15|HW16|HW17|HW18|HW19|HW20|HW21|HW22|HW23|HW24|HW25|J1-21|J1-22|J1-23|J1-24|J1-25|J1-26|J1-27|J1-31|J1-32|J2-21|J2-22|J2-31|J2-32|J2-34|J2-35|J2-53|J2-56|J3-21|J3-22|J4-41|J4-52|J5-41|J5-52|J6-41|J6-52|J7-21|J7-22|J8-41|J8-52|K1-31|K1-32|K1-33|K1-34|K1-41|K1-42|K10-21|K10-22|K10-23|K10-24|K2-31|K2-32|K2-34|K2-35|K2-36|K2-37|K2-37a|K2-41|K2-42|K2-43|K3-31a|K3-32|K3-32a|K3-33|K3-33a|K3-34|K4-31a|K4-32|K4-33|K4-34|K4-35|K4-42|K5-21|K5-22|K5-41|K5-42|K5-43|K5-44|K6-21|K6-21a|K6-22|K6-22a|K6-23|K7-21|K7-22|K7-23|K7-24|K7-31|K7-32|K8-21|K8-22|K8-23|K8-24|K9-21|K9-22|K9-23|K9-24|M1-21|M1-22|MD01|MD02|MD03|MD04|MD05|MD06|MD07|MD08|MD09|MD10|MD11|MD12|MD13|MD14|MD15|S001|S002|SM01|SM02|SM03|SM05|SM06|SM09|SM10|SM11|SM12|SM13|SM14|SM15|SM16|SM17|SP00|SP01|SP02|SP03|SP04|SP05|SP06|SP07|SP08|SP09|SP11|SP12|SP13|SP14|SP15|SP16|SP17|SP19|SP20|SP21|SP22|SP23|TM01|TM02".Split('|'))
+                var names = "A002|A003|A004|A006|A007|A008|A009|A010|A011|A012|A013|A014|A015|A016|A017|A018|A019|A020|A021|A022|A023|A024|A025|A026|A1-31|A1-33|A1-52|A2-31|A2-52|A2-53|A3-31|A3-52|A4-31|A4-31a|A4-32|A4-53|A5-31|A5-31A|A5-42|A5-42A|A5-53|A6-31|A6-31a|A6-32|A6-32A|A6-34|A6-35|A6-53|A7-31|A7-32|A7-53|A8-31|A8-32|A8-53|AV06|AV07|AV08|AV09|AV11|AV12|B1-32|B1-33|B1-34|B1-45|B1-51|B1-53|B2-32|B2-32a|B2-33|B2-34|B2-35|B2-51|B3-41|B3-52|BR01|C-32|C-33|C-34|C-51|C-52|FC01|FC02|FC03|FC04|FC05|FC06|FC07|FC08|FC09|FC10|FC11|FC12|FC13|FC13a|FC14|FC15|FC16|FC17|FC18|GK01|GK02|GR01|GR02|GR03|GR04|H1-21|H1-42|H1-43|H1-44|H2-31|H2-51|H2-52|H2-53|H2-54|H3-31|H3-34|H3-35|H3-36|H3-51|H3-52|H3-53|HW01|HW02|HW03|HW05|HW06|HW07|HW08|HW09|HW12|HW14|HW15|HW16|HW17|HW18|HW19|HW20|HW21|HW22|HW23|HW24|HW25|J1-21|J1-22|J1-23|J1-24|J1-25|J1-26|J1-27|J1-31|J1-32|J2-21|J2-22|J2-31|J2-32|J2-34|J2-35|J2-53|J2-56|J3-21|J3-22|J4-41|J4-52|J5-41|J5-52|J6-41|J6-52|J7-21|J7-22|J8-41|J8-52|K1-31|K1-32|K1-33|K1-34|K1-41|K1-42|K10-21|K10-22|K10-23|K10-24|K2-31|K2-32|K2-34|K2-35|K2-36|K2-37|K2-37a|K2-41|K2-42|K2-43|K3-31a|K3-32|K3-32a|K3-33|K3-33a|K3-34|K4-31a|K4-32|K4-33|K4-34|K4-35|K4-42|K5-21|K5-22|K5-41|K5-42|K5-43|K5-44|K6-21|K6-21a|K6-22|K6-22a|K6-23|K7-21|K7-22|K7-23|K7-24|K7-31|K7-32|K8-21|K8-22|K8-23|K8-24|K9-21|K9-22|K9-23|K9-24|M1-21|M1-22|MD01|MD02|MD03|MD04|MD05|MD06|MD07|MD08|MD09|MD10|MD11|MD12|MD13|MD14|MD15|S001|S002|SM01|SM02|SM03|SM05|SM06|SM09|SM10|SM11|SM12|SM13|SM14|SM15|SM16|SM17|SP00|SP01|SP02|SP03|SP04|SP05|SP06|SP07|SP08|SP09|SP11|SP12|SP13|SP14|SP15|SP16|SP17|SP19|SP20|SP21|SP22|SP23|TM01|TM02".Split('|');
+                for (var i = 0; i < names.Length; i++)
                 {
-                    context.MachineNames.Add(new MachineName { Name = name, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    var serial = (i % 2 == 0)
+                        ? "E" + (123546 + i / 2).ToString("D6") + "WR"
+                        : (102222 + (i - 1) / 2).ToString("D6") + "ED";
+                    context.MachineNames.Add(new MachineName { Name = names[i], Description = serial, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }
@@ -210,9 +214,11 @@ public static class DbSeeder
         {
             if (context.MachineWorkcenters != null && !context.MachineWorkcenters.Any())
             {
-                foreach (var workcenter in "2X-01|2X-02|2X-03|2X-04|2X-06|2X-07|2X-08|2X-09|2X-10|2X-11|3X-01|3X-02|3X-03|3X-07|3X-08|3X-09|3X-09i|3X-10|3X-11|3X-14|3X-18|3X-19|3X-20|3X-21|3X-22|3X-23|3X-26|3X-27|3X-28|3X-29|3X-30|3X-31|3X-32|4X-01|4X-02|4X-03|4X-07|4X-08|4X-10|4X-11|4X-13|4X-14|4X-15|4X-16|5X-01|5X-02|5X-03|5X-04|5X-05|5X-06|5X-07|5X-08|5X-09|5X-10|5X-11|5X-12|5X-13|5X-14|5X-15".Split('|'))
+                var workcenters = "2X-01|2X-02|2X-03|2X-04|2X-06|2X-07|2X-08|2X-09|2X-10|2X-11|3X-01|3X-02|3X-03|3X-07|3X-08|3X-09|3X-09i|3X-10|3X-11|3X-14|3X-18|3X-19|3X-20|3X-21|3X-22|3X-23|3X-26|3X-27|3X-28|3X-29|3X-30|3X-31|3X-32|4X-01|4X-02|4X-03|4X-07|4X-08|4X-10|4X-11|4X-13|4X-14|4X-15|4X-16|5X-01|5X-02|5X-03|5X-04|5X-05|5X-06|5X-07|5X-08|5X-09|5X-10|5X-11|5X-12|5X-13|5X-14|5X-15".Split('|');
+                foreach (var wc in workcenters)
                 {
-                    context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = workcenter, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    var axis = wc.StartsWith("2X") ? "2-Axis" : wc.StartsWith("3X") ? "3-Axis" : wc.StartsWith("4X") ? "4-Axis" : wc.StartsWith("5X") ? "5-Axis" : "3-Axis";
+                    context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = wc, Description = axis, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }
@@ -312,9 +318,10 @@ public static class DbSeeder
         {
             if (context.CamLeaders != null && !context.CamLeaders.Any())
             {
-                foreach (var name in new[] { "Venkatesan", "Desmond", "Adib Jamil" })
+                var camLeaderSeed = new[] { ("Venkatesan", "Director"), ("Desmond", "HOD"), ("Adib Jamil", "CAM Manager") };
+                foreach (var (name, position) in camLeaderSeed)
                 {
-                    context.CamLeaders.Add(new CamLeader { Name = name, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    context.CamLeaders.Add(new CamLeader { Name = name, Description = position, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }
@@ -325,9 +332,10 @@ public static class DbSeeder
         {
             if (context.CamProgrammers != null && !context.CamProgrammers.Any())
             {
-                foreach (var name in new[] { "Adib Jamil", "Bakhari Hussin", "Faiq Faizul", "Hakim Hisham", "Hakim Ramaly", "Ismail Jahrin", "Low Boon Bao", "Nik Faiszal Abdullah", "Tan Chee Wei" })
+                var camProgrammerSeed = new[] { ("Adib Jamil", "Subang Plant"), ("Bakhari Hussin", "Shah Alam Plant"), ("Faiq Faizul", "Subang Plant"), ("Hakim Hisham", "Subang Plant"), ("Hakim Ramaly", "Shah Alam Plant"), ("Ismail Jahrin", "Subang Plant"), ("Low Boon Bao", "Shah Alam Plant"), ("Nik Faiszal Abdullah", "Subang Plant"), ("Tan Chee Wei", "Shah Alam Plant") };
+                foreach (var (name, location) in camProgrammerSeed)
                 {
-                    context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = null, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }

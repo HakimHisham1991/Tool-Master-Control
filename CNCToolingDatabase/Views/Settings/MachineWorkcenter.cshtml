@@ -32,7 +32,7 @@
             <tr>
                 <th>No.</th>
                 <th>Workcenter</th>
-                <th>Description</th>
+                <th>Axis</th>
                 <th>Created By</th>
                 <th>Created Date</th>
                 <th>Status</th>
@@ -75,7 +75,7 @@
                             }
                         </td>
                         <td>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@item.Workcenter', '@(item.Description ?? "")', @item.IsActive.ToString().ToLower())">Edit</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@(item.Workcenter.Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Description ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', @item.IsActive.ToString().ToLower())">Edit</button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(@item.Id, '@item.Workcenter')">Delete</button>
                         </td>
                     </tr>
@@ -127,8 +127,8 @@
                     <input type="text" id="workcenter" class="form-control" required />
                 </div>
                 <div class="form-group">
-                    <label for="description">Description</label>
-                    <input type="text" id="description" class="form-control" />
+                    <label for="axis">Axis</label>
+                    <input type="text" id="axis" class="form-control" placeholder="e.g. 2-Axis, 3-Axis, 4-Axis, 5-Axis" />
                 </div>
                 <div class="form-group" id="isActiveGroup" style="display: none;">
                     <label>
@@ -165,12 +165,12 @@
         document.getElementById('itemModal').classList.add('active');
     }
     
-    function editItem(id, workcenter, description, isActive) {
+    function editItem(id, workcenter, axis, isActive) {
         document.getElementById('modalTitle').textContent = 'Edit Machine Workcenter';
         document.getElementById('itemId').value = id;
-        document.getElementById('workcenter').value = workcenter;
+        document.getElementById('workcenter').value = (workcenter || '').replace(/&quot;/g, '"');
         document.getElementById('workcenter').disabled = true;
-        document.getElementById('description').value = description;
+        document.getElementById('axis').value = (axis || '').replace(/&quot;/g, '"');
         document.getElementById('isActive').checked = isActive;
         document.getElementById('isActiveGroup').style.display = 'block';
         document.getElementById('itemModal').classList.add('active');
@@ -209,15 +209,15 @@
         
         const itemId = document.getElementById('itemId').value;
         const workcenter = document.getElementById('workcenter').value;
-        const description = document.getElementById('description').value;
+        const axis = document.getElementById('axis').value;
         const isActive = document.getElementById('isActive').checked;
         
         let url = '/Settings/CreateMachineWorkcenter';
-        let body = `workcenter=${encodeURIComponent(workcenter)}&description=${encodeURIComponent(description)}`;
+        let body = `workcenter=${encodeURIComponent(workcenter)}&description=${encodeURIComponent(axis)}`;
         
         if (itemId) {
             url = '/Settings/UpdateMachineWorkcenter';
-            body = `id=${itemId}&description=${encodeURIComponent(description)}&isActive=${isActive}`;
+            body = `id=${itemId}&description=${encodeURIComponent(axis)}&isActive=${isActive}`;
         }
         
         try {
