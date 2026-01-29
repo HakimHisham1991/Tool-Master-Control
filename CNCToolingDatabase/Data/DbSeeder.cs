@@ -146,22 +146,46 @@ public static class DbSeeder
             {
                 context.ProjectCodes.RemoveRange(context.ProjectCodes.ToList());
                 context.SaveChanges();
-                var codeProjectPairs = new[] {
-                    ("AB03", "UTAS A350 Component"), ("AD01", "MCS-C"), ("AD02", "MSS-F"), ("AD03", "MABS A"),
-                    ("AE01", "Honeywell"), ("AE02", "Celestica Localisation"), ("AE03", "DU1080"), ("AE04", "Plexus"), ("AE05", "VMI PULL"),
-                    ("AG01", "A350 XWB"), ("AG02", "A320 FTB-6B"), ("AG03", "Spirit Subang A320 6C"), ("AG04", "SPIRIT EPIPHRON TTI & CR"),
-                    ("AG05", "Spirit Wave 4"), ("AG06", "WAVE 5"), ("AG07", "A321 XLR"),
-                    ("AH01", "Goodrich"), ("AH02", "787 Fan Cowl"), ("AH03", "A350 Fan Cowl"), ("AH04", "Motor Controller Plates"), ("AH05", "C-Series & MRJ Fan Cowl"),
-                    ("AJ01", "Celestica HS"),
-                    ("AL01", "A350 SOGERMA"), ("AL02", "A321 S14A SOGERMA"), ("AL03", "Celeste Seat"), ("AL04", "A350 MLGB"), ("AL05", "Celeste Seat 2nd Package"),
-                    ("AL06", "AIRBUS D2P SBMSA"), ("AL07", "STELIA D2P SBMSA"), ("AL10", "Airbus Atlantic NPI & SB76"),
-                    ("AM01", "MC130 & MC133"), ("AM03", "GKN A350 TE"),
-                    ("AP02", "FHI-SAT Fitting"),
-                    ("SA01", "SSP A320 Neo & C-Series Flanges"), ("SB01", "Senior Ermeto")
+                var codeCustomerProjectTrios = new[] {
+                    ("AB03", "UTAS US", "UTAS A350 Component"),
+                    ("AD01", "Senior Ermeto", "MCS-C"),
+                    ("AD02", "Meggitt Akrons Braking Systems", "MSS-F"),
+                    ("AD03", "UTAS India", "MABS A"),
+                    ("AE01", "Celestica", "Honeywell"),
+                    ("AE02", "Honeywell", "Celestica Localisation"),
+                    ("AE03", "Spirit Aerosystems", "DU1080"),
+                    ("AE04", "Celestica", "Plexus"),
+                    ("AE05", "Airbus Atlantic", "VMI PULL"),
+                    ("AG01", "Honeywell", "A350 XWB"),
+                    ("AG02", "SOGERMA, FRENCH", "A320 FTB-6B"),
+                    ("AG03", "Meggitt Coventry", "Spirit Subang A320 6C"),
+                    ("AG04", "Meggitt Akrons Braking Systems", "SPIRIT EPIPHRON TTI & CR"),
+                    ("AG05", "UTAS India", "Spirit Wave 4"),
+                    ("AG06", "Airbus", "WAVE 5"),
+                    ("AG07", "Airbus Atlantic", "A321 XLR"),
+                    ("AH01", "Meggitt Coventry", "Goodrich"),
+                    ("AH02", "SAM", "787 Fan Cowl"),
+                    ("AH03", "UTAS / CTRM", "A350 Fan Cowl"),
+                    ("AH04", "UTAS US", "Motor Controller Plates"),
+                    ("AH05", "UTAS US", "C-Series & MRJ Fan Cowl"),
+                    ("AJ01", "Meggitt Coventry", "Celestica HS"),
+                    ("AL01", "Meggitt Akrons Braking Systems", "A350 SOGERMA"),
+                    ("AL02", "SOGERMA, FRENCH", "A321 S14A SOGERMA"),
+                    ("AL03", "UTAS / CTRM", "Celeste Seat"),
+                    ("AL04", "GKN Aerospace", "A350 MLGB"),
+                    ("AL05", "Meggitt Coventry", "Celeste Seat 2nd Package"),
+                    ("AL06", "Honeywell", "AIRBUS D2P SBMSA"),
+                    ("AL07", "GKN Aerospace", "STELIA D2P SBMSA"),
+                    ("AL10", "Airbus", "Airbus Atlantic NPI & SB76"),
+                    ("AM01", "Celestica", "MC130 & MC133"),
+                    ("AM03", "UTAS / CTRM", "GKN A350 TE"),
+                    ("AP02", "SAM", "FHI-SAT Fitting"),
+                    ("SA01", "Stelia Aerospace", "SSP A320 Neo & C-Series Flanges"),
+                    ("SB01", "Spirit Aerosystems", "Senior Ermeto")
                 };
-                foreach (var (code, project) in codeProjectPairs)
+                foreach (var (code, customer, project) in codeCustomerProjectTrios)
                 {
-                    context.ProjectCodes.Add(new ProjectCode { Code = code, Description = null, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    context.ProjectCodes.Add(new ProjectCode { Code = code, Description = customer, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }
