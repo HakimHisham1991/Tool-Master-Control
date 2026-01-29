@@ -21,7 +21,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search project codes..." class="search-input" id="searchInput" />
+            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search project codes or customers..." class="search-input" id="searchInput" />
         </div>
     </form>
 </div>
@@ -31,7 +31,7 @@
         <thead>
             <tr>
                 <th>Code</th>
-                <th>Description</th>
+                <th>Customer</th>
                 <th>Created By</th>
                 <th>Created Date</th>
                 <th>Status</th>
@@ -71,7 +71,8 @@
                             }
                         </td>
                         <td>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@item.Code', '@(item.Description ?? "")', @item.IsActive.ToString().ToLower())">Edit</button>
+                            @{ var custJs = (item.Description ?? "").Replace("\\", "\\\\").Replace("'", "\\'"); var codeJs = (item.Code ?? "").Replace("\\", "\\\\").Replace("'", "\\'"); }
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@Html.Raw(codeJs)', '@Html.Raw(custJs)', @item.IsActive.ToString().ToLower())">Edit</button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(@item.Id, '@item.Code')">Delete</button>
                         </td>
                     </tr>
@@ -123,8 +124,10 @@
                     <input type="text" id="code" class="form-control" required />
                 </div>
                 <div class="form-group">
-                    <label for="description">Description</label>
-                    <input type="text" id="description" class="form-control" />
+                    <label for="customer">Customer</label>
+                    <select id="customer" class="form-control">
+                        <option value="">-- Select Customer --</option>
+                    </select>
                 </div>
                 <div class="form-group" id="isActiveGroup" style="display: none;">
                     <label>
@@ -152,21 +155,43 @@
         }, 300);
     });
     
+    const CUSTOMERS = [
+        'Airbus', 'Airbus Atlantic', 'Celestica', 'GKN Aerospace', 'Honeywell',
+        'Meggitt Akrons Braking Systems', 'Meggitt Coventry', 'Meggitt Sensing System',
+        'Plexus', 'SAM', 'Senior Aerospace Thailand', 'Senior Ermeto', 'Senior SSP',
+        'SOGERMA, FRENCH', 'Spirit Aerosystems', 'Stelia Aerospace', 'UTAS India',
+        'UTAS / CTRM', 'UTAS US'
+    ];
+    
+    function fillCustomerOptions(selectedValue) {
+        const sel = document.getElementById('customer');
+        sel.innerHTML = '<option value="">-- Select Customer --</option>';
+        const seen = new Set(['']);
+        for (const c of CUSTOMERS) {
+            if (!seen.has(c)) { seen.add(c); sel.appendChild(new Option(c, c)); }
+        }
+        if (selectedValue && !CUSTOMERS.includes(selectedValue)) {
+            sel.appendChild(new Option(selectedValue, selectedValue));
+        }
+        sel.value = selectedValue || '';
+    }
+    
     function openCreateModal() {
         document.getElementById('modalTitle').textContent = 'Add Project Code';
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('code').disabled = false;
+        fillCustomerOptions('');
         document.getElementById('isActiveGroup').style.display = 'none';
         document.getElementById('itemModal').classList.add('active');
     }
     
-    function editItem(id, code, description, isActive) {
+    function editItem(id, code, customer, isActive) {
         document.getElementById('modalTitle').textContent = 'Edit Project Code';
         document.getElementById('itemId').value = id;
         document.getElementById('code').value = code;
         document.getElementById('code').disabled = true;
-        document.getElementById('description').value = description;
+        fillCustomerOptions(customer || '');
         document.getElementById('isActive').checked = isActive;
         document.getElementById('isActiveGroup').style.display = 'block';
         document.getElementById('itemModal').classList.add('active');
@@ -205,15 +230,15 @@
         
         const itemId = document.getElementById('itemId').value;
         const code = document.getElementById('code').value;
-        const description = document.getElementById('description').value;
+        const customer = document.getElementById('customer').value;
         const isActive = document.getElementById('isActive').checked;
         
         let url = '/Settings/CreateProjectCode';
-        let body = `code=${encodeURIComponent(code)}&description=${encodeURIComponent(description)}`;
+        let body = `code=${encodeURIComponent(code)}&description=${encodeURIComponent(customer)}`;
         
         if (itemId) {
             url = '/Settings/UpdateProjectCode';
-            body = `id=${itemId}&description=${encodeURIComponent(description)}&isActive=${isActive}`;
+            body = `id=${itemId}&description=${encodeURIComponent(customer)}&isActive=${isActive}`;
         }
         
         try {
