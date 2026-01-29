@@ -1,8 +1,29 @@
+using System.Data;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Repositories;
 using CNCToolingDatabase.Services;
 using CNCToolingDatabase.Middleware;
+
+static bool ColumnExists(DbConnection conn, string table, string column)
+{
+    using var cmd = conn.CreateCommand();
+    cmd.CommandText = $"PRAGMA table_info({table})";
+    using var r = cmd.ExecuteReader();
+    while (r.Read())
+        if (string.Equals(r.GetString(1), column, StringComparison.OrdinalIgnoreCase))
+            return true;
+    return false;
+}
+
+static void EnsureColumn(DbConnection conn, string table, string column, string typeAndDefault)
+{
+    if (ColumnExists(conn, table, column)) return;
+    using var cmd = conn.CreateCommand();
+    cmd.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {typeAndDefault};";
+    cmd.ExecuteNonQuery();
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,22 +55,19 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     context.Database.EnsureCreated();
-    // Add new columns if DB existed before they were added (EnsureCreated does not alter tables)
+    // Add new columns only if missing (avoids failed ALTER and log noise when columns exist)
+    var conn = context.Database.GetDbConnection();
+    if (conn.State != ConnectionState.Open) conn.Open();
     try
     {
-        context.Database.ExecuteSqlRaw("ALTER TABLE ToolListDetails ADD COLUMN ToolPathTimeMinutes REAL NOT NULL DEFAULT 0;");
+        EnsureColumn(conn, "ToolListDetails", "ToolPathTimeMinutes", "REAL NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "ToolListDetails", "Remarks", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(conn, "ToolListHeaders", "MachineModel", "TEXT NOT NULL DEFAULT ''");
     }
-    catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase)) { }
-    try
+    finally
     {
-        context.Database.ExecuteSqlRaw("ALTER TABLE ToolListDetails ADD COLUMN Remarks TEXT NOT NULL DEFAULT '';");
+        if (conn.State == ConnectionState.Open) conn.Close();
     }
-    catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase)) { }
-    try
-    {
-        context.Database.ExecuteSqlRaw("ALTER TABLE ToolListHeaders ADD COLUMN MachineModel TEXT NOT NULL DEFAULT '';");
-    }
-    catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase)) { }
     DbSeeder.Seed(context);
 }
 

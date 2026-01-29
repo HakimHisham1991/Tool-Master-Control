@@ -129,6 +129,22 @@ public class ToolListEditorController : Controller
         return Json(models);
     }
     
+    /// <summary>Consumable Tool Descriptions from Tool Code Database - Unique only. Used for dropdown in Create/Edit Tool List.</summary>
+    [HttpGet]
+    public async Task<IActionResult> GetConsumableToolDescriptions()
+    {
+        var rows = await _context.ToolCodeUniques
+            .AsNoTracking()
+            .OrderBy(t => t.ConsumableCode)
+            .Select(t => new { value = t.ConsumableCode, text = t.ConsumableCode, supplier = t.Supplier })
+            .ToListAsync();
+        var distinct = rows
+            .GroupBy(x => x.value)
+            .Select(g => new { value = g.Key, text = g.Key, supplier = g.First().supplier })
+            .ToList();
+        return Json(distinct);
+    }
+    
     [HttpGet]
     public async Task<IActionResult> Export(int id, string format)
     {

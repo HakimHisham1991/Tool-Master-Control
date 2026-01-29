@@ -116,7 +116,7 @@
                 <th style="width: 40px;">#</th>
                 <th>Tool No.</th>
                 <th>Tool Name</th>
-                <th>Consumable Tool Description</th>
+                <th>Consumable Tool Description <a href="/ToolCodeUnique" target="_blank" class="form-hint" title="Register new codes">↗</a></th>
                 <th>Tool Supplier</th>
                 <th>Tool Holder</th>
                 <th>Tool Diameter (D1)</th>
@@ -140,7 +140,16 @@
                     <td class="row-number">@(i + 1)</td>
                     <td><input type="text" class="cell-input" data-field="toolNumber" value="@detail.ToolNumber" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     <td><input type="text" class="cell-input" data-field="toolDescription" value="@detail.ToolDescription" @(Model.IsReadOnly ? "readonly" : "") /></td>
-                    <td><input type="text" class="cell-input" data-field="consumableCode" value="@detail.ConsumableCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td class="consumable-cell">
+                        @if (Model.IsReadOnly)
+                        {
+                            <input type="text" class="cell-input" data-field="consumableCode" value="@detail.ConsumableCode" readonly />
+                        }
+                        else
+                        {
+                            <select class="cell-input cell-select" data-field="consumableCode" data-current="@detail.ConsumableCode" data-supplier="@detail.Supplier"></select>
+                        }
+                    </td>
                     <td><input type="text" class="cell-input" data-field="supplier" value="@detail.Supplier" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     <td><input type="text" class="cell-input" data-field="holderExtensionCode" value="@detail.HolderExtensionCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     <td><input type="number" step="0.01" class="cell-input" data-field="diameter" value="@(detail.Diameter?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
@@ -177,6 +186,7 @@
             </svg>
             Add Row
         </button>
+        <span class="table-actions-hint">Register new consumable codes in <a href="/ToolCodeUnique" target="_blank">Tool Code Database - Unique</a>.</span>
     </div>
 }
 
@@ -294,6 +304,57 @@
         } catch (error) {
             console.error('Error loading machine models:', error);
         }
+        
+        // Consumable Tool Description (Tool Code Database - Unique only)
+        try {
+            const r = await fetch('/ToolListEditor/GetConsumableToolDescriptions');
+            consumableOptions = await r.json();
+            document.querySelectorAll('#detailsBody select[data-field="consumableCode"]').forEach(sel => {
+                const cur = sel.dataset.current || '';
+                fillConsumableSelect(sel, cur);
+                bindConsumableChange(sel.closest('tr'));
+            });
+        } catch (error) {
+            console.error('Error loading consumable tool descriptions:', error);
+        }
+    }
+    
+    let consumableOptions = [];
+    
+    function fillConsumableSelect(sel, currentVal) {
+        sel.innerHTML = '';
+        const opt0 = document.createElement('option');
+        opt0.value = '';
+        opt0.textContent = '-- Select --';
+        sel.appendChild(opt0);
+        const values = new Set();
+        consumableOptions.forEach(o => {
+            if (values.has(o.value)) return;
+            values.add(o.value);
+            const opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.text;
+            opt.dataset.supplier = o.supplier || '';
+            sel.appendChild(opt);
+        });
+        if (currentVal && !values.has(currentVal)) {
+            const opt = document.createElement('option');
+            opt.value = currentVal;
+            opt.textContent = currentVal;
+            sel.appendChild(opt);
+        }
+        sel.value = currentVal || '';
+    }
+    
+    function bindConsumableChange(row) {
+        const sel = row.querySelector('select[data-field="consumableCode"]');
+        const sup = row.querySelector('[data-field="supplier"]');
+        if (!sel || !sup) return;
+        sel.addEventListener('change', function() {
+            hasUnsavedChanges = true;
+            const chosen = sel.options[sel.selectedIndex];
+            sup.value = (chosen && chosen.dataset.supplier) ? chosen.dataset.supplier : '';
+        });
     }
     
     // Initialize dropdowns when page loads
@@ -400,7 +461,7 @@
             <td class="row-number">${rowCount}</td>
             <td><input type="text" class="cell-input" data-field="toolNumber" /></td>
             <td><input type="text" class="cell-input" data-field="toolDescription" /></td>
-            <td><input type="text" class="cell-input" data-field="consumableCode" /></td>
+            <td class="consumable-cell"><select class="cell-input cell-select" data-field="consumableCode"></select></td>
             <td><input type="text" class="cell-input" data-field="supplier" /></td>
             <td><input type="text" class="cell-input" data-field="holderExtensionCode" /></td>
             <td><input type="number" step="0.01" class="cell-input" data-field="diameter" /></td>
@@ -413,10 +474,12 @@
             <td><button type="button" class="btn-icon" onclick="removeRow(this)" title="Remove row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></td>
         `;
         tbody.appendChild(row);
+        fillConsumableSelect(row.querySelector('[data-field="consumableCode"]'), null);
         hasUnsavedChanges = true;
         row.querySelectorAll('.cell-input').forEach(input => {
             input.addEventListener('change', () => hasUnsavedChanges = true);
         });
+        bindConsumableChange(row);
     }
     
     function removeRow(btn) {

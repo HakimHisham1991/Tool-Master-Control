@@ -18,7 +18,7 @@ public class AccountController : Controller
     {
         if (_authService.IsAuthenticated(HttpContext))
         {
-            return RedirectToAction("Index", "ToolCode");
+            return RedirectToAction("Index", "ToolCodeUnique");
         }
         return View(new LoginViewModel());
     }
@@ -39,7 +39,7 @@ public class AccountController : Controller
         }
         
         _authService.SetUserSession(HttpContext, user);
-        return RedirectToAction("Index", "ToolCode");
+        return RedirectToAction("Index", "ToolCodeUnique");
     }
     
     [HttpGet("/logout")]

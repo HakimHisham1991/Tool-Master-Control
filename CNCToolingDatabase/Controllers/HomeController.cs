@@ -8,7 +8,7 @@ public class HomeController : Controller
     {
         if (HttpContext.Session.GetInt32("UserId").HasValue)
         {
-            return RedirectToAction("Index", "ToolCode");
+            return RedirectToAction("Index", "ToolCodeUnique");
         }
         return RedirectToAction("Login", "Account");
     }

@@ -535,6 +535,10 @@ select.form-control {
     text-align: right;
 }
 
+.cell-select {
+    min-width: 160px;
+}
+
 .row-number {
     text-align: center;
     color: var(--text-secondary);
@@ -543,6 +547,27 @@ select.form-control {
 
 .table-actions {
     margin-top: 12px;
+}
+
+.table-actions-hint {
+    margin-left: 12px;
+    font-size: 0.9em;
+    color: var(--text-muted, #666);
+}
+
+.table-actions-hint a {
+    color: var(--link-color, #0d6efd);
+}
+
+.form-hint {
+    font-size: 0.85em;
+    margin-left: 4px;
+    color: var(--link-color, #0d6efd);
+    text-decoration: none;
+}
+
+.form-hint:hover {
+    text-decoration: underline;
 }
 
 .modal {
