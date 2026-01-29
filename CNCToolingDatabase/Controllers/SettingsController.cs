@@ -690,6 +690,20 @@ public class SettingsController : Controller
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
         
+        var projectCodes = await _context.ProjectCodes
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.Code)
+            .Select(p => new { id = p.Id, code = p.Code, project = p.Project ?? "", customer = p.Description ?? "" })
+            .ToListAsync();
+        var materialSpecs = await _context.MaterialSpecs
+            .Where(m => m.IsActive)
+            .OrderBy(m => m.Spec)
+            .ThenBy(m => m.Material)
+            .Select(m => new { id = m.Id, spec = m.Spec, material = m.Material })
+            .ToListAsync();
+        ViewBag.ProjectCodesForPartNumber = projectCodes;
+        ViewBag.MaterialSpecsForPartNumber = materialSpecs;
+        
         return View(list);
     }
     

@@ -2,6 +2,10 @@
 @using System.Text.Json
 @{
     ViewData["Title"] = "Settings - Part Number";
+    var pcJson = JsonSerializer.Serialize(ViewBag.ProjectCodesForPartNumber ?? Array.Empty<object>());
+    pcJson = pcJson.Replace("</script>", "\\u003c/script>", StringComparison.OrdinalIgnoreCase);
+    var msJson = JsonSerializer.Serialize(ViewBag.MaterialSpecsForPartNumber ?? Array.Empty<object>());
+    msJson = msJson.Replace("</script>", "\\u003c/script>", StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="module-header">
@@ -187,10 +191,14 @@
 
 @section Scripts {
 <script>
+    window.__projectCodesForPartNumber = @Html.Raw(pcJson);
+    window.__materialSpecsForPartNumber = @Html.Raw(msJson);
+</script>
+<script>
     let searchTimeout;
     const searchInput = document.getElementById('searchInput');
-    let projectCodesData = [];
-    let materialSpecsData = [];
+    let projectCodesData = Array.isArray(window.__projectCodesForPartNumber) ? window.__projectCodesForPartNumber : [];
+    let materialSpecsData = Array.isArray(window.__materialSpecsForPartNumber) ? window.__materialSpecsForPartNumber : [];
     
     searchInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
@@ -198,23 +206,6 @@
             document.getElementById('searchForm').submit();
         }, 300);
     });
-    
-    async function loadDropdownData() {
-        try {
-            const [pcRes, msRes] = await Promise.all([
-                fetch('/Settings/GetProjectCodesForPartNumberDropdown', { credentials: 'same-origin' }),
-                fetch('/Settings/GetMaterialSpecsForPartNumberDropdown', { credentials: 'same-origin' })
-            ]);
-            if (pcRes.ok) {
-                const data = await pcRes.json();
-                if (Array.isArray(data)) projectCodesData = data;
-            }
-            if (msRes.ok) {
-                const data = await msRes.json();
-                if (Array.isArray(data)) materialSpecsData = data;
-            }
-        } catch (e) { console.error('Part Number dropdowns load failed:', e); }
-    }
     
     function fillProjectCodeOptions(selectedId) {
         const sel = document.getElementById('projectCode');
@@ -256,16 +247,14 @@
         document.getElementById('materialDisplay').value = opt ? (opt.dataset.material || '') : '';
     }
     
-    (async function init() {
-        await loadDropdownData();
+    (function init() {
         fillProjectCodeOptions(0);
         fillMaterialSpecOptions(0);
         document.getElementById('projectCode').addEventListener('change', onProjectCodeChange);
         document.getElementById('materialSpec').addEventListener('change', onMaterialSpecChange);
     })();
     
-    async function openCreateModal() {
-        await loadDropdownData();
+    function openCreateModal() {
         document.getElementById('modalTitle').textContent = 'Add Part Number';
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
@@ -279,13 +268,12 @@
         document.getElementById('itemModal').classList.add('active');
     }
     
-    async function editItemFromRow(btn) {
+    function editItemFromRow(btn) {
         const tr = btn.closest('tr');
         const raw = tr.getAttribute('data-edit');
         if (!raw) return;
         let d;
         try { d = JSON.parse(raw); } catch (e) { console.error('Edit row data parse failed:', e); return; }
-        await loadDropdownData();
         document.getElementById('modalTitle').textContent = 'Edit Part Number';
         document.getElementById('itemId').value = d.id;
         document.getElementById('nameValue').value = d.name;
