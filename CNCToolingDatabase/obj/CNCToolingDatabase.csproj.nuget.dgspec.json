@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj": {}
+    "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj": {}
   },
   "projects": {
-    "c:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj": {
+    "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
+        "projectUniqueName": "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
         "projectName": "CNCToolingDatabase",
-        "projectPath": "c:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
+        "projectPath": "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
         "packagesPath": "C:\\Users\\hakim.hisham\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\obj\\",
+        "outputPath": "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\hakim.hisham\\AppData\\Roaming\\NuGet\\NuGet.Config"
