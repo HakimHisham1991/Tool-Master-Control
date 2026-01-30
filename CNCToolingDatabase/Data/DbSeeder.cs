@@ -2,10 +2,8 @@ using System.Data;
 using System.Data.Common;
 using System.Globalization;
 using System.Linq;
-using System.Text.RegularExpressions;
 using CNCToolingDatabase.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CNCToolingDatabase.Data;
 
@@ -439,13 +437,15 @@ public static class DbSeeder
         
         if (!context.ToolListHeaders.Any())
         {
+            var masterLookup = GetToolCodeUniqueSeedData()
+                .ToDictionary(t => t.Consumable, t => (t.SystemToolName, t.Supplier, t.Dia, t.Flute, t.Radius));
             var toolLists = new List<ToolListHeader>
             {
-                CreateToolListWithDetails("PART-001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham"),
-                CreateToolListWithDetails("PART-001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham"),
-                CreateToolListWithDetails("PART-002", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil"),
-                CreateToolListWithDetails("PART-003", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul"),
-                CreateToolListWithDetails("PART-003", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul"),
+                CreateToolListWithDetails("PART-001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
+                CreateToolListWithDetails("PART-001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
+                CreateToolListWithDetails("PART-002", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil", masterLookup),
+                CreateToolListWithDetails("PART-003", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
+                CreateToolListWithDetails("PART-003", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
             };
             
             context.ToolListHeaders.AddRange(toolLists);
@@ -469,12 +469,9 @@ public static class DbSeeder
         
         if (context.ToolCodeUniques != null && !context.ToolCodeUniques.Any())
         {
-            var baseTime = DateTime.UtcNow.AddDays(-60);
-            foreach (var (consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
+            var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            foreach (var (systemName, consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
             {
-                var systemName = DeriveSystemToolName(consumable, dia, radius);
-                var created = baseTime.AddDays(Random.Shared.Next(0, 50));
-                var modified = created.AddDays(Random.Shared.Next(0, 20));
                 context.ToolCodeUniques.Add(new ToolCodeUnique
                 {
                     SystemToolName = systemName,
@@ -483,100 +480,12 @@ public static class DbSeeder
                     Diameter = dia,
                     FluteLength = flute,
                     CornerRadius = radius,
-                    CreatedDate = created,
-                    LastModifiedDate = modified
+                    CreatedDate = baseTime,
+                    LastModifiedDate = baseTime
                 });
             }
             context.SaveChanges();
         }
-
-        // One-time repopulate SystemToolName for existing ToolCodeUniques (Facemill/Endmill/Drill format)
-        const string runOnceKey = "ToolCodeUnique_SystemName_Repopulated";
-        if (context.ToolCodeUniques != null && context.ToolCodeUniques.Any())
-        {
-            try
-            {
-                var conn = context.Database.GetDbConnection();
-                conn.Open();
-                try
-                {
-                    using var cmd = conn.CreateCommand();
-                    cmd.CommandText = "SELECT COUNT(*) FROM RunOnce WHERE Key = @k";
-                    var p = cmd.CreateParameter();
-                    p.ParameterName = "@k";
-                    p.Value = runOnceKey;
-                    cmd.Parameters.Add(p);
-                    var count = Convert.ToInt32(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
-                    if (count > 0) return;
-                }
-                finally { conn.Close(); }
-                foreach (var t in context.ToolCodeUniques.ToList())
-                    t.SystemToolName = DeriveSystemToolName(t.ConsumableCode, t.Diameter, t.CornerRadius);
-                context.SaveChanges();
-                conn.Open();
-                try
-                {
-                    using var cmd = conn.CreateCommand();
-                    cmd.CommandText = "INSERT INTO RunOnce (Key, DoneAt) VALUES (@k, @d)";
-                    var pk = cmd.CreateParameter();
-                    pk.ParameterName = "@k";
-                    pk.Value = runOnceKey;
-                    var pd = cmd.CreateParameter();
-                    pd.ParameterName = "@d";
-                    pd.Value = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
-                    cmd.Parameters.Add(pk);
-                    cmd.Parameters.Add(pd);
-                    cmd.ExecuteNonQuery();
-                }
-                finally { conn.Close(); }
-            }
-            catch
-            {
-                // RunOnce table may not exist yet; ignore
-            }
-        }
-    }
-
-    /// <summary>
-    /// Derives System Tool Name from consumable code and dimensions.
-    /// Examples: "Facemill Ø80 R6.0 x 6-Flute", "Endmill Ø16 R0.0 x 3-Flute", "Drill Ø3.2 x 140°".
-    /// </summary>
-    private static string DeriveSystemToolName(string consumableCode, decimal diameter, decimal cornerRadius)
-    {
-        var c = consumableCode ?? "";
-        var flutes = ParseFlutesFromConsumable(c);
-        var isDrill = c.Contains("VXP", StringComparison.OrdinalIgnoreCase);
-        var drillAngle = ParseDrillAngleFromConsumable(c);
-
-        if (isDrill)
-            return $"Drill Ø{FormatDim(diameter)} x {drillAngle}°";
-
-        var isFacemill = c.Contains("VXD", StringComparison.OrdinalIgnoreCase) || diameter >= 40m;
-        var n = flutes > 0 ? flutes : (isFacemill ? 6 : 3);
-        var r = FormatDim(cornerRadius);
-        return isFacemill
-            ? $"Facemill Ø{FormatDim(diameter)} R{r} x {n}-Flute"
-            : $"Endmill Ø{FormatDim(diameter)} R{r} x {n}-Flute";
-    }
-
-    private static string FormatDim(decimal d)
-    {
-        return d == Math.Floor(d) ? ((int)d).ToString(CultureInfo.InvariantCulture) : d.ToString("0.##", CultureInfo.InvariantCulture);
-    }
-
-    private static int ParseFlutesFromConsumable(string c)
-    {
-        var m = Regex.Match(c, @"Z(\d+)", RegexOptions.IgnoreCase);
-        return m.Success && int.TryParse(m.Groups[1].Value, out var n) ? n : 0;
-    }
-
-    private static int ParseDrillAngleFromConsumable(string c)
-    {
-        if (Regex.IsMatch(c, @"R180(?!\d)|180°")) return 180;
-        if (Regex.IsMatch(c, @"R160(?!\d)|160°")) return 160;
-        if (Regex.IsMatch(c, @"R140(?!\d)|140°")) return 140;
-        if (Regex.IsMatch(c, @"R118(?!\d)|118°")) return 118;
-        return 140;
     }
 
     /// <summary>Machine Name seed: Name|Serial Number|Machine Workcenter|Status. INACTIVE → IsActive false.</summary>
@@ -883,71 +792,83 @@ TM02|267917|2X-07|INACTIVE";
             .ToArray();
     }
 
-    private static List<(string Consumable, string Supplier, decimal Dia, decimal Flute, decimal Radius)> GetToolCodeUniqueSeedData()
+    /// <summary>Hard-coded Master Tool Code seed. Same data every reset, like Settings pages.</summary>
+    private static List<(string SystemToolName, string Consumable, string Supplier, decimal Dia, decimal Flute, decimal Radius)> GetToolCodeUniqueSeedData()
     {
-        var data = new List<(string, string, decimal, decimal, decimal)>();
-        var pairs = new[]
+        return new List<(string, string, string, decimal, decimal, decimal)>
         {
-            ("553120Z3.0-SIRON-A", "SECO", 12.0m, 28.0m, 0m),
-            ("553160R050Z3.0-SIRON-A", "SECO", 16.0m, 32.0m, 0.5m),
-            ("553080Z3.0-SIRON-A", "SECO", 8.0m, 22.0m, 0m),
-            ("553100R250Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0.25m),
-            ("553100Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0m),
-            ("A3389DPL-9.8", "WALTER", 9.8m, 24.0m, 0m),
-            ("A3389DPL-12", "WALTER", 12.0m, 30.0m, 0m),
-            ("A3389AML-2.55", "WALTER", 2.55m, 8.0m, 0m),
-            ("A3389DPL-6.1", "WALTER", 6.1m, 18.0m, 0m),
-            ("A3389DPL-8.5", "WALTER", 8.5m, 22.0m, 0m),
-            ("7792VXP06CA016Z2R140", "KENNAMETAL", 16.0m, 45.0m, 1.4m),
-            ("7792VXD09WA032Z3R", "KENNAMETAL", 32.0m, 55.0m, 3.0m),
-            ("7792VXD12-A052Z5R", "KENNAMETAL", 52.0m, 65.0m, 5.0m),
-            ("7792VXD12-A080Z8R", "KENNAMETAL", 80.0m, 85.0m, 8.0m),
-            ("553040Z3.0-SIRON-A", "SECO", 4.0m, 14.0m, 0m),
-            ("553060Z3.0-SIRON-A", "SECO", 6.0m, 18.0m, 0m),
-            ("553140Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0m),
-            ("553180R100Z3.0-SIRON-A", "SECO", 18.0m, 38.0m, 1.0m),
-            ("553200Z3.0-SIRON-A", "SECO", 20.0m, 42.0m, 0m),
-            ("553250Z3.0-SIRON-A", "SECO", 25.0m, 50.0m, 0m),
-            ("553120R025Z3.0-SIRON-A", "SECO", 12.0m, 28.0m, 0.25m),
-            ("553140R050Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0.5m),
-            ("553160Z3.0-SIRON-A", "SECO", 16.0m, 36.0m, 0m),
-            ("553100R200Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0.2m),
-            ("553080R050Z3.0-SIRON-A", "SECO", 8.0m, 22.0m, 0.5m),
-            ("553220Z3.0-SIRON-A", "SECO", 22.0m, 46.0m, 0m),
-            ("553300Z3.0-SIRON-A", "SECO", 30.0m, 58.0m, 0m),
-            ("553160R100Z3.0-SIRON-A", "SECO", 16.0m, 36.0m, 1.0m),
-            ("553060R025Z3.0-SIRON-A", "SECO", 6.0m, 18.0m, 0.25m),
-            ("553140R025Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0.25m),
-            ("553180Z3.0-SIRON-A", "SECO", 18.0m, 38.0m, 0m),
-            ("A3389DPL-10", "WALTER", 10.0m, 26.0m, 0m),
-            ("A3389DPL-11", "WALTER", 11.0m, 28.0m, 0m),
-            ("A3389AML-3.0", "WALTER", 3.0m, 10.0m, 0m),
-            ("A3389AML-4.0", "WALTER", 4.0m, 12.0m, 0m),
-            ("A3389DPL-7.0", "WALTER", 7.0m, 20.0m, 0m),
-            ("A3389AML-2.0", "WALTER", 2.0m, 6.0m, 0m),
-            ("A3389DPL-5.0", "WALTER", 5.0m, 16.0m, 0m),
-            ("A3389DPL-14", "WALTER", 14.0m, 34.0m, 0m),
-            ("A3389AML-5.0", "WALTER", 5.0m, 14.0m, 0m),
-            ("A3389DPL-15", "WALTER", 15.0m, 36.0m, 0m),
-            ("7792VXD10-A040Z4R", "KENNAMETAL", 40.0m, 60.0m, 4.0m),
-            ("7792VXD16-A100Z10R", "KENNAMETAL", 100.0m, 110.0m, 10.0m),
-            ("7792VXP08CA020Z2R160", "KENNAMETAL", 20.0m, 55.0m, 1.6m),
-            ("7792VXD12-A063Z6R", "KENNAMETAL", 63.0m, 75.0m, 6.0m),
-            ("7792VXD12-A050Z5R", "KENNAMETAL", 50.0m, 62.0m, 5.0m),
-            ("7792VXD14-A070Z7R", "KENNAMETAL", 70.0m, 82.0m, 7.0m),
-            ("7792VXD08-A032Z3R", "KENNAMETAL", 32.0m, 48.0m, 3.0m),
-            ("7792VXP10CA024Z2R180", "KENNAMETAL", 24.0m, 60.0m, 1.8m),
-            ("7792VXD20-A120Z12R", "KENNAMETAL", 120.0m, 130.0m, 12.0m),
-            ("7792VXD12-A090Z9R", "KENNAMETAL", 90.0m, 100.0m, 9.0m),
+            ("Endmill Ø12 R0.0 x 3-Flute", "553120Z3.0-SIRON-A", "SECO", 12.0m, 28.0m, 0m),
+            ("Endmill Ø16 R0.5 x 3-Flute", "553160R050Z3.0-SIRON-A", "SECO", 16.0m, 32.0m, 0.5m),
+            ("Endmill Ø8 R0.0 x 3-Flute", "553080Z3.0-SIRON-A", "SECO", 8.0m, 22.0m, 0m),
+            ("Endmill Ø10 R0.25 x 3-Flute", "553100R250Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0.25m),
+            ("Endmill Ø10 R0.0 x 3-Flute", "553100Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0m),
+            ("Endmill Ø9.8 R0.0 x 3-Flute", "A3389DPL-9.8", "WALTER", 9.8m, 24.0m, 0m),
+            ("Endmill Ø12 R0.0 x 3-Flute", "A3389DPL-12", "WALTER", 12.0m, 30.0m, 0m),
+            ("Endmill Ø2.55 R0.0 x 3-Flute", "A3389AML-2.55", "WALTER", 2.55m, 8.0m, 0m),
+            ("Endmill Ø6.1 R0.0 x 3-Flute", "A3389DPL-6.1", "WALTER", 6.1m, 18.0m, 0m),
+            ("Endmill Ø8.5 R0.0 x 3-Flute", "A3389DPL-8.5", "WALTER", 8.5m, 22.0m, 0m),
+            ("Drill Ø16 x 140°", "7792VXP06CA016Z2R140", "KENNAMETAL", 16.0m, 45.0m, 1.4m),
+            ("Facemill Ø32 R3.0 x 6-Flute", "7792VXD09WA032Z3R", "KENNAMETAL", 32.0m, 55.0m, 3.0m),
+            ("Facemill Ø52 R5.0 x 6-Flute", "7792VXD12-A052Z5R", "KENNAMETAL", 52.0m, 65.0m, 5.0m),
+            ("Facemill Ø80 R8.0 x 6-Flute", "7792VXD12-A080Z8R", "KENNAMETAL", 80.0m, 85.0m, 8.0m),
+            ("Endmill Ø4 R0.0 x 3-Flute", "553040Z3.0-SIRON-A", "SECO", 4.0m, 14.0m, 0m),
+            ("Endmill Ø6 R0.0 x 3-Flute", "553060Z3.0-SIRON-A", "SECO", 6.0m, 18.0m, 0m),
+            ("Endmill Ø14 R0.0 x 3-Flute", "553140Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0m),
+            ("Endmill Ø18 R1.0 x 3-Flute", "553180R100Z3.0-SIRON-A", "SECO", 18.0m, 38.0m, 1.0m),
+            ("Endmill Ø20 R0.0 x 3-Flute", "553200Z3.0-SIRON-A", "SECO", 20.0m, 42.0m, 0m),
+            ("Endmill Ø25 R0.0 x 3-Flute", "553250Z3.0-SIRON-A", "SECO", 25.0m, 50.0m, 0m),
+            ("Endmill Ø12 R0.25 x 3-Flute", "553120R025Z3.0-SIRON-A", "SECO", 12.0m, 28.0m, 0.25m),
+            ("Endmill Ø14 R0.5 x 3-Flute", "553140R050Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0.5m),
+            ("Endmill Ø16 R0.0 x 3-Flute", "553160Z3.0-SIRON-A", "SECO", 16.0m, 36.0m, 0m),
+            ("Endmill Ø10 R0.2 x 3-Flute", "553100R200Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0.2m),
+            ("Endmill Ø8 R0.5 x 3-Flute", "553080R050Z3.0-SIRON-A", "SECO", 8.0m, 22.0m, 0.5m),
+            ("Endmill Ø22 R0.0 x 3-Flute", "553220Z3.0-SIRON-A", "SECO", 22.0m, 46.0m, 0m),
+            ("Endmill Ø30 R0.0 x 3-Flute", "553300Z3.0-SIRON-A", "SECO", 30.0m, 58.0m, 0m),
+            ("Endmill Ø16 R1.0 x 3-Flute", "553160R100Z3.0-SIRON-A", "SECO", 16.0m, 36.0m, 1.0m),
+            ("Endmill Ø6 R0.25 x 3-Flute", "553060R025Z3.0-SIRON-A", "SECO", 6.0m, 18.0m, 0.25m),
+            ("Endmill Ø14 R0.25 x 3-Flute", "553140R025Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0.25m),
+            ("Endmill Ø18 R0.0 x 3-Flute", "553180Z3.0-SIRON-A", "SECO", 18.0m, 38.0m, 0m),
+            ("Endmill Ø10 R0.0 x 3-Flute", "A3389DPL-10", "WALTER", 10.0m, 26.0m, 0m),
+            ("Endmill Ø11 R0.0 x 3-Flute", "A3389DPL-11", "WALTER", 11.0m, 28.0m, 0m),
+            ("Endmill Ø3 R0.0 x 3-Flute", "A3389AML-3.0", "WALTER", 3.0m, 10.0m, 0m),
+            ("Endmill Ø4 R0.0 x 3-Flute", "A3389AML-4.0", "WALTER", 4.0m, 12.0m, 0m),
+            ("Endmill Ø7 R0.0 x 3-Flute", "A3389DPL-7.0", "WALTER", 7.0m, 20.0m, 0m),
+            ("Endmill Ø2 R0.0 x 3-Flute", "A3389AML-2.0", "WALTER", 2.0m, 6.0m, 0m),
+            ("Endmill Ø5 R0.0 x 3-Flute", "A3389DPL-5.0", "WALTER", 5.0m, 16.0m, 0m),
+            ("Endmill Ø14 R0.0 x 3-Flute", "A3389DPL-14", "WALTER", 14.0m, 34.0m, 0m),
+            ("Endmill Ø5 R0.0 x 3-Flute", "A3389AML-5.0", "WALTER", 5.0m, 14.0m, 0m),
+            ("Endmill Ø15 R0.0 x 3-Flute", "A3389DPL-15", "WALTER", 15.0m, 36.0m, 0m),
+            ("Facemill Ø40 R4.0 x 6-Flute", "7792VXD10-A040Z4R", "KENNAMETAL", 40.0m, 60.0m, 4.0m),
+            ("Facemill Ø100 R10.0 x 6-Flute", "7792VXD16-A100Z10R", "KENNAMETAL", 100.0m, 110.0m, 10.0m),
+            ("Drill Ø20 x 160°", "7792VXP08CA020Z2R160", "KENNAMETAL", 20.0m, 55.0m, 1.6m),
+            ("Facemill Ø63 R6.0 x 6-Flute", "7792VXD12-A063Z6R", "KENNAMETAL", 63.0m, 75.0m, 6.0m),
+            ("Facemill Ø50 R5.0 x 6-Flute", "7792VXD12-A050Z5R", "KENNAMETAL", 50.0m, 62.0m, 5.0m),
+            ("Facemill Ø70 R7.0 x 6-Flute", "7792VXD14-A070Z7R", "KENNAMETAL", 70.0m, 82.0m, 7.0m),
+            ("Facemill Ø32 R3.0 x 6-Flute", "7792VXD08-A032Z3R", "KENNAMETAL", 32.0m, 48.0m, 3.0m),
+            ("Drill Ø24 x 180°", "7792VXP10CA024Z2R180", "KENNAMETAL", 24.0m, 60.0m, 1.8m),
+            ("Facemill Ø120 R12.0 x 6-Flute", "7792VXD20-A120Z12R", "KENNAMETAL", 120.0m, 130.0m, 12.0m),
+            ("Facemill Ø90 R9.0 x 6-Flute", "7792VXD12-A090Z9R", "KENNAMETAL", 90.0m, 100.0m, 9.0m),
         };
-        foreach (var t in pairs)
-            data.Add(t);
-        return data;
     }
     
-    private static ToolListHeader CreateToolListWithDetails(string partNumber, string operation, string revision, 
-        string projectCode, string machineName, string workcenter, string machineModel, string createdBy)
+    /// <summary>Hard-coded tool list seed. Each (partNumber, operation) has fixed consumable codes from Master. Same every reset.</summary>
+    private static (string PartNumber, string Operation, string[] ConsumableCodes)[] GetToolListDetailsSeedData()
     {
+        return new[]
+        {
+            ("PART-001", "OP10", new[] { "553120Z3.0-SIRON-A", "553160R050Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "553100Z3.0-SIRON-A", "553040Z3.0-SIRON-A" }),
+            ("PART-001", "OP20", new[] { "553100Z3.0-SIRON-A", "A3389DPL-9.8", "A3389DPL-12", "7792VXP06CA016Z2R140", "7792VXD09WA032Z3R", "553060Z3.0-SIRON-A" }),
+            ("PART-002", "OP10", new[] { "553140Z3.0-SIRON-A", "553180R100Z3.0-SIRON-A", "553200Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "553100R250Z3.0-SIRON-A", "553120R025Z3.0-SIRON-A", "7792VXD12-A052Z5R" }),
+            ("PART-003", "OP10", new[] { "7792VXD12-A080Z8R", "553040Z3.0-SIRON-A", "553060Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "A3389DPL-6.1" }),
+            ("PART-003", "OP20", new[] { "553100Z3.0-SIRON-A", "553120Z3.0-SIRON-A", "7792VXP06CA016Z2R140", "7792VXD09WA032Z3R", "553140Z3.0-SIRON-A", "553160R050Z3.0-SIRON-A" }),
+        };
+    }
+
+    private static ToolListHeader CreateToolListWithDetails(string partNumber, string operation, string revision,
+        string projectCode, string machineName, string workcenter, string machineModel, string createdBy,
+        IReadOnlyDictionary<string, (string SystemToolName, string Supplier, decimal Dia, decimal Flute, decimal Radius)> masterLookup)
+    {
+        var baseDate = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc);
         var header = new ToolListHeader
         {
             PartNumber = partNumber,
@@ -958,55 +879,37 @@ TM02|267917|2X-07|INACTIVE";
             MachineWorkcenter = workcenter,
             MachineModel = machineModel,
             CreatedBy = createdBy,
-            CreatedDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 30)),
-            LastModifiedDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(0, 10))
+            CreatedDate = baseDate,
+            LastModifiedDate = baseDate
         };
         header.GenerateToolListName();
-        
-        header.Details = GenerateSampleDetails();
-        return header;
-    }
-    
-    private static List<ToolListDetail> GenerateSampleDetails()
-    {
-        var tools = new List<(string code, string desc, string supplier, decimal dia, decimal flute, decimal protrusion, decimal radius, string holder, string arbor)>
-        {
-            ("SECO-EM-10", "End Mill 10mm 4 Flute", "Seco", 10.0m, 22.0m, 45.0m, 0.0m, "ER32-10", "BT40-ER32"),
-            ("SECO-EM-12", "End Mill 12mm 4 Flute", "Seco", 12.0m, 26.0m, 50.0m, 0.0m, "ER32-12", "BT40-ER32"),
-            ("SAND-FM-25", "Face Mill 25mm 5 Insert", "Sandvik", 25.0m, 0.0m, 35.0m, 0.8m, "FM25-A", "BT40-FM25"),
-            ("SAND-DR-8", "Drill 8mm Carbide", "Sandvik", 8.0m, 40.0m, 65.0m, 0.0m, "ER25-8", "BT40-ER25"),
-            ("WALT-BN-6", "Ball Nose 6mm 2 Flute", "Walter", 6.0m, 12.0m, 30.0m, 3.0m, "ER20-6", "BT40-ER20"),
-            ("WALT-CM-16", "Chamfer Mill 16mm 45deg", "Walter", 16.0m, 8.0m, 40.0m, 0.0m, "ER32-16", "BT40-ER32"),
-            ("KEN-RP-20", "Roughing End Mill 20mm", "Kennametal", 20.0m, 45.0m, 80.0m, 0.0m, "ER40-20", "BT40-ER40"),
-            ("KEN-TH-M10", "Thread Mill M10x1.5", "Kennametal", 8.5m, 15.0m, 35.0m, 0.0m, "ER16-TM", "BT40-ER16"),
-            ("SECO-SP-4", "Spot Drill 4mm 90deg", "Seco", 4.0m, 6.0m, 25.0m, 0.0m, "ER16-4", "BT40-ER16"),
-            ("SAND-RM-8", "Reamer 8H7", "Sandvik", 8.0m, 25.0m, 50.0m, 0.0m, "ER25-8R", "BT40-ER25"),
-        };
-        
-        var details = new List<ToolListDetail>();
-        var toolsToUse = tools.OrderBy(x => Random.Shared.Next()).Take(Random.Shared.Next(3, 8)).ToList();
-        
-        for (int i = 0; i < toolsToUse.Count; i++)
-        {
-            var tool = toolsToUse[i];
-            details.Add(new ToolListDetail
+
+        var seedEntry = GetToolListDetailsSeedData().FirstOrDefault(x => x.PartNumber == partNumber && x.Operation == operation);
+        var consumableCodes = seedEntry.ConsumableCodes ?? Array.Empty<string>();
+        header.Details = consumableCodes
+            .Select((code, i) =>
             {
-                ToolNumber = $"T{(i + 1):D2}",
-                ConsumableCode = tool.code,
-                ToolDescription = tool.desc,
-                Supplier = tool.supplier,
-                Diameter = tool.dia,
-                FluteLength = tool.flute,
-                ProtrusionLength = tool.protrusion,
-                CornerRadius = tool.radius,
-                HolderExtensionCode = tool.holder,
-                ArborCode = tool.arbor,
-                ToolPathTimeMinutes = 0,
-                Remarks = ""
-            });
-        }
-        
-        return details;
+                if (!masterLookup.TryGetValue(code, out var m)) return null;
+                return new ToolListDetail
+                {
+                    ToolNumber = $"T{(i + 1):D2}",
+                    ConsumableCode = code,
+                    ToolDescription = m.SystemToolName,
+                    Supplier = m.Supplier,
+                    Diameter = m.Dia,
+                    FluteLength = m.Flute,
+                    ProtrusionLength = 45.0m,
+                    CornerRadius = m.Radius,
+                    HolderExtensionCode = "ER32",
+                    ArborCode = "BT40-ER32",
+                    ToolPathTimeMinutes = 0,
+                    Remarks = ""
+                };
+            })
+            .Where(d => d != null)
+            .Cast<ToolListDetail>()
+            .ToList();
+        return header;
     }
     
     private static void UpdateToolMaster(ApplicationDbContext context, ToolListDetail detail)
@@ -1227,12 +1130,9 @@ TM02|267917|2X-07|INACTIVE";
             }
             const string insertSql = @"INSERT INTO ToolCodeUniques (SystemToolName, ConsumableCode, Supplier, Diameter, FluteLength, CornerRadius, CreatedDate, LastModifiedDate)
                 VALUES (@sn, @cc, @su, @di, @fl, @cr, @cd, @lm)";
-            var baseTime = DateTime.UtcNow.AddDays(-60);
-            foreach (var (consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
+            var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            foreach (var (systemName, consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
             {
-                var systemName = DeriveSystemToolName(consumable, dia, radius);
-                var created = baseTime.AddDays(Random.Shared.Next(0, 50));
-                var modified = created.AddDays(Random.Shared.Next(0, 20));
                 using var insCmd = conn.CreateCommand();
                 insCmd.Transaction = dbTrans;
                 insCmd.CommandText = insertSql;
@@ -1242,8 +1142,8 @@ TM02|267917|2X-07|INACTIVE";
                 AddParam(insCmd, "@di", dia);
                 AddParam(insCmd, "@fl", flute);
                 AddParam(insCmd, "@cr", radius);
-                AddParam(insCmd, "@cd", created.ToString("o", CultureInfo.InvariantCulture));
-                AddParam(insCmd, "@lm", modified.ToString("o", CultureInfo.InvariantCulture));
+                AddParam(insCmd, "@cd", baseTime.ToString("o", CultureInfo.InvariantCulture));
+                AddParam(insCmd, "@lm", baseTime.ToString("o", CultureInfo.InvariantCulture));
                 insCmd.ExecuteNonQuery();
             }
             dbTrans.Commit();
@@ -1267,13 +1167,15 @@ TM02|267917|2X-07|INACTIVE";
     {
         context.ToolListHeaders.RemoveRange(context.ToolListHeaders.ToList());
         context.SaveChanges();
+        var masterLookup = GetToolCodeUniqueSeedData()
+            .ToDictionary(t => t.Consumable, t => (t.SystemToolName, t.Supplier, t.Dia, t.Flute, t.Radius));
         var toolLists = new List<ToolListHeader>
         {
-            CreateToolListWithDetails("PART-001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham"),
-            CreateToolListWithDetails("PART-001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham"),
-            CreateToolListWithDetails("PART-002", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil"),
-            CreateToolListWithDetails("PART-003", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul"),
-            CreateToolListWithDetails("PART-003", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul"),
+            CreateToolListWithDetails("PART-001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
+            CreateToolListWithDetails("PART-001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
+            CreateToolListWithDetails("PART-002", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil", masterLookup),
+            CreateToolListWithDetails("PART-003", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
+            CreateToolListWithDetails("PART-003", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
         };
         context.ToolListHeaders.AddRange(toolLists);
         context.SaveChanges();
