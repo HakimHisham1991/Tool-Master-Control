@@ -1,0 +1,739 @@
+@model ToolListEditorViewModel
+@{
+    ViewData["Title"] = "Create / Edit Tool List";
+}
+
+<div class="module-header">
+    <div class="header-title-area">
+        <h2>Create / Edit Tool List</h2>
+        <span class="tool-list-name" id="toolListName">@(string.IsNullOrEmpty(Model.ToolListName) ? "New Tool List" : Model.ToolListName)</span>
+    </div>
+    @if (Model.IsReadOnly)
+    {
+        <div class="readonly-notice">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Read-only: Locked by @Model.LockedBy
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-error">@Model.ErrorMessage</div>
+}
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">@Model.SuccessMessage</div>
+}
+
+<div class="editor-toolbar">
+    <div class="toolbar-left">
+        <button type="button" class="btn btn-secondary" onclick="openToolListModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Open
+        </button>
+        @if (!Model.IsReadOnly)
+        {
+            <button type="button" class="btn btn-primary" onclick="saveToolList()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Save
+            </button>
+        }
+        <button type="button" class="btn btn-secondary" onclick="closeToolList()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Close
+        </button>
+    </div>
+    <div class="toolbar-right">
+        @if (Model.Id.HasValue)
+        {
+            <a href="/ToolListEditor/Export?id=@Model.Id&format=excel" class="btn btn-secondary btn-sm">Excel</a>
+            <a href="/ToolListEditor/Export?id=@Model.Id&format=csv" class="btn btn-secondary btn-sm">CSV</a>
+            <a href="/ToolListEditor/Export?id=@Model.Id&format=txt" class="btn btn-secondary btn-sm">TXT</a>
+        }
+    </div>
+</div>
+
+<div class="header-form">
+    <div class="form-row">
+        <div class="form-group">
+            <label for="partNumber">Part Number</label>
+            <select id="partNumber" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+                <option value="">-- Select Part Number --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="operation">Operation</label>
+            <input type="text" id="operation" value="@Model.Operation" class="form-control" placeholder="e.g., OP10, OP20" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+        </div>
+        <div class="form-group">
+            <label for="revision">Revision</label>
+            <input type="text" id="revision" value="@Model.Revision" class="form-control" placeholder="e.g., REV00" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="projectCode">Project Code</label>
+            <select id="projectCode" class="form-control" disabled title="Set by Part Number (Settings &gt; Part Number Management)">
+                <option value="">-- Select Project Code --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="machineName">Machine Name</label>
+            <select id="machineName" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+                <option value="">-- Select Machine Name --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="machineWorkcenter">Machine Workcenter</label>
+            <select id="machineWorkcenter" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+                <option value="">-- Select Machine Workcenter --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="machineModel">Machine Model</label>
+            <select id="machineModel" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+                <option value="">-- Select Machine Model --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="approvedBy">Approved By</label>
+            <select id="approvedBy" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+                <option value="">-- Select CAM Leader --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="camProgrammer">CAM Programmer</label>
+            <select id="camProgrammer" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+                <option value="">-- Select CAM Programmer --</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="table-container editable-table">
+    <table class="data-table" id="detailsTable">
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th>Tool No.</th>
+                <th>Tool Name</th>
+                <th>Consumable Tool Description <a href="/ToolCodeUnique" target="_blank" class="form-hint" title="Register new codes">↗</a></th>
+                <th>Tool Supplier</th>
+                <th>Tool Holder</th>
+                <th>Tool Diameter (D1)</th>
+                <th>Flute Length (L1)</th>
+                <th>Tool Ext. Length (L2)</th>
+                <th>Tool Corner Radius</th>
+                <th>Arbor Description (or equivalent specs)</th>
+                <th>Tool Path Time in Minutes</th>
+                <th>Remarks</th>
+                @if (!Model.IsReadOnly)
+                {
+                    <th style="width: 50px;"></th>
+                }
+            </tr>
+        </thead>
+        <tbody id="detailsBody">
+            @for (int i = 0; i < Model.Details.Count; i++)
+            {
+                var detail = Model.Details[i];
+                <tr data-row-id="@detail.Id">
+                    <td class="row-number">@(i + 1)</td>
+                    <td><input type="text" class="cell-input" data-field="toolNumber" value="@detail.ToolNumber" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="text" class="cell-input" data-field="toolDescription" value="@detail.ToolDescription" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td class="consumable-cell">
+                        @if (Model.IsReadOnly)
+                        {
+                            <input type="text" class="cell-input" data-field="consumableCode" value="@detail.ConsumableCode" readonly />
+                        }
+                        else
+                        {
+                            <select class="cell-input cell-select" data-field="consumableCode" data-current="@detail.ConsumableCode" data-supplier="@detail.Supplier"></select>
+                        }
+                    </td>
+                    <td><input type="text" class="cell-input" data-field="supplier" value="@detail.Supplier" readonly /></td>
+                    <td><input type="text" class="cell-input" data-field="holderExtensionCode" value="@detail.HolderExtensionCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="diameter" value="@(detail.Diameter?.ToString("0.##") ?? "")" readonly /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="fluteLength" value="@(detail.FluteLength?.ToString("0.##") ?? "")" readonly /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="protrusionLength" value="@(detail.ProtrusionLength?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" value="@(detail.CornerRadius?.ToString("0.##") ?? "")" readonly /></td>
+                    <td><input type="text" class="cell-input" data-field="arborCode" value="@detail.ArborCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="number" step="0.01" class="cell-input" data-field="toolPathTimeMinutes" value="@(detail.ToolPathTimeMinutes?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td><input type="text" class="cell-input" data-field="remarks" value="@(detail.Remarks ?? string.Empty)" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    @if (!Model.IsReadOnly)
+                    {
+                        <td>
+                            <button type="button" class="btn-icon" onclick="removeRow(this)" title="Remove row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Model.IsReadOnly)
+{
+    <div class="table-actions">
+        <button type="button" class="btn btn-secondary" onclick="addRow()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Row
+        </button>
+        <span class="table-actions-hint">Register new consumable codes in <a href="/ToolCodeUnique" target="_blank">Master Tool Code Database</a>.</span>
+    </div>
+}
+
+<div class="modal" id="openModal">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Open Tool List</h3>
+            <button type="button" class="btn-icon" onclick="closeModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="search-input-group">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="modalSearch" placeholder="Search tool lists..." class="search-input" oninput="searchToolLists()" />
+            </div>
+            <div class="modal-list" id="toolListList">
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="toolListId" value="@Model.Id" />
+<input type="hidden" id="isReadOnly" value="@Model.IsReadOnly.ToString().ToLower()" />
+
+@section Scripts {
+<script>
+    const toolListId = document.getElementById('toolListId').value;
+    const isReadOnly = document.getElementById('isReadOnly').value === 'true';
+    const currentPartNumber = '@((Model.PartNumber ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    const currentProjectCode = '@Model.ProjectCode';
+    const currentMachineName = '@Model.MachineName';
+    const currentMachineWorkcenter = '@Model.MachineWorkcenter';
+    const currentMachineModel = '@((Model.MachineModel ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    const currentApprovedBy = '@((Model.ApprovedBy ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    const currentCamProgrammer = '@((Model.CamProgrammer ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    let hasUnsavedChanges = false;
+    let lockReleased = false;
+    let heartbeatInterval = null;
+    
+    // Populate dropdowns on page load
+    async function populateDropdowns() {
+        // Populate Part Numbers (with projectCode from Settings > Part Number Management for auto-fill)
+        try {
+            const partNumbersResponse = await fetch('/ToolListEditor/GetPartNumbers');
+            const partNumbers = await partNumbersResponse.json();
+            const partNumberSelect = document.getElementById('partNumber');
+            partNumbers.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.value;
+                option.textContent = p.text;
+                if (p.projectCode != null && p.projectCode !== '') {
+                    option.dataset.projectCode = p.projectCode;
+                }
+                if (p.value === currentPartNumber) {
+                    option.selected = true;
+                }
+                partNumberSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading part numbers:', error);
+        }
+        
+        // Populate Project Codes
+        try {
+            const projectCodesResponse = await fetch('/ToolListEditor/GetProjectCodes');
+            const projectCodes = await projectCodesResponse.json();
+            const projectCodeSelect = document.getElementById('projectCode');
+            projectCodes.forEach(code => {
+                const option = document.createElement('option');
+                option.value = code.value;
+                option.textContent = code.text;
+                if (code.value === currentProjectCode) {
+                    option.selected = true;
+                }
+                projectCodeSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading project codes:', error);
+        }
+        
+        // Populate Machine Names
+        try {
+            const machineNamesResponse = await fetch('/ToolListEditor/GetMachineNames');
+            const machineNames = await machineNamesResponse.json();
+            const machineNameSelect = document.getElementById('machineName');
+            machineNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name.value;
+                option.textContent = name.text;
+                if (name.value === currentMachineName) {
+                    option.selected = true;
+                }
+                machineNameSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading machine names:', error);
+        }
+        
+        // Populate Machine Workcenters
+        try {
+            const workcentersResponse = await fetch('/ToolListEditor/GetMachineWorkcenters');
+            const workcenters = await workcentersResponse.json();
+            const workcenterSelect = document.getElementById('machineWorkcenter');
+            workcenters.forEach(workcenter => {
+                const option = document.createElement('option');
+                option.value = workcenter.value;
+                option.textContent = workcenter.text;
+                if (workcenter.value === currentMachineWorkcenter) {
+                    option.selected = true;
+                }
+                workcenterSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading machine workcenters:', error);
+        }
+        
+        // Populate Machine Models
+        try {
+            const modelsResponse = await fetch('/ToolListEditor/GetMachineModels');
+            const models = await modelsResponse.json();
+            const modelSelect = document.getElementById('machineModel');
+            models.forEach(m => {
+                const option = document.createElement('option');
+                option.value = m.value;
+                option.textContent = m.text;
+                if (m.value === currentMachineModel) {
+                    option.selected = true;
+                }
+                modelSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading machine models:', error);
+        }
+        
+        // Populate Approved By (CAM Leader)
+        try {
+            const leadersResponse = await fetch('/ToolListEditor/GetCamLeaders');
+            const leaders = await leadersResponse.json();
+            const approvedBySelect = document.getElementById('approvedBy');
+            leaders.forEach(l => {
+                const option = document.createElement('option');
+                option.value = l.value;
+                option.textContent = l.text;
+                if (l.value === currentApprovedBy) {
+                    option.selected = true;
+                }
+                approvedBySelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading CAM leaders:', error);
+        }
+        
+        // Populate CAM Programmer
+        try {
+            const programmersResponse = await fetch('/ToolListEditor/GetCamProgrammers');
+            const programmers = await programmersResponse.json();
+            const camProgrammerSelect = document.getElementById('camProgrammer');
+            programmers.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.value;
+                option.textContent = p.text;
+                if (p.value === currentCamProgrammer) {
+                    option.selected = true;
+                }
+                camProgrammerSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading CAM programmers:', error);
+        }
+        
+        // Consumable Tool Description (Master Tool Code Database only)
+        try {
+            const r = await fetch('/ToolListEditor/GetConsumableToolDescriptions');
+            consumableOptions = await r.json();
+            document.querySelectorAll('#detailsBody select[data-field="consumableCode"]').forEach(sel => {
+                const cur = sel.dataset.current || '';
+                fillConsumableSelect(sel, cur);
+                bindConsumableChange(sel.closest('tr'));
+            });
+        } catch (error) {
+            console.error('Error loading consumable tool descriptions:', error);
+        }
+    }
+    
+    let consumableOptions = [];
+    
+    function fillConsumableSelect(sel, currentVal) {
+        sel.innerHTML = '';
+        const opt0 = document.createElement('option');
+        opt0.value = '';
+        opt0.textContent = '-- Select --';
+        sel.appendChild(opt0);
+        const values = new Set();
+        consumableOptions.forEach(o => {
+            if (values.has(o.value)) return;
+            values.add(o.value);
+            const opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.text;
+            opt.dataset.supplier = o.supplier != null ? String(o.supplier) : '';
+            opt.dataset.diameter = o.diameter != null ? String(o.diameter) : '';
+            opt.dataset.fluteLength = o.fluteLength != null ? String(o.fluteLength) : '';
+            opt.dataset.cornerRadius = o.cornerRadius != null ? String(o.cornerRadius) : '';
+            sel.appendChild(opt);
+        });
+        if (currentVal && !values.has(currentVal)) {
+            const opt = document.createElement('option');
+            opt.value = currentVal;
+            opt.textContent = currentVal;
+            sel.appendChild(opt);
+        }
+        sel.value = currentVal || '';
+    }
+    
+    function bindConsumableChange(row) {
+        const sel = row.querySelector('select[data-field="consumableCode"]');
+        const sup = row.querySelector('[data-field="supplier"]');
+        const dia = row.querySelector('[data-field="diameter"]');
+        const flute = row.querySelector('[data-field="fluteLength"]');
+        const radius = row.querySelector('[data-field="cornerRadius"]');
+        if (!sel) return;
+        sel.addEventListener('change', function() {
+            hasUnsavedChanges = true;
+            const chosen = sel.options[sel.selectedIndex];
+            if (chosen && chosen.value) {
+                if (sup) sup.value = chosen.dataset.supplier || '';
+                if (dia) dia.value = chosen.dataset.diameter || '';
+                if (flute) flute.value = chosen.dataset.fluteLength || '';
+                if (radius) radius.value = chosen.dataset.cornerRadius || '';
+            } else {
+                if (sup) sup.value = '';
+                if (dia) dia.value = '';
+                if (flute) flute.value = '';
+                if (radius) radius.value = '';
+            }
+        });
+    }
+    
+    // Initialize dropdowns when page loads
+    populateDropdowns();
+    
+    // Function to release lock reliably
+    function releaseLock() {
+        if (lockReleased || !toolListId || isReadOnly) return;
+        
+        lockReleased = true;
+        
+        // Clear heartbeat interval first
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+        
+        // Use sendBeacon for reliable delivery even when page is unloading
+        const url = '/ToolListEditor/Close?id=' + toolListId;
+        if (navigator.sendBeacon) {
+            // sendBeacon with URLSearchParams - works reliably with POST
+            const formData = new URLSearchParams();
+            formData.append('id', toolListId);
+            navigator.sendBeacon(url, formData);
+        } else {
+            // Fallback for browsers without sendBeacon - use fetch with keepalive
+            fetch(url, { 
+                method: 'POST',
+                keepalive: true 
+            }).catch(() => {}); // Ignore errors during unload
+        }
+    }
+    
+    if (toolListId && !isReadOnly) {
+        // Reduced heartbeat interval from 30s to 15s for faster detection
+        heartbeatInterval = setInterval(function() {
+            if (!lockReleased) {
+                fetch('/ToolListEditor/Heartbeat?id=' + toolListId, { method: 'POST' })
+                    .catch(() => {
+                        // If heartbeat fails, release lock
+                        releaseLock();
+                    });
+            }
+        }, 15000);
+        
+        // Release lock on page hide (fires when tab/window is closed, more reliable than beforeunload)
+        window.addEventListener('pagehide', function() {
+            releaseLock();
+        });
+        
+        // Also handle visibility change with a delay - only release if tab has been hidden for 30+ seconds
+        // This handles cases where pagehide might not fire (some mobile browsers)
+        let visibilityTimeout = null;
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && !lockReleased) {
+                // Set a timeout - if tab remains hidden for 30 seconds, release the lock
+                visibilityTimeout = setTimeout(function() {
+                    if (document.hidden && !lockReleased) {
+                        releaseLock();
+                    }
+                }, 30000);
+            } else {
+                // Tab is visible again, cancel the timeout
+                if (visibilityTimeout) {
+                    clearTimeout(visibilityTimeout);
+                    visibilityTimeout = null;
+                }
+            }
+        });
+    }
+    
+    document.querySelectorAll('.cell-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+            hasUnsavedChanges = true;
+        });
+    });
+    
+    // Track changes on dropdowns (Project Code is read-only, set by Part Number)
+    document.getElementById('machineName').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+    });
+    document.getElementById('machineWorkcenter').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+    });
+    document.getElementById('machineModel').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+    });
+    document.getElementById('approvedBy').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+    });
+    document.getElementById('camProgrammer').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+    });
+    document.getElementById('partNumber').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+        updateToolListName();
+        // Auto-populate Project Code from Settings > Part Number Management
+        const partNumberSelect = document.getElementById('partNumber');
+        const selectedOption = partNumberSelect.options[partNumberSelect.selectedIndex];
+        const projectCodeSelect = document.getElementById('projectCode');
+        if (selectedOption && selectedOption.dataset.projectCode && projectCodeSelect) {
+            const code = selectedOption.dataset.projectCode;
+            if (Array.from(projectCodeSelect.options).some(opt => opt.value === code)) {
+                projectCodeSelect.value = code;
+            }
+        }
+    });
+    
+    function updateToolListName() {
+        const partNumber = document.getElementById('partNumber').value;
+        const operation = document.getElementById('operation').value;
+        const revision = document.getElementById('revision').value;
+        
+        if (partNumber && operation && revision) {
+            document.getElementById('toolListName').textContent = partNumber + '_' + operation + '_' + revision;
+        }
+    }
+    
+    function addRow() {
+        const tbody = document.getElementById('detailsBody');
+        const rowCount = tbody.children.length + 1;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="row-number">${rowCount}</td>
+            <td><input type="text" class="cell-input" data-field="toolNumber" /></td>
+            <td><input type="text" class="cell-input" data-field="toolDescription" /></td>
+            <td class="consumable-cell"><select class="cell-input cell-select" data-field="consumableCode"></select></td>
+            <td><input type="text" class="cell-input" data-field="supplier" readonly /></td>
+            <td><input type="text" class="cell-input" data-field="holderExtensionCode" /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="diameter" readonly /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="fluteLength" readonly /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="protrusionLength" /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" readonly /></td>
+            <td><input type="text" class="cell-input" data-field="arborCode" /></td>
+            <td><input type="number" step="0.01" class="cell-input" data-field="toolPathTimeMinutes" /></td>
+            <td><input type="text" class="cell-input" data-field="remarks" /></td>
+            <td><button type="button" class="btn-icon" onclick="removeRow(this)" title="Remove row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></td>
+        `;
+        tbody.appendChild(row);
+        fillConsumableSelect(row.querySelector('[data-field="consumableCode"]'), null);
+        hasUnsavedChanges = true;
+        row.querySelectorAll('.cell-input').forEach(input => {
+            input.addEventListener('change', () => hasUnsavedChanges = true);
+        });
+        bindConsumableChange(row);
+    }
+    
+    function removeRow(btn) {
+        btn.closest('tr').remove();
+        updateRowNumbers();
+        hasUnsavedChanges = true;
+    }
+    
+    function updateRowNumbers() {
+        const rows = document.querySelectorAll('#detailsBody tr');
+        rows.forEach((row, index) => {
+            row.querySelector('.row-number').textContent = index + 1;
+        });
+    }
+    
+    function getDetailsData() {
+        const rows = document.querySelectorAll('#detailsBody tr');
+        const details = [];
+        rows.forEach(row => {
+            const id = row.dataset.rowId || 0;
+            details.push({
+                id: parseInt(id) || 0,
+                toolNumber: row.querySelector('[data-field="toolNumber"]').value,
+                toolDescription: row.querySelector('[data-field="toolDescription"]').value,
+                consumableCode: row.querySelector('[data-field="consumableCode"]').value,
+                supplier: row.querySelector('[data-field="supplier"]').value,
+                holderExtensionCode: row.querySelector('[data-field="holderExtensionCode"]').value,
+                diameter: parseFloat(row.querySelector('[data-field="diameter"]').value) || null,
+                fluteLength: parseFloat(row.querySelector('[data-field="fluteLength"]').value) || null,
+                protrusionLength: parseFloat(row.querySelector('[data-field="protrusionLength"]').value) || null,
+                cornerRadius: parseFloat(row.querySelector('[data-field="cornerRadius"]').value) || null,
+                arborCode: row.querySelector('[data-field="arborCode"]').value,
+                toolPathTimeMinutes: parseFloat(row.querySelector('[data-field="toolPathTimeMinutes"]').value) || null,
+                remarks: row.querySelector('[data-field="remarks"]').value || ''
+            });
+        });
+        return details;
+    }
+    
+    async function saveToolList() {
+        const data = {
+            id: toolListId ? parseInt(toolListId) : null,
+            partNumber: document.getElementById('partNumber').value,
+            operation: document.getElementById('operation').value,
+            revision: document.getElementById('revision').value,
+            projectCode: document.getElementById('projectCode').value,
+            machineName: document.getElementById('machineName').value,
+            machineWorkcenter: document.getElementById('machineWorkcenter').value,
+            machineModel: document.getElementById('machineModel').value,
+            approvedBy: document.getElementById('approvedBy').value,
+            camProgrammer: document.getElementById('camProgrammer').value,
+            details: getDetailsData()
+        };
+        
+        if (!data.partNumber || !data.operation || !data.revision) {
+            alert('Part Number, Operation, and Revision are required');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/ToolListEditor/Save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                hasUnsavedChanges = false;
+                alert('Tool list saved successfully');
+                if (result.id && !toolListId) {
+                    window.location.href = '/ToolListEditor?id=' + result.id;
+                }
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            alert('Error saving tool list: ' + error.message);
+        }
+    }
+    
+    async function closeToolList() {
+        if (hasUnsavedChanges) {
+            if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
+                return;
+            }
+        }
+        
+        // Release lock before navigating away
+        releaseLock();
+        
+        // Wait a moment for the request to complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        window.location.href = '/ToolListEditor';
+    }
+    
+    function openToolListModal() {
+        document.getElementById('openModal').classList.add('active');
+        searchToolLists();
+    }
+    
+    function closeModal() {
+        document.getElementById('openModal').classList.remove('active');
+    }
+    
+    async function searchToolLists() {
+        const search = document.getElementById('modalSearch').value;
+        const response = await fetch('/ToolListEditor/GetAvailableToolLists?search=' + encodeURIComponent(search));
+        const toolLists = await response.json();
+        
+        const container = document.getElementById('toolListList');
+        if (toolLists.length === 0) {
+            container.innerHTML = '<div class="empty-modal-state">No tool lists found</div>';
+            return;
+        }
+        
+        container.innerHTML = toolLists.map(item => `
+            <a href="/ToolListEditor?id=${item.id}" class="modal-list-item">
+                <div class="item-name">${item.toolListName}</div>
+                <div class="item-details">${item.partNumber} - ${item.operation} - ${item.revision}</div>
+            </a>
+        `).join('');
+    }
+    
+    // Only register beforeunload if user has edit access (not read-only)
+    if (toolListId && !isReadOnly) {
+        window.addEventListener('beforeunload', function(e) {
+            // Always release lock on unload, regardless of unsaved changes
+            releaseLock();
+            
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    } else {
+        // For read-only views, only check for unsaved changes (shouldn't happen, but safety check)
+        window.addEventListener('beforeunload', function(e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    }
+</script>
+}
