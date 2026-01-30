@@ -1,3 +1,5 @@
+using System.Data;
+using System.Data.Common;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -1212,36 +1214,53 @@ TM02|267917|2X-07|INACTIVE";
     public static void ResetToolCodeUniques(ApplicationDbContext context)
     {
         if (context.ToolCodeUniques == null) return;
-        using var transaction = context.Database.BeginTransaction();
+        var conn = context.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open) conn.Open();
+        using var dbTrans = conn.BeginTransaction();
         try
         {
-            context.Database.ExecuteSqlRaw("DELETE FROM ToolCodeUniques");
+            using (var delCmd = conn.CreateCommand())
+            {
+                delCmd.Transaction = dbTrans;
+                delCmd.CommandText = "DELETE FROM ToolCodeUniques";
+                delCmd.ExecuteNonQuery();
+            }
+            const string insertSql = @"INSERT INTO ToolCodeUniques (SystemToolName, ConsumableCode, Supplier, Diameter, FluteLength, CornerRadius, CreatedDate, LastModifiedDate)
+                VALUES (@sn, @cc, @su, @di, @fl, @cr, @cd, @lm)";
             var baseTime = DateTime.UtcNow.AddDays(-60);
             foreach (var (consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
             {
                 var systemName = DeriveSystemToolName(consumable, dia, radius);
                 var created = baseTime.AddDays(Random.Shared.Next(0, 50));
                 var modified = created.AddDays(Random.Shared.Next(0, 20));
-                context.ToolCodeUniques.Add(new ToolCodeUnique
-                {
-                    SystemToolName = systemName,
-                    ConsumableCode = consumable,
-                    Supplier = supplier,
-                    Diameter = dia,
-                    FluteLength = flute,
-                    CornerRadius = radius,
-                    CreatedDate = created,
-                    LastModifiedDate = modified
-                });
+                using var insCmd = conn.CreateCommand();
+                insCmd.Transaction = dbTrans;
+                insCmd.CommandText = insertSql;
+                AddParam(insCmd, "@sn", systemName);
+                AddParam(insCmd, "@cc", consumable);
+                AddParam(insCmd, "@su", supplier);
+                AddParam(insCmd, "@di", dia);
+                AddParam(insCmd, "@fl", flute);
+                AddParam(insCmd, "@cr", radius);
+                AddParam(insCmd, "@cd", created.ToString("o", CultureInfo.InvariantCulture));
+                AddParam(insCmd, "@lm", modified.ToString("o", CultureInfo.InvariantCulture));
+                insCmd.ExecuteNonQuery();
             }
-            context.SaveChanges();
-            transaction.Commit();
+            dbTrans.Commit();
         }
         catch
         {
-            transaction.Rollback();
+            dbTrans.Rollback();
             throw;
         }
+    }
+
+    private static void AddParam(DbCommand cmd, string name, object value)
+    {
+        var p = cmd.CreateParameter();
+        p.ParameterName = name;
+        p.Value = value;
+        cmd.Parameters.Add(p);
     }
 
     public static void ResetToolLists(ApplicationDbContext context)
