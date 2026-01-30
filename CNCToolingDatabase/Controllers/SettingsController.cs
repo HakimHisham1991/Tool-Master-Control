@@ -214,7 +214,8 @@ public class SettingsController : Controller
             var term = search.ToLower();
             query = query.Where(m => 
                 m.Name.ToLower().Contains(term) ||
-                (m.Description != null && m.Description.ToLower().Contains(term)));
+                (m.Description != null && m.Description.ToLower().Contains(term)) ||
+                (m.Workcenter != null && m.Workcenter.ToLower().Contains(term)));
         }
         
         var totalItems = await query.CountAsync();
@@ -235,8 +236,19 @@ public class SettingsController : Controller
         return View(machineNames);
     }
     
+    [HttpGet]
+    public async Task<IActionResult> GetMachineWorkcenters()
+    {
+        var list = await _context.MachineWorkcenters
+            .Where(w => w.IsActive)
+            .OrderBy(w => w.Workcenter)
+            .Select(w => new { value = w.Workcenter, text = w.Workcenter })
+            .ToListAsync();
+        return Json(list);
+    }
+    
     [HttpPost]
-    public async Task<IActionResult> CreateMachineName(string name, string? description)
+    public async Task<IActionResult> CreateMachineName(string name, string? description, string? workcenter)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -252,6 +264,7 @@ public class SettingsController : Controller
         {
             Name = name,
             Description = description,
+            Workcenter = workcenter ?? "",
             CreatedDate = DateTime.UtcNow,
             CreatedBy = HttpContext.Session.GetString("Username") ?? "",
             IsActive = true
@@ -264,7 +277,7 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> UpdateMachineName(int id, string? description, bool? isActive)
+    public async Task<IActionResult> UpdateMachineName(int id, string? description, string? workcenter, bool? isActive)
     {
         var machineName = await _context.MachineNames.FindAsync(id);
         if (machineName == null)
@@ -273,6 +286,7 @@ public class SettingsController : Controller
         }
         
         if (description != null) machineName.Description = description;
+        if (workcenter != null) machineName.Workcenter = workcenter;
         if (isActive.HasValue) machineName.IsActive = isActive.Value;
         
         await _context.SaveChangesAsync();

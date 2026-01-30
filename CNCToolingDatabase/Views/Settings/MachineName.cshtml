@@ -33,6 +33,7 @@
                 <th>No.</th>
                 <th>Name</th>
                 <th>Serial Number</th>
+                <th>Machine Workcenter</th>
                 <th>Created By</th>
                 <th>Created Date</th>
                 <th>Status</th>
@@ -43,7 +44,7 @@
             @if (Model.Count == 0)
             {
                 <tr>
-                    <td colspan="7" class="empty-state">
+                    <td colspan="8" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                             <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
@@ -62,6 +63,7 @@
                         <td>@no</td>
                         <td>@item.Name</td>
                         <td>@(item.Description ?? "-")</td>
+                        <td>@(item.Workcenter ?? "-")</td>
                         <td>@item.CreatedBy</td>
                         <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
@@ -75,7 +77,7 @@
                             }
                         </td>
                         <td>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@(item.Name.Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Description ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', @item.IsActive.ToString().ToLower())">Edit</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@(item.Name.Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Description ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Workcenter ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', @item.IsActive.ToString().ToLower())">Edit</button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(@item.Id, '@item.Name')">Delete</button>
                         </td>
                     </tr>
@@ -130,6 +132,12 @@
                     <label for="serialNumber">Serial Number</label>
                     <input type="text" id="serialNumber" class="form-control" placeholder="e.g. E123546WR, 102222ED" />
                 </div>
+                <div class="form-group">
+                    <label for="machineWorkcenter">Machine Workcenter</label>
+                    <select id="machineWorkcenter" class="form-control">
+                        <option value="">-- Select Machine Workcenter --</option>
+                    </select>
+                </div>
                 <div class="form-group" id="isActiveGroup" style="display: none;">
                     <label>
                         <input type="checkbox" id="isActive" /> Active
@@ -156,22 +164,42 @@
         }, 300);
     });
     
-    function openCreateModal() {
+    async function ensureWorkcentersLoaded() {
+        const sel = document.getElementById('machineWorkcenter');
+        if (sel.options.length > 1) return;
+        try {
+            const r = await fetch('/Settings/GetMachineWorkcenters');
+            const list = await r.json();
+            sel.innerHTML = '<option value="">-- Select Machine Workcenter --</option>';
+            list.forEach(function(x) {
+                const opt = document.createElement('option');
+                opt.value = x.value;
+                opt.textContent = x.text;
+                sel.appendChild(opt);
+            });
+        } catch (e) { console.error(e); }
+    }
+    
+    async function openCreateModal() {
+        await ensureWorkcentersLoaded();
         document.getElementById('modalTitle').textContent = 'Add Machine Name';
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('name').disabled = false;
         document.getElementById('serialNumber').value = '';
+        document.getElementById('machineWorkcenter').value = '';
         document.getElementById('isActiveGroup').style.display = 'none';
         document.getElementById('itemModal').classList.add('active');
     }
     
-    function editItem(id, name, serialNumber, isActive) {
+    async function editItem(id, name, serialNumber, workcenter, isActive) {
+        await ensureWorkcentersLoaded();
         document.getElementById('modalTitle').textContent = 'Edit Machine Name';
         document.getElementById('itemId').value = id;
         document.getElementById('name').value = (name || '').replace(/&quot;/g, '"');
         document.getElementById('name').disabled = true;
         document.getElementById('serialNumber').value = (serialNumber || '').replace(/&quot;/g, '"');
+        document.getElementById('machineWorkcenter').value = (workcenter || '').replace(/&quot;/g, '"');
         document.getElementById('isActive').checked = isActive;
         document.getElementById('isActiveGroup').style.display = 'block';
         document.getElementById('itemModal').classList.add('active');
@@ -211,14 +239,15 @@
         const itemId = document.getElementById('itemId').value;
         const name = document.getElementById('name').value;
         const serialNumber = document.getElementById('serialNumber').value;
+        const workcenter = document.getElementById('machineWorkcenter').value;
         const isActive = document.getElementById('isActive').checked;
         
         let url = '/Settings/CreateMachineName';
-        let body = `name=${encodeURIComponent(name)}&description=${encodeURIComponent(serialNumber)}`;
+        let body = `name=${encodeURIComponent(name)}&description=${encodeURIComponent(serialNumber)}&workcenter=${encodeURIComponent(workcenter)}`;
         
         if (itemId) {
             url = '/Settings/UpdateMachineName';
-            body = `id=${itemId}&description=${encodeURIComponent(serialNumber)}&isActive=${isActive}`;
+            body = `id=${itemId}&description=${encodeURIComponent(serialNumber)}&workcenter=${encodeURIComponent(workcenter)}&isActive=${isActive}`;
         }
         
         try {
