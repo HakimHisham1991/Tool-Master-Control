@@ -1,6 +1,7 @@
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using CNCToolingDatabase.Models;
 using Microsoft.EntityFrameworkCore;
@@ -397,25 +398,10 @@ public static class DbSeeder
                 var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
                 var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
                 var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
-                var partSeed = new[]
+                foreach (var (name, desc, partRev, drawRev, pcCode, msSpec) in GetPartNumberSeedData())
                 {
-                    ("351-2123-13", "HINGES-LH", "A00", "A00", "V12345", "AG01", "ABP3-2101"),
-                    ("351-2123-14", "BRACKET RH", "B00", "B00", "351-2261", "AG02", "ABP3-2304"),
-                    ("351-2123-15", "LINK LH", "A", "A", "D123456", "AG03", "ABP3-4001"),
-                    ("351-2123-16", "HINGES-RH", "NA", "NA", "V12346", "AH01", "ABP3-7101"),
-                    ("351-2123-21", "BRACKET LH", "A00", "B00", "351-2262", "AL01", "BMS7-304"),
-                    ("351-2123-22", "LINK RH", "B00", "A00", "D123457", "AL02", "AMS4928"),
-                    ("351-2123-23", "FITTING", "A", "NA", "V12347", "AM01", "AMS5643"),
-                    ("351-2123-24", "PLATE ASSY", "NA", "A", "351-2263", "AP02", "AMS5662"),
-                    ("351-2123-25", "BRACKET ASSY", "A00", "A00", "D123458", "SA01", "BMS7-331"),
-                    ("351-2123-26", "HINGES-CENTER", "B00", "B00", "V12348", "SB01", "BMS7-380"),
-                    ("351-2123-27", "LINK ASSY", "A", "A", "351-2264", "AG04", "BMS7-430"),
-                    ("351-2123-29", "FITTING LH", "NA", "NA", "D123459", "AE01", "ABP3-2304"),
-                };
-                foreach (var (name, desc, partRev, drawRev, refDraw, pcCode, msSpec) in partSeed)
-                {
-                    var pcId = projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
-                    var msId = matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
+                    var pcId = !string.IsNullOrEmpty(pcCode) && projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
+                    var msId = !string.IsNullOrEmpty(msSpec) && matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
                     context.PartNumbers.Add(new PartNumber
                     {
                         Name = name,
@@ -424,7 +410,7 @@ public static class DbSeeder
                         PartRev = partRev,
                         DrawingRev = drawRev,
                         MaterialSpecId = msId,
-                        RefDrawing = refDraw,
+                        RefDrawing = "",
                         CreatedDate = DateTime.UtcNow,
                         CreatedBy = "system",
                         IsActive = true
@@ -863,6 +849,29 @@ TM02|267917|2X-07|INACTIVE";
         };
     }
 
+    /// <summary>Part Number seed from PART NUMBERS MASTER.txt. Format: Part Number|Description|Part Revision|Drawing Revision|Project Code|Material Spec.|Material</summary>
+    private static (string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string MaterialSpec)[] GetPartNumberSeedData()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "PART NUMBERS MASTER.txt");
+        if (!File.Exists(path))
+            return Array.Empty<(string, string, string, string, string, string)>();
+        var lines = File.ReadAllLines(path);
+        var result = new List<(string, string, string, string, string, string)>();
+        for (var i = 1; i < lines.Length; i++)
+        {
+            var cols = lines[i].Split('|');
+            if (cols.Length < 6 || string.IsNullOrWhiteSpace(cols[0])) continue;
+            var name = cols[0].Trim();
+            var desc = cols.Length > 1 ? cols[1].Trim() : "";
+            var partRev = cols.Length > 2 ? cols[2].Trim() : "";
+            var drawRev = cols.Length > 3 ? cols[3].Trim() : "";
+            var pcCode = cols.Length > 4 ? cols[4].Trim() : "";
+            var msSpec = cols.Length > 5 ? cols[5].Trim() : "";
+            result.Add((name, desc, partRev, drawRev, pcCode, msSpec));
+        }
+        return result.ToArray();
+    }
+
     private static ToolListHeader CreateToolListWithDetails(string partNumber, string operation, string revision,
         string projectCode, string machineName, string workcenter, string machineModel, string createdBy,
         IReadOnlyDictionary<string, (string SystemToolName, string Supplier, decimal Dia, decimal Flute, decimal Radius)> masterLookup)
@@ -1096,19 +1105,11 @@ TM02|267917|2X-07|INACTIVE";
         var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
         var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
         var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
-        var partSeed = new[] {
-            ("351-2123-13", "HINGES-LH", "A00", "A00", "V12345", "AG01", "ABP3-2101"), ("351-2123-14", "BRACKET RH", "B00", "B00", "351-2261", "AG02", "ABP3-2304"),
-            ("351-2123-15", "LINK LH", "A", "A", "D123456", "AG03", "ABP3-4001"), ("351-2123-16", "HINGES-RH", "NA", "NA", "V12346", "AH01", "ABP3-7101"),
-            ("351-2123-21", "BRACKET LH", "A00", "B00", "351-2262", "AL01", "BMS7-304"), ("351-2123-22", "LINK RH", "B00", "A00", "D123457", "AL02", "AMS4928"),
-            ("351-2123-23", "FITTING", "A", "NA", "V12347", "AM01", "AMS5643"), ("351-2123-24", "PLATE ASSY", "NA", "A", "351-2263", "AP02", "AMS5662"),
-            ("351-2123-25", "BRACKET ASSY", "A00", "A00", "D123458", "SA01", "BMS7-331"), ("351-2123-26", "HINGES-CENTER", "B00", "B00", "V12348", "SB01", "BMS7-380"),
-            ("351-2123-27", "LINK ASSY", "A", "A", "351-2264", "AG04", "BMS7-430"), ("351-2123-29", "FITTING LH", "NA", "NA", "D123459", "AE01", "ABP3-2304"),
-        };
-        foreach (var (name, desc, partRev, drawRev, refDraw, pcCode, msSpec) in partSeed)
+        foreach (var (name, desc, partRev, drawRev, pcCode, msSpec) in GetPartNumberSeedData())
         {
-            var pcId = projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
-            var msId = matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
-            context.PartNumbers.Add(new PartNumber { Name = name, Description = desc, ProjectCodeId = pcId, PartRev = partRev, DrawingRev = drawRev, MaterialSpecId = msId, RefDrawing = refDraw, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+            var pcId = !string.IsNullOrEmpty(pcCode) && projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
+            var msId = !string.IsNullOrEmpty(msSpec) && matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
+            context.PartNumbers.Add(new PartNumber { Name = name, Description = desc, ProjectCodeId = pcId, PartRev = partRev, DrawingRev = drawRev, MaterialSpecId = msId, RefDrawing = "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
         }
         context.SaveChanges();
     }
