@@ -11,101 +11,105 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = CNCToolingDatabase
 build_property.RootNamespace = CNCToolingDatabase
-build_property.ProjectDir = c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\
+build_property.ProjectDir = C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase
+build_property.MSBuildProjectDirectory = C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 8.0
 build_property.EnableCodeStyleSeverity = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Account/Login.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Account/Login.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxMb2dpbi5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Home/Privacy.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Home/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/CamLeader.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/CamLeader.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2V0dGluZ3NcQ2FtTGVhZGVyLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/CamProgrammer.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/CamProgrammer.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2V0dGluZ3NcQ2FtUHJvZ3JhbW1lci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/Index.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2V0dGluZ3NcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/MachineModel.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/MachineModel.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2V0dGluZ3NcTWFjaGluZU1vZGVsLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/MachineName.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/MachineName.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2V0dGluZ3NcTWFjaGluZU5hbWUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/MachineWorkcenter.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/MachineWorkcenter.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2V0dGluZ3NcTWFjaGluZVdvcmtjZW50ZXIuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/MaterialSpec.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/MaterialSpec.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2V0dGluZ3NcTWF0ZXJpYWxTcGVjLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/PartNumber.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/PartNumber.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2V0dGluZ3NcUGFydE51bWJlci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/ProjectCode.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/ProjectCode.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2V0dGluZ3NcUHJvamVjdENvZGUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/User.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Settings/User.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2V0dGluZ3NcVXNlci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Shared/Error.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Shared/_ValidationScriptsPartial.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Shared/_Pagination.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9QYWdpbmF0aW9uLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/ToolCodeUniqueEditor/Index.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/ToolCodeUniqueEditor/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVG9vbENvZGVVbmlxdWVFZGl0b3JcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/ToolCodeUnique/Index.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/ToolCodeUnique/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVG9vbENvZGVVbmlxdWVcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/ToolCode/Index.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/ToolCode/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVG9vbENvZGVcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/ToolListEditor/Index.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/ToolListEditor/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVG9vbExpc3RFZGl0b3JcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/ToolList/Index.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/ToolList/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVG9vbExpc3RcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/_ViewImports.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/_ViewStart.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/_ViewStart.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[c:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Shared/_Layout.cshtml]
+[C:/Users/Public/Documents/Tool-Master-Control/Tool-Master-Control/CNCToolingDatabase/Views/Shared/_Layout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = b-qp64c5asm7

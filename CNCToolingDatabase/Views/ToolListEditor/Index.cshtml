@@ -250,7 +250,7 @@
     
     // Populate dropdowns on page load
     async function populateDropdowns() {
-        // Populate Part Numbers
+        // Populate Part Numbers (with projectCode from Settings > Part Number Management for auto-fill)
         try {
             const partNumbersResponse = await fetch('/ToolListEditor/GetPartNumbers');
             const partNumbers = await partNumbersResponse.json();
@@ -259,6 +259,9 @@
                 const option = document.createElement('option');
                 option.value = p.value;
                 option.textContent = p.text;
+                if (p.projectCode != null && p.projectCode !== '') {
+                    option.dataset.projectCode = p.projectCode;
+                }
                 if (p.value === currentPartNumber) {
                     option.selected = true;
                 }
@@ -541,6 +544,16 @@
     document.getElementById('partNumber').addEventListener('change', function() {
         hasUnsavedChanges = true;
         updateToolListName();
+        // Auto-populate Project Code from Settings > Part Number Management
+        const partNumberSelect = document.getElementById('partNumber');
+        const selectedOption = partNumberSelect.options[partNumberSelect.selectedIndex];
+        const projectCodeSelect = document.getElementById('projectCode');
+        if (selectedOption && selectedOption.dataset.projectCode && projectCodeSelect) {
+            const code = selectedOption.dataset.projectCode;
+            if (Array.from(projectCodeSelect.options).some(opt => opt.value === code)) {
+                projectCodeSelect.value = code;
+            }
+        }
     });
     
     function updateToolListName() {
