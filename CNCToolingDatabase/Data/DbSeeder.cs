@@ -208,44 +208,6 @@ public static class DbSeeder
         
         try
         {
-            if (context.MachineNames != null)
-            {
-                context.MachineNames.RemoveRange(context.MachineNames.ToList());
-                context.SaveChanges();
-                foreach (var (name, serial, workcenter, isActive) in GetMachineNameSeedData())
-                {
-                    context.MachineNames.Add(new MachineName
-                    {
-                        Name = name,
-                        Description = serial,
-                        Workcenter = workcenter ?? "",
-                        CreatedDate = DateTime.UtcNow,
-                        CreatedBy = "system",
-                        IsActive = isActive
-                    });
-                }
-                context.SaveChanges();
-            }
-        }
-        catch { }
-        
-        try
-        {
-            if (context.MachineWorkcenters != null && !context.MachineWorkcenters.Any())
-            {
-                var workcenters = "2X-01|2X-02|2X-03|2X-04|2X-06|2X-07|2X-08|2X-09|2X-10|2X-11|3X-01|3X-02|3X-03|3X-07|3X-08|3X-09|3X-09i|3X-10|3X-11|3X-14|3X-18|3X-19|3X-20|3X-21|3X-22|3X-23|3X-26|3X-27|3X-28|3X-29|3X-30|3X-31|3X-32|4X-01|4X-02|4X-03|4X-07|4X-08|4X-10|4X-11|4X-13|4X-14|4X-15|4X-16|5X-01|5X-02|5X-03|5X-04|5X-05|5X-06|5X-07|5X-08|5X-09|5X-10|5X-11|5X-12|5X-13|5X-14|5X-15|NA".Split('|');
-                foreach (var wc in workcenters)
-                {
-                    var axis = wc == "NA" ? "N/A" : wc.StartsWith("2X") ? "2-Axis" : wc.StartsWith("3X") ? "3-Axis" : wc.StartsWith("4X") ? "4-Axis" : wc.StartsWith("5X") ? "5-Axis" : "3-Axis";
-                    context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = wc, Description = axis, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
-                }
-                context.SaveChanges();
-            }
-        }
-        catch { }
-        
-        try
-        {
             if (context.MachineModels != null && !context.MachineModels.Any())
             {
                 var machineModelSeed = new[] {
@@ -327,6 +289,48 @@ public static class DbSeeder
                         CreatedBy = "system",
                         IsActive = true
                     });
+                }
+                context.SaveChanges();
+            }
+        }
+        catch { }
+        
+        try
+        {
+            if (context.MachineNames != null)
+            {
+                context.MachineNames.RemoveRange(context.MachineNames.ToList());
+                context.SaveChanges();
+                var modelToId = (context.MachineModels ?? Enumerable.Empty<MachineModel>())
+                    .ToDictionary(m => m.Model, m => m.Id, StringComparer.OrdinalIgnoreCase);
+                foreach (var (name, serial, workcenter, machineModel, isActive) in GetMachineNameSeedData())
+                {
+                    var machineModelId = !string.IsNullOrWhiteSpace(machineModel) && modelToId.TryGetValue(machineModel.Trim(), out var id) ? id : (int?)null;
+                    context.MachineNames.Add(new MachineName
+                    {
+                        Name = name,
+                        Description = serial,
+                        Workcenter = workcenter ?? "",
+                        MachineModelId = machineModelId,
+                        CreatedDate = DateTime.UtcNow,
+                        CreatedBy = "system",
+                        IsActive = isActive
+                    });
+                }
+                context.SaveChanges();
+            }
+        }
+        catch { }
+        
+        try
+        {
+            if (context.MachineWorkcenters != null && !context.MachineWorkcenters.Any())
+            {
+                var workcenters = "2X-01|2X-02|2X-03|2X-04|2X-06|2X-07|2X-08|2X-09|2X-10|2X-11|3X-01|3X-02|3X-03|3X-07|3X-08|3X-09|3X-09i|3X-10|3X-11|3X-14|3X-18|3X-19|3X-20|3X-21|3X-22|3X-23|3X-26|3X-27|3X-28|3X-29|3X-30|3X-31|3X-32|4X-01|4X-02|4X-03|4X-07|4X-08|4X-10|4X-11|4X-13|4X-14|4X-15|4X-16|5X-01|5X-02|5X-03|5X-04|5X-05|5X-06|5X-07|5X-08|5X-09|5X-10|5X-11|5X-12|5X-13|5X-14|5X-15|NA".Split('|');
+                foreach (var wc in workcenters)
+                {
+                    var axis = wc == "NA" ? "N/A" : wc.StartsWith("2X") ? "2-Axis" : wc.StartsWith("3X") ? "3-Axis" : wc.StartsWith("4X") ? "4-Axis" : wc.StartsWith("5X") ? "5-Axis" : "3-Axis";
+                    context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = wc, Description = axis, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }
@@ -474,308 +478,26 @@ public static class DbSeeder
         }
     }
 
-    /// <summary>Machine Name seed: Name|Serial Number|Machine Workcenter|Status. INACTIVE → IsActive false.</summary>
-    private static (string Name, string Serial, string Workcenter, bool IsActive)[] GetMachineNameSeedData()
+    /// <summary>Machine Name seed from MACHINE NAME MASTER.txt. Format: Machine Name|Serial Number|Machine Workcenter|Machine Model|Status.</summary>
+    private static (string Name, string Serial, string Workcenter, string MachineModel, bool IsActive)[] GetMachineNameSeedData()
     {
-        const string raw = @"A002|P117XK535|3X-09|INACTIVE
-A003|G8952-0054|3X-23|INACTIVE
-A004|G8952-0053|3X-23|INACTIVE
-A006|287706|2X-10|INACTIVE
-A007|NL153170920|2X-09|INACTIVE
-A008|G8952-0055|3X-23|INACTIVE
-A009|14585618044|3X-20|INACTIVE
-A010|14585617994|3X-20|INACTIVE
-A011|12620000563|5X-12|INACTIVE
-A012|12620000553|5X-12|INACTIVE
-A013|290299|2X-10|INACTIVE
-A014|G8952-0084|3X-23|INACTIVE
-A015|NL153180416|2X-09|INACTIVE
-A016|294599|5X-08|INACTIVE
-A017|NV504180628|4X-10|INACTIVE
-A018|294600|5X-08|INACTIVE
-A019|12710007873|5X-13|INACTIVE
-A020|NV504180623|4X-10|INACTIVE
-A021|NL153180814|2X-09|INACTIVE
-A022|NV504180626|4X-10|INACTIVE
-A023|NV504180618|4X-10|INACTIVE
-A024|MV0041-000277|3X-26|INACTIVE
-A025|MV0041-000278|3X-26|INACTIVE
-A026|12710007823|5X-13|INACTIVE
-A1-31|MV0097-000172|3X-27|ACTIVE
-A1-33|232129|3X-08|ACTIVE
-A1-52|024433|5X-15|ACTIVE
-A2-31|MV0062-000833|3X-28|ACTIVE
-A2-52|12710007823|5X-13|ACTIVE
-A2-53|10000002906|5X-13|ACTIVE
-A3-31|MV0062-000834|3X-28|ACTIVE
-A3-52|12710008043|5X-13|ACTIVE
-A4-31|G8952-0084|3X-23|INACTIVE
-A4-31a|MV0041-000278|3X-26|ACTIVE
-A4-32|231616|3X-10|ACTIVE
-A4-53|12140018913|5X-14|ACTIVE
-A5-31|G8952-0054|3X-23|INACTIVE
-A5-31A|MV0041-000277|3X-26|ACTIVE
-A5-42|G8952-0055|3X-23|INACTIVE
-A5-42A|266744|4X-07|ACTIVE
-A5-53|12140018903|5X-14|ACTIVE
-A6-31|MV0041-000278|3X-26|INACTIVE
-A6-31a|G8952-0084|3X-23|ACTIVE
-A6-32|MV0041-000277|3X-26|INACTIVE
-A6-32A|G8952-0053|3X-23|ACTIVE
-A6-34|G8952-0054|3X-23|ACTIVE
-A6-35|G8952-0055|3X-23|ACTIVE
-A6-53|12620000553|5X-12|ACTIVE
-A7-31|AZMY4002|3X-29|ACTIVE
-A7-32|AZMY3001|3X-29|ACTIVE
-A7-53|12620000753|5X-12|ACTIVE
-A8-31|AZMY9004|3X-29|ACTIVE
-A8-32|AZMY7003|3X-29|ACTIVE
-A8-53|12620000563|5X-12|ACTIVE
-AV06|P11ZXK017|3X-09|INACTIVE
-AV07|P122XK602|4X-16|INACTIVE
-AV08|P124XKJ69|3X-09i|INACTIVE
-AV09|P122XKH81|3X-09|INACTIVE
-AV11|035269|4X-15|INACTIVE
-AV12|035268|4X-15|INACTIVE
-B1-32|203823|3X-07|ACTIVE
-B1-33|P117XK535|3X-09|INACTIVE
-B1-34|034768|3X-14|ACTIVE
-B1-45|034769|4X-14|ACTIVE
-B1-51|12140019183|5X-14|ACTIVE
-B1-53|12140022203|5X-14|ACTIVE
-B2-32|P117XK535|3X-09|INACTIVE
-B2-32a|VD010060|3X-30|ACTIVE
-B2-33|VD010061|3X-30|ACTIVE
-B2-34|VD010067|3X-30|ACTIVE
-B2-35|VD010068|3X-30|ACTIVE
-B2-51|12620000953|5X-12|ACTIVE
-B3-41|268110|4X-08|ACTIVE
-B3-52|15475745484|5X-07|ACTIVE
-BR01|CY-C107021|NA|ACTIVE
-C-32|CMXV1231029|3X-32|INACTIVE
-C-33|CMXV1231029|3X-32|ACTIVE
-C-34|CMXV1241101|3X-32|ACTIVE
-C-51|12140022153|5X-14|ACTIVE
-C-52|12140022163|5X-14|ACTIVE
-FC01|243039|4X-01|ACTIVE
-FC02|244490|3X-11|ACTIVE
-FC03|250436|5X-02|ACTIVE
-FC04|250796|4X-01|ACTIVE
-FC05|261526|4X-01|ACTIVE
-FC06|261527|4X-01|ACTIVE
-FC07|11880000913|5X-04|ACTIVE
-FC08|M256363E20A|3X-18|ACTIVE
-FC09|253410|5X-05|ACTIVE
-FC10|265558|5X-06|ACTIVE
-FC11|265559|5X-06|ACTIVE
-FC12|15475739884|5X-07|ACTIVE
-FC13|14585609704|3X-20|INACTIVE
-FC13a|NV505230113|3X-31|ACTIVE
-FC14|14585609674|3X-20|ACTIVE
-FC15|269124|4X-01|ACTIVE
-FC16|14585610364|3X-20|ACTIVE
-FC17|15475739874|5X-07|ACTIVE
-FC18|15475739904|5X-07|ACTIVE
-GK01|034768|3X-14|INACTIVE
-GK02|034769|4X-14|INACTIVE
-GR01|227325|3X-08|ACTIVE
-GR02|203823|3X-07|INACTIVE
-GR03|232129|3X-08|INACTIVE
-GR04|268110|4X-08|INACTIVE
-H1-21|Y2-1286|2X-04|ACTIVE
-H1-42|283496|4X-13|ACTIVE
-H1-43|269004|4X-13|ACTIVE
-H1-44|261684|4X-13|ACTIVE
-H2-31|276775|3X-21|INACTIVE
-H2-51|283192|5X-11|ACTIVE
-H2-52|283193|5X-10|ACTIVE
-H2-53|264750|5X-09|ACTIVE
-H2-54|283194|5X-10|ACTIVE
-H3-31|NV503170603|3X-22|INACTIVE
-H3-34|276775|3X-21|ACTIVE
-H3-35|NV503170512|3X-22|ACTIVE
-H3-36|NV503170603|3X-22|ACTIVE
-H3-51|11415589584|5X-03|ACTIVE
-H3-52|281392|5X-08|ACTIVE
-H3-53|268112|5X-08|ACTIVE
-HW01|183367|2X-03|INACTIVE
-HW02|186970|2X-03|INACTIVE
-HW03|Y2-1286|2X-04|INACTIVE
-HW05|219321|3X-01|INACTIVE
-HW06|219320|3X-01|INACTIVE
-HW07|219322|3X-01|INACTIVE
-HW08|196093|3X-01|ACTIVE
-HW09|220930|3X-01|INACTIVE
-HW12|199831|4X-03|ACTIVE
-HW14|231616|3X-10|INACTIVE
-HW15|231615|3X-10|INACTIVE
-HW16|218349|4X-03|ACTIVE
-HW17|266744|4X-07|INACTIVE
-HW18|266897|4X-07|INACTIVE
-HW19|266896|4X-07|INACTIVE
-HW20|NV503160118|4X-10|INACTIVE
-HW21|NV503160125|4X-10|INACTIVE
-HW22|NV503160116|4X-10|INACTIVE
-HW23|NV503160117|4X-10|INACTIVE
-HW24|G8940-0078|3X-19|INACTIVE
-HW25|NV503160915|4X-10|INACTIVE
-J1-21|219060|2X-02|ACTIVE
-J1-22|233201|2X-02|ACTIVE
-J1-23|212465|2X-03|ACTIVE
-J1-24|218188|2X-02|ACTIVE
-J1-25|217205|2X-01|ACTIVE
-J1-26|178997|2X-01|ACTIVE
-J1-27|178996|2X-01|ACTIVE
-J1-31|G8940-0045|3X-19|INACTIVE
-J1-32|G8940-0078|3X-19|INACTIVE
-J2-21|186970|2X-03|INACTIVE
-J2-22|178996|2X-01|INACTIVE
-J2-31|G8940-0045|3X-19|ACTIVE
-J2-32|220930|3X-01|ACTIVE
-J2-34|G8940-0078|3X-19|ACTIVE
-J2-35|182714|3X-02|ACTIVE
-J2-53|200395|5X-01|ACTIVE
-J2-56|182711|5X-01|ACTIVE
-J3-21|178995|2X-01|ACTIVE
-J3-22|178997|2X-01|INACTIVE
-J4-41|NV504180623|4X-10|ACTIVE
-J4-52|294600|5X-08|ACTIVE
-J5-41|NV504180626|4X-10|ACTIVE
-J5-52|294599|5X-08|ACTIVE
-J6-41|NV504180628|4X-10|ACTIVE
-J6-52|12710007873|5X-13|ACTIVE
-J7-21|290299|2X-10|INACTIVE
-J7-22|287706|2X-10|INACTIVE
-J8-41|NV504180618|4X-10|ACTIVE
-J8-52|311017|5X-08|ACTIVE
-K1-31|035269|4X-15|INACTIVE
-K1-32|035268|4X-15|INACTIVE
-K1-33|232129|3X-08|INACTIVE
-K1-34|231615|3X-10|ACTIVE
-K1-41|266897|4X-07|ACTIVE
-K1-42|266896|4X-07|ACTIVE
-K10-21|NL153180814|2X-09|ACTIVE
-K10-22|NL153170901|2X-09|ACTIVE
-K10-23|NL153180416|2X-09|ACTIVE
-K10-24|NL153170920|2X-09|ACTIVE
-K2-31|P11ZXK017|3X-09|INACTIVE
-K2-32|P122XK602|4X-16|INACTIVE
-K2-34|P11ZXK017|3X-09|ACTIVE
-K2-35|P124XKJ69|3X-09i|ACTIVE
-K2-36|P122XKH81|3X-09|ACTIVE
-K2-37|182714|3X-02|INACTIVE
-K2-37a|P117XK535|3X-09|ACTIVE
-K2-41|035268|4X-15|ACTIVE
-K2-42|035269|4X-15|ACTIVE
-K2-43|P122XK602|4X-16|ACTIVE
-K3-31a|14585617994|3X-20|ACTIVE
-K3-32|P124XKJ69|3X-09i|INACTIVE
-K3-32a|14585618044|3X-20|ACTIVE
-K3-33|NV505230113|3X-31|INACTIVE
-K3-33a|14585609704|3X-20|ACTIVE
-K3-34|14585613704|3X-20|ACTIVE
-K4-31a|219321|3X-01|ACTIVE
-K4-32|P122XKH81|3X-09|INACTIVE
-K4-33|219322|3X-01|ACTIVE
-K4-34|177480|3X-02|ACTIVE
-K4-35|219320|3X-01|ACTIVE
-K4-42|NV503160915|4X-10|ACTIVE
-K5-21|NL153170901|2X-09|INACTIVE
-K5-22|NL153180814|2X-09|INACTIVE
-K5-41|NV503160117|4X-10|ACTIVE
-K5-42|NV503160116|4X-10|ACTIVE
-K5-43|NV503160125|4X-10|ACTIVE
-K5-44|NV503160118|4X-10|ACTIVE
-K6-21|NL153180416|2X-09|INACTIVE
-K6-21a|NL153170210|2X-09|ACTIVE
-K6-22|NL153170920|2X-09|INACTIVE
-K6-22a|178997|2X-01|INACTIVE
-K6-23|178996|2X-01|INACTIVE
-K7-21|267916|2X-07|ACTIVE
-K7-22|267917|2X-07|ACTIVE
-K7-23|290299|2X-10|ACTIVE
-K7-24|287706|2X-10|ACTIVE
-K7-31|14585618044|3X-20|INACTIVE
-K7-32|14585617994|3X-20|INACTIVE
-K8-21|186970|2X-03|ACTIVE
-K8-22|183367|2X-03|ACTIVE
-K8-23|276379|2X-08|ACTIVE
-K8-24|38510104|2X-06|ACTIVE
-K9-21|NL154230105|2X-09|ACTIVE
-K9-22|335828|2X-11|ACTIVE
-K9-23|NL154230107|2X-09|ACTIVE
-K9-24|335833|2X-11|ACTIVE
-M1-21|219060|2X-02|INACTIVE
-M1-22|218188|2X-02|INACTIVE
-MD01|261684|4X-13|INACTIVE
-MD02|269004|4X-13|INACTIVE
-MD03|268112|5X-08|INACTIVE
-MD04|15475745484|5X-07|INACTIVE
-MD05|264750|5X-09|INACTIVE
-MD06|276775|3X-21|INACTIVE
-MD07|276379|2X-08|INACTIVE
-MD08|NL153170210|2X-09|INACTIVE
-MD09|NL153170210|2X-09|INACTIVE
-MD10|NV503170512|3X-22|INACTIVE
-MD11|NV503170603|3X-22|INACTIVE
-MD12|281392|5X-08|INACTIVE
-MD13|283193|5X-10|INACTIVE
-MD14|283194|5X-10|INACTIVE
-MD15|283192|5X-11|INACTIVE
-S001|286303|4X-08|ACTIVE
-S002|NL153170901|2X-09|INACTIVE
-SM01|178996|2X-01|INACTIVE
-SM02|178995|2X-01|INACTIVE
-SM03|178997|2X-01|INACTIVE
-SM05|182714|3X-02|INACTIVE
-SM06|177480|3X-02|INACTIVE
-SM09|200395|5X-01|INACTIVE
-SM10|182712|5X-01|ACTIVE
-SM11|182711|5X-01|INACTIVE
-SM12|172570|5X-01|ACTIVE
-SM13|183438|4X-02|ACTIVE
-SM14|174085|4X-02|ACTIVE
-SM15|38510104|2X-06|INACTIVE
-SM16|11415589584|5X-03|INACTIVE
-SM17|G8940-0045|3X-19|INACTIVE
-SP00|212465|2X-03|INACTIVE
-SP01|219060|2X-02|INACTIVE
-SP02|218188|2X-02|INACTIVE
-SP03|217205|2X-01|INACTIVE
-SP04|220931|3X-01|ACTIVE
-SP05|196094|3X-01|ACTIVE
-SP06|219355|3X-01|ACTIVE
-SP07|219356|3X-01|ACTIVE
-SP08|198313|3X-07|ACTIVE
-SP09|219339|3X-03|ACTIVE
-SP11|218408|4X-01|ACTIVE
-SP12|218407|4X-03|ACTIVE
-SP13|218406|4X-03|ACTIVE
-SP14|221071|4X-03|ACTIVE
-SP15|230812|4X-03|ACTIVE
-SP16|225314|3X-10|ACTIVE
-SP17|233201|2X-02|INACTIVE
-SP19|266898|4X-08|ACTIVE
-SP20|NV701160110|4X-11|ACTIVE
-SP21|NV701160210|4X-11|ACTIVE
-SP22|275044|4X-08|ACTIVE
-SP23|14585613704|3X-20|INACTIVE
-TM01|267916|2X-07|INACTIVE
-TM02|267917|2X-07|INACTIVE";
-        return raw.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None)
-            .Select(l => l.Trim())
-            .Where(l => l.Length > 0)
-            .Select(l =>
-            {
-                var p = l.Split('|');
-                var name = p.Length > 0 ? p[0].Trim() : "";
-                var serial = p.Length > 1 ? p[1].Trim() : "";
-                var workcenter = p.Length > 2 ? p[2].Trim() : "";
-                var active = p.Length > 3 && string.Equals(p[3].Trim(), "ACTIVE", StringComparison.OrdinalIgnoreCase);
-                return (name, serial, workcenter, active);
-            })
-            .Where(t => !string.IsNullOrEmpty(t.name))
-            .ToArray();
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MACHINE NAME MASTER.txt");
+        if (!File.Exists(path))
+            return Array.Empty<(string, string, string, string, bool)>();
+        var lines = File.ReadAllLines(path);
+        var result = new List<(string, string, string, string, bool)>();
+        for (var i = 1; i < lines.Length; i++)
+        {
+            var cols = lines[i].Split('|');
+            if (cols.Length < 5 || string.IsNullOrWhiteSpace(cols[0])) continue;
+            var name = cols[0].Trim();
+            var serial = cols.Length > 1 ? cols[1].Trim() : "";
+            var workcenter = cols.Length > 2 ? cols[2].Trim() : "";
+            var machineModel = cols.Length > 3 ? cols[3].Trim() : "";
+            var isActive = cols.Length > 4 && string.Equals(cols[4].Trim(), "ACTIVE", StringComparison.OrdinalIgnoreCase);
+            result.Add((name, serial, workcenter, machineModel, isActive));
+        }
+        return result.ToArray();
     }
 
     /// <summary>Hard-coded Master Tool Code seed. Same data every reset, like Settings pages.</summary>
@@ -1004,9 +726,12 @@ TM02|267917|2X-07|INACTIVE";
         if (context.MachineNames == null) return;
         context.MachineNames.RemoveRange(context.MachineNames.ToList());
         context.SaveChanges();
-        foreach (var (name, serial, workcenter, isActive) in GetMachineNameSeedData())
+        var modelToId = (context.MachineModels ?? Enumerable.Empty<MachineModel>())
+            .ToDictionary(m => m.Model, m => m.Id, StringComparer.OrdinalIgnoreCase);
+        foreach (var (name, serial, workcenter, machineModel, isActive) in GetMachineNameSeedData())
         {
-            context.MachineNames.Add(new MachineName { Name = name, Description = serial, Workcenter = workcenter ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
+            var machineModelId = !string.IsNullOrWhiteSpace(machineModel) && modelToId.TryGetValue(machineModel.Trim(), out var id) ? id : (int?)null;
+            context.MachineNames.Add(new MachineName { Name = name, Description = serial, Workcenter = workcenter ?? "", MachineModelId = machineModelId, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
         }
         context.SaveChanges();
     }

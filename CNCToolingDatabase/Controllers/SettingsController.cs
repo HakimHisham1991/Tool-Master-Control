@@ -240,7 +240,7 @@ public class SettingsController : Controller
     public async Task<IActionResult> MachineName(string? search, int page = 1, int pageSize = 50)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
-        var query = _context.MachineNames.AsQueryable();
+        var query = _context.MachineNames.Include(m => m.MachineModel).AsQueryable();
         
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -281,8 +281,19 @@ public class SettingsController : Controller
         return Json(list);
     }
     
+    [HttpGet]
+    public async Task<IActionResult> GetMachineModels()
+    {
+        var list = await _context.MachineModels
+            .Where(m => m.IsActive)
+            .OrderBy(m => m.Model)
+            .Select(m => new { value = m.Id.ToString(), text = m.Model })
+            .ToListAsync();
+        return Json(list);
+    }
+    
     [HttpPost]
-    public async Task<IActionResult> CreateMachineName(string name, string? description, string? workcenter)
+    public async Task<IActionResult> CreateMachineName(string name, string? description, string? workcenter, int? machineModelId)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -299,6 +310,7 @@ public class SettingsController : Controller
             Name = name,
             Description = description,
             Workcenter = workcenter ?? "",
+            MachineModelId = machineModelId > 0 ? machineModelId : null,
             CreatedDate = DateTime.UtcNow,
             CreatedBy = HttpContext.Session.GetString("Username") ?? "",
             IsActive = true
@@ -311,7 +323,7 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> UpdateMachineName(int id, string? description, string? workcenter, bool? isActive)
+    public async Task<IActionResult> UpdateMachineName(int id, string? description, string? workcenter, int? machineModelId, bool? isActive)
     {
         var machineName = await _context.MachineNames.FindAsync(id);
         if (machineName == null)
@@ -321,6 +333,7 @@ public class SettingsController : Controller
         
         if (description != null) machineName.Description = description;
         if (workcenter != null) machineName.Workcenter = workcenter;
+        if (machineModelId.HasValue) machineName.MachineModelId = machineModelId > 0 ? machineModelId : null;
         if (isActive.HasValue) machineName.IsActive = isActive.Value;
         
         await _context.SaveChangesAsync();

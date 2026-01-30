@@ -64,6 +64,10 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Name).IsUnique();
+            entity.HasOne(e => e.MachineModel)
+                .WithMany()
+                .HasForeignKey(e => e.MachineModelId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
         
         modelBuilder.Entity<MachineWorkcenter>(entity =>

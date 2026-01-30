@@ -43,6 +43,7 @@
                 <th>Name</th>
                 <th>Serial Number</th>
                 <th>Machine Workcenter</th>
+                <th>Machine Model</th>
                 <th>Created By</th>
                 <th>Created Date</th>
                 <th>Status</th>
@@ -53,7 +54,7 @@
             @if (Model.Count == 0)
             {
                 <tr>
-                    <td colspan="8" class="empty-state">
+                    <td colspan="9" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                             <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
@@ -73,6 +74,7 @@
                         <td>@item.Name</td>
                         <td>@(item.Description ?? "-")</td>
                         <td>@(item.Workcenter ?? "-")</td>
+                        <td>@(item.MachineModel?.Model ?? "-")</td>
                         <td>@item.CreatedBy</td>
                         <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
@@ -86,7 +88,7 @@
                             }
                         </td>
                         <td>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@(item.Name.Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Description ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Workcenter ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', @item.IsActive.ToString().ToLower())">Edit</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@(item.Name.Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Description ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Workcenter ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', @(item.MachineModelId?.ToString() ?? "null"), @item.IsActive.ToString().ToLower())">Edit</button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(@item.Id, '@item.Name')">Delete</button>
                         </td>
                     </tr>
@@ -138,6 +140,12 @@
                         <option value="">-- Select Machine Workcenter --</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="machineModel">Machine Model</label>
+                    <select id="machineModel" class="form-control">
+                        <option value="">-- Select Machine Model --</option>
+                    </select>
+                </div>
                 <div class="form-group" id="isActiveGroup" style="display: none;">
                     <label>
                         <input type="checkbox" id="isActive" /> Active
@@ -180,26 +188,46 @@
         } catch (e) { console.error(e); }
     }
     
+    async function ensureMachineModelsLoaded() {
+        const sel = document.getElementById('machineModel');
+        if (sel.options.length > 1) return;
+        try {
+            const r = await fetch('/Settings/GetMachineModels');
+            const list = await r.json();
+            sel.innerHTML = '<option value="">-- Select Machine Model --</option>';
+            list.forEach(function(x) {
+                const opt = document.createElement('option');
+                opt.value = x.value;
+                opt.textContent = x.text;
+                sel.appendChild(opt);
+            });
+        } catch (e) { console.error(e); }
+    }
+    
     async function openCreateModal() {
         await ensureWorkcentersLoaded();
+        await ensureMachineModelsLoaded();
         document.getElementById('modalTitle').textContent = 'Add Machine Name';
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('name').disabled = false;
         document.getElementById('serialNumber').value = '';
         document.getElementById('machineWorkcenter').value = '';
+        document.getElementById('machineModel').value = '';
         document.getElementById('isActiveGroup').style.display = 'none';
         document.getElementById('itemModal').classList.add('active');
     }
     
-    async function editItem(id, name, serialNumber, workcenter, isActive) {
+    async function editItem(id, name, serialNumber, workcenter, machineModelId, isActive) {
         await ensureWorkcentersLoaded();
+        await ensureMachineModelsLoaded();
         document.getElementById('modalTitle').textContent = 'Edit Machine Name';
         document.getElementById('itemId').value = id;
         document.getElementById('name').value = (name || '').replace(/&quot;/g, '"');
         document.getElementById('name').disabled = true;
         document.getElementById('serialNumber').value = (serialNumber || '').replace(/&quot;/g, '"');
         document.getElementById('machineWorkcenter').value = (workcenter || '').replace(/&quot;/g, '"');
+        document.getElementById('machineModel').value = (machineModelId === 'null' || machineModelId === null || machineModelId === '') ? '' : String(machineModelId);
         document.getElementById('isActive').checked = isActive;
         document.getElementById('isActiveGroup').style.display = 'block';
         document.getElementById('itemModal').classList.add('active');
@@ -248,14 +276,15 @@
         const name = document.getElementById('name').value;
         const serialNumber = document.getElementById('serialNumber').value;
         const workcenter = document.getElementById('machineWorkcenter').value;
+        const machineModelId = document.getElementById('machineModel').value;
         const isActive = document.getElementById('isActive').checked;
         
         let url = '/Settings/CreateMachineName';
-        let body = `name=${encodeURIComponent(name)}&description=${encodeURIComponent(serialNumber)}&workcenter=${encodeURIComponent(workcenter)}`;
+        let body = `name=${encodeURIComponent(name)}&description=${encodeURIComponent(serialNumber)}&workcenter=${encodeURIComponent(workcenter)}&machineModelId=${encodeURIComponent(machineModelId)}`;
         
         if (itemId) {
             url = '/Settings/UpdateMachineName';
-            body = `id=${itemId}&description=${encodeURIComponent(serialNumber)}&workcenter=${encodeURIComponent(workcenter)}&isActive=${isActive}`;
+            body = `id=${itemId}&description=${encodeURIComponent(serialNumber)}&workcenter=${encodeURIComponent(workcenter)}&machineModelId=${encodeURIComponent(machineModelId)}&isActive=${isActive}`;
         }
         
         try {
