@@ -35,6 +35,7 @@
     <table class="data-table">
         <thead>
             <tr>
+                <th onclick="sortBy('id')">No. @Html.Raw(GetSortIcon("id"))</th>
                 <th onclick="sortBy('toolListName')">Tool List Name @Html.Raw(GetSortIcon("toolListName"))</th>
                 <th onclick="sortBy('partNumber')">Part Number @Html.Raw(GetSortIcon("partNumber"))</th>
                 <th onclick="sortBy('operation')">Operation @Html.Raw(GetSortIcon("operation"))</th>
@@ -52,7 +53,7 @@
             @if (Model.ToolLists.Count == 0)
             {
                 <tr>
-                    <td colspan="11" class="empty-state">
+                    <td colspan="12" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
@@ -64,9 +65,12 @@
             }
             else
             {
-                @foreach (var item in Model.ToolLists)
+                @for (int i = 0; i < Model.ToolLists.Count; i++)
                 {
+                    var item = Model.ToolLists[i];
+                    var no = (Model.CurrentPage - 1) * Model.PageSize + i + 1;
                     <tr>
+                        <td>@no</td>
                         <td>
                             <a href="/ToolListEditor?id=@item.Id" target="_blank" class="tool-list-link">@item.ToolListName</a>
                         </td>

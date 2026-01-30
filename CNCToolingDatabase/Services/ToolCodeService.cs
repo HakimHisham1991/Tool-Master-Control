@@ -124,13 +124,29 @@ public class ToolCodeService : IToolCodeService
         
         return column?.ToLower() switch
         {
+            "no" => isDescending
+                ? query.OrderByDescending(t => t.PartNumber).ThenByDescending(t => t.Operation).ThenByDescending(t => t.ToolNumber)
+                : query.OrderBy(t => t.PartNumber).ThenBy(t => t.Operation).ThenBy(t => t.ToolNumber),
             "toolnumber" => isDescending ? query.OrderByDescending(t => t.ToolNumber) : query.OrderBy(t => t.ToolNumber),
             "tooldescription" => isDescending ? query.OrderByDescending(t => t.ToolDescription) : query.OrderBy(t => t.ToolDescription),
             "consumablecode" => isDescending ? query.OrderByDescending(t => t.ConsumableCode) : query.OrderBy(t => t.ConsumableCode),
             "supplier" => isDescending ? query.OrderByDescending(t => t.Supplier) : query.OrderBy(t => t.Supplier),
+            "holderextensioncode" => isDescending ? query.OrderByDescending(t => t.HolderExtensionCode) : query.OrderBy(t => t.HolderExtensionCode),
             "diameter" => isDescending ? query.OrderByDescending(t => t.Diameter) : query.OrderBy(t => t.Diameter),
+            "flutelength" => isDescending ? query.OrderByDescending(t => t.FluteLength) : query.OrderBy(t => t.FluteLength),
+            "protrusionlength" => isDescending ? query.OrderByDescending(t => t.ProtrusionLength) : query.OrderBy(t => t.ProtrusionLength),
+            "cornerradius" => isDescending ? query.OrderByDescending(t => t.CornerRadius) : query.OrderBy(t => t.CornerRadius),
+            "arborcode" => isDescending ? query.OrderByDescending(t => t.ArborCode) : query.OrderBy(t => t.ArborCode),
             "partnumber" => isDescending ? query.OrderByDescending(t => t.PartNumber) : query.OrderBy(t => t.PartNumber),
             "operation" => isDescending ? query.OrderByDescending(t => t.Operation) : query.OrderBy(t => t.Operation),
+            "revision" => isDescending ? query.OrderByDescending(t => t.Revision) : query.OrderBy(t => t.Revision),
+            "toollistname" => isDescending ? query.OrderByDescending(t => t.ToolListName) : query.OrderBy(t => t.ToolListName),
+            "projectcode" => isDescending ? query.OrderByDescending(t => t.ProjectCode) : query.OrderBy(t => t.ProjectCode),
+            "machinename" => isDescending ? query.OrderByDescending(t => t.MachineName) : query.OrderBy(t => t.MachineName),
+            "machineworkcenter" => isDescending ? query.OrderByDescending(t => t.MachineWorkcenter) : query.OrderBy(t => t.MachineWorkcenter),
+            "createdby" => isDescending ? query.OrderByDescending(t => t.CreatedBy) : query.OrderBy(t => t.CreatedBy),
+            "createddate" => isDescending ? query.OrderByDescending(t => t.CreatedDate) : query.OrderBy(t => t.CreatedDate),
+            "lastmodifieddate" => isDescending ? query.OrderByDescending(t => t.LastModifiedDate) : query.OrderBy(t => t.LastModifiedDate),
             _ => query.OrderBy(t => t.PartNumber).ThenBy(t => t.Operation).ThenBy(t => t.ToolNumber)
         };
     }

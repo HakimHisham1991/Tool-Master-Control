@@ -106,33 +106,34 @@
     <table class="data-table">
         <thead>
             <tr>
+                <th onclick="sortBy('no')">No. @Html.Raw(GetSortIcon("no"))</th>
                 <th onclick="sortBy('toolNumber')">Tool No. @Html.Raw(GetSortIcon("toolNumber"))</th>
                 <th onclick="sortBy('toolDescription')">Tool Name @Html.Raw(GetSortIcon("toolDescription"))</th>
                 <th onclick="sortBy('consumableCode')">Consumable Tool Description @Html.Raw(GetSortIcon("consumableCode"))</th>
                 <th onclick="sortBy('supplier')">Tool Supplier @Html.Raw(GetSortIcon("supplier"))</th>
-                <th>Tool Holder</th>
+                <th onclick="sortBy('holderExtensionCode')">Tool Holder @Html.Raw(GetSortIcon("holderExtensionCode"))</th>
                 <th onclick="sortBy('diameter')">Tool Diameter (D1) @Html.Raw(GetSortIcon("diameter"))</th>
-                <th>Flute Length (L1)</th>
-                <th>Tool Ext. Length (L2)</th>
-                <th>Tool Corner Radius</th>
-                <th>Arbor Description (or equivalent specs)</th>
+                <th onclick="sortBy('fluteLength')">Flute Length (L1) @Html.Raw(GetSortIcon("fluteLength"))</th>
+                <th onclick="sortBy('protrusionLength')">Tool Ext. Length (L2) @Html.Raw(GetSortIcon("protrusionLength"))</th>
+                <th onclick="sortBy('cornerRadius')">Tool Corner Radius @Html.Raw(GetSortIcon("cornerRadius"))</th>
+                <th onclick="sortBy('arborCode')">Arbor Description (or equivalent specs) @Html.Raw(GetSortIcon("arborCode"))</th>
                 <th onclick="sortBy('partNumber')">Part Number @Html.Raw(GetSortIcon("partNumber"))</th>
                 <th onclick="sortBy('operation')">Operation @Html.Raw(GetSortIcon("operation"))</th>
-                <th>Revision</th>
-                <th>Tool List Name</th>
-                <th>Project Code</th>
-                <th>Machine Name</th>
-                <th>Machine Workcenter</th>
-                <th>Created By</th>
-                <th>Created Date</th>
-                <th>Last Modified</th>
+                <th onclick="sortBy('revision')">Revision @Html.Raw(GetSortIcon("revision"))</th>
+                <th onclick="sortBy('toolListName')">Tool List Name @Html.Raw(GetSortIcon("toolListName"))</th>
+                <th onclick="sortBy('projectCode')">Project Code @Html.Raw(GetSortIcon("projectCode"))</th>
+                <th onclick="sortBy('machineName')">Machine Name @Html.Raw(GetSortIcon("machineName"))</th>
+                <th onclick="sortBy('machineWorkcenter')">Machine Workcenter @Html.Raw(GetSortIcon("machineWorkcenter"))</th>
+                <th onclick="sortBy('createdBy')">Created By @Html.Raw(GetSortIcon("createdBy"))</th>
+                <th onclick="sortBy('createdDate')">Created Date @Html.Raw(GetSortIcon("createdDate"))</th>
+                <th onclick="sortBy('lastModifiedDate')">Last Modified @Html.Raw(GetSortIcon("lastModifiedDate"))</th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Tools.Count == 0)
             {
                 <tr>
-                    <td colspan="19" class="empty-state">
+                    <td colspan="20" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -144,9 +145,12 @@
             }
             else
             {
-                @foreach (var tool in Model.Tools)
+                @for (int i = 0; i < Model.Tools.Count; i++)
                 {
+                    var tool = Model.Tools[i];
+                    var no = (Model.CurrentPage - 1) * Model.PageSize + i + 1;
                     <tr>
+                        <td>@no</td>
                         <td>@tool.ToolNumber</td>
                         <td>@tool.ToolDescription</td>
                         <td><a href="@BuildFilterUrl(tool.ConsumableCode, null)" class="cell-link">@tool.ConsumableCode</a></td>

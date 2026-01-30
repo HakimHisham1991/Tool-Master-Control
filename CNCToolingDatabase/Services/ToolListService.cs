@@ -324,6 +324,9 @@ public class ToolListService : IToolListService
 
         return columnLower switch
         {
+            "id" => isDescending
+                ? headers.OrderByDescending(h => h.Id).ToList()
+                : headers.OrderBy(h => h.Id).ToList(),
             "toollistname" => isDescending
                 ? headers.OrderByDescending(h => h.ToolListName).ToList()
                 : headers.OrderBy(h => h.ToolListName).ToList(),
