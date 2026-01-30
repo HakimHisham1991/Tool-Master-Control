@@ -6,20 +6,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <!-- Exclude nested CNCToolingDatabase folder (duplicate copy) from compilation -->
+  <!-- Exclude nested obj/bin so their generated AssemblyInfo are not compiled (avoids duplicate attribute errors) -->
   <ItemGroup>
-    <Compile Remove="CNCToolingDatabase\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Remove="CNCToolingDatabase\**" />
-    <None Remove="CNCToolingDatabase\**" />
+    <Compile Remove="CNCToolingDatabase\obj\**" />
+    <Compile Remove="CNCToolingDatabase\bin\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Data\PART NUMBERS MASTER.txt">
+    <Content Include="CNCToolingDatabase\Data\PART NUMBERS MASTER.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Data\MACHINE NAME MASTER.txt">
+    <Content Include="CNCToolingDatabase\Data\MACHINE NAME MASTER.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
