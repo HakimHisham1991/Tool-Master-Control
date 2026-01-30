@@ -110,6 +110,20 @@ public class SettingsController : Controller
         return Json(new { success = true, message = "User deleted successfully" });
     }
     
+    [HttpPost]
+    public IActionResult ResetUser()
+    {
+        try
+        {
+            DbSeeder.ResetUsers(_context);
+            return Json(new { success = true, message = "Users reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    
     // Project Code Management
     public async Task<IActionResult> ProjectCode(string? search, int page = 1, int pageSize = 50)
     {
@@ -202,6 +216,20 @@ public class SettingsController : Controller
         await _context.SaveChangesAsync();
         
         return Json(new { success = true, message = "Project code deleted successfully" });
+    }
+    
+    [HttpPost]
+    public IActionResult ResetProjectCode()
+    {
+        try
+        {
+            DbSeeder.ResetProjectCodes(_context);
+            return Json(new { success = true, message = "Project codes reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
     }
     
     // Machine Name Management
@@ -309,6 +337,20 @@ public class SettingsController : Controller
         return Json(new { success = true, message = "Machine name deleted successfully" });
     }
     
+    [HttpPost]
+    public IActionResult ResetMachineName()
+    {
+        try
+        {
+            DbSeeder.ResetMachineNames(_context);
+            return Json(new { success = true, message = "Machine names reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    
     // Machine Workcenter Management
     public async Task<IActionResult> MachineWorkcenter(string? search, int page = 1, int pageSize = 50)
     {
@@ -400,6 +442,20 @@ public class SettingsController : Controller
         return Json(new { success = true, message = "Machine workcenter deleted successfully" });
     }
     
+    [HttpPost]
+    public IActionResult ResetMachineWorkcenter()
+    {
+        try
+        {
+            DbSeeder.ResetMachineWorkcenters(_context);
+            return Json(new { success = true, message = "Machine workcenters reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    
     // Machine Model Management
     public async Task<IActionResult> MachineModel(string? search, int page = 1, int pageSize = 50)
     {
@@ -486,6 +542,20 @@ public class SettingsController : Controller
         return Json(new { success = true, message = "Machine model deleted successfully" });
     }
     
+    [HttpPost]
+    public IActionResult ResetMachineModel()
+    {
+        try
+        {
+            DbSeeder.ResetMachineModels(_context);
+            return Json(new { success = true, message = "Machine models reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    
     // CAM Leader Management
     public async Task<IActionResult> CamLeader(string? search, int page = 1, int pageSize = 50)
     {
@@ -563,6 +633,20 @@ public class SettingsController : Controller
         return Json(new { success = true, message = "CAM leader deleted successfully" });
     }
     
+    [HttpPost]
+    public IActionResult ResetCamLeader()
+    {
+        try
+        {
+            DbSeeder.ResetCamLeaders(_context);
+            return Json(new { success = true, message = "CAM leaders reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    
     // CAM Programmer Management
     public async Task<IActionResult> CamProgrammer(string? search, int page = 1, int pageSize = 50)
     {
@@ -638,6 +722,20 @@ public class SettingsController : Controller
         _context.CamProgrammers.Remove(item);
         await _context.SaveChangesAsync();
         return Json(new { success = true, message = "CAM programmer deleted successfully" });
+    }
+    
+    [HttpPost]
+    public IActionResult ResetCamProgrammer()
+    {
+        try
+        {
+            DbSeeder.ResetCamProgrammers(_context);
+            return Json(new { success = true, message = "CAM programmers reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
     }
     
     [HttpGet]
@@ -772,6 +870,20 @@ public class SettingsController : Controller
         return Json(new { success = true, message = "Part number deleted successfully" });
     }
     
+    [HttpPost]
+    public IActionResult ResetPartNumber()
+    {
+        try
+        {
+            DbSeeder.ResetPartNumbers(_context);
+            return Json(new { success = true, message = "Part numbers reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    
     // Material Spec. Management
     public async Task<IActionResult> MaterialSpec(string? search, int page = 1, int pageSize = 50)
     {
@@ -866,5 +978,19 @@ public class SettingsController : Controller
         await _context.SaveChangesAsync();
         
         return Json(new { success = true, message = "Material Spec. deleted successfully" });
+    }
+    
+    [HttpPost]
+    public IActionResult ResetMaterialSpec()
+    {
+        try
+        {
+            DbSeeder.ResetMaterialSpecs(_context);
+            return Json(new { success = true, message = "Material specs reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
     }
 }

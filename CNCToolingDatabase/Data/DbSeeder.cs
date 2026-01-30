@@ -1042,4 +1042,156 @@ TM02|267917|2X-07|INACTIVE";
             existing.LastUpdated = DateTime.UtcNow;
         }
     }
+
+    // ---- Reset from seed (used by Settings Reset buttons) ----
+
+    public static void ResetUsers(ApplicationDbContext context)
+    {
+        context.Users.RemoveRange(context.Users.ToList());
+        context.SaveChanges();
+        foreach (var (displayName, username, password) in new[] { ("Adib Jamil", "adib.jamil", "123"), ("Bakhari Hussin", "bakhari.hussin", "123"), ("Faiq Faizul", "faiq.faizul", "123"), ("Hakim Hisham", "hakim.hisham", "123"), ("Hakim Ramaly", "hakim.ramaly", "123"), ("Ismail Jahrin", "ismail.jahrin", "123"), ("Low Boon Bao", "boon.bao", "123"), ("Nik Faiszal Abdullah", "nik.faiszal", "123"), ("Tan Chee Wei", "chee.wei", "123") })
+            context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName });
+        context.SaveChanges();
+    }
+
+    public static void ResetProjectCodes(ApplicationDbContext context)
+    {
+        if (context.ProjectCodes == null) return;
+        context.ProjectCodes.RemoveRange(context.ProjectCodes.ToList());
+        context.SaveChanges();
+        var trios = new[] {
+            ("AB01", "SAM", "Engine Casing"), ("AB02", "SAM", "Panther"), ("AB03", "SAM", "UTAS A350 Component"),
+            ("AD01", "Meggitt Coventry", "MCS-C"), ("AD02", "Meggitt Sensing System", "MSS-F"), ("AD03", "Meggitt Akrons Braking Systems", "MABS A"),
+            ("AE01", "Honeywell", "Honeywell"), ("AE02", "Honeywell", "Celestica Localisation"), ("AE03", "Honeywell", "DU1080"), ("AE04", "Plexus", "Plexus"), ("AE05", "Spirit Aerosystems", "VMI PULL"),
+            ("AG01", "Spirit Aerosystems", "A350 XWB"), ("AG02", "Spirit Aerosystems", "A320 FTB-6B"), ("AG03", "Spirit Aerosystems", "Spirit Subang A320 6C"), ("AG04", "Spirit Aerosystems", "SPIRIT EPIPHRON TTI & CR"),
+            ("AG05", "Spirit Aerosystems", "Spirit Wave 4"), ("AG06", "Spirit Aerosystems", "WAVE 5"), ("AG07", "Spirit Aerosystems", "A321 XLR"), ("AG08", "Spirit Aerosystems", "SPIRIT GOLD"), ("AG09", "Spirit Aerosystems", "SINARAN A320 CA"),
+            ("AH01", "UTAS India", "Goodrich"), ("AH02", "UTAS / CTRM", "787 Fan Cowl"), ("AH03", "UTAS / CTRM", "A350 Fan Cowl"), ("AH04", "UTAS US", "Motor Controller Plates"), ("AH05", "UTAS US", "C-Series & MRJ Fan Cowl"),
+            ("AJ01", "Celestica", "Celestica HS"),
+            ("AL01", "SOGERMA, FRENCH", "A350 SOGERMA"), ("AL02", "SOGERMA, FRENCH", "A321 S14A SOGERMA"), ("AL03", "SOGERMA, FRENCH", "Celeste Seat"), ("AL04", "SOGERMA, FRENCH", "A350 MLGB"), ("AL05", "SOGERMA, FRENCH", "Celeste Seat 2nd Package"),
+            ("AL06", "Stelia Aerospace", "AIRBUS D2P SBMSA"), ("AL07", "Stelia Aerospace", "STELIA D2P SBMSA"), ("AL08", "Senior Aerospace Thailand", "SAT D2P"), ("AL09", "Senior Aerospace Thailand", "SAT D2P"), ("AL10", "Airbus Atlantic", "Airbus Atlantic NPI & SB76"),
+            ("AL11", "Airbus Germany", "AIRBUS GERMANY SA-A350"), ("AL12", "Airbus Germany", "AIRBUS GERMANY SA-A350-KPDD-VAR"),
+            ("AM01", "GKN Aerospace", "MC130 & MC133"), ("AM03", "GKN Aerospace", "GKN A350 TE"), ("AM04", "GKN Aerospace", "GKN A330 BEARING ASSY"),
+            ("AOG", "Airbus", "Airbus"), ("AP02", "Senior Aerospace Thailand", "FHI-SAT Fitting"), ("AQ01", "CTRM Aerosystems", "A350 XWB"),
+            ("SA01", "Senior SSP", "SSP A320 Neo & C-Series Flanges"), ("SB01", "Senior Ermeto", "Senior Ermeto")
+        };
+        foreach (var (code, customer, project) in trios)
+            context.ProjectCodes.Add(new ProjectCode { Code = code, Description = customer, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        context.SaveChanges();
+    }
+
+    public static void ResetMachineNames(ApplicationDbContext context)
+    {
+        if (context.MachineNames == null) return;
+        context.MachineNames.RemoveRange(context.MachineNames.ToList());
+        context.SaveChanges();
+        foreach (var (name, serial, workcenter, isActive) in GetMachineNameSeedData())
+        {
+            context.MachineNames.Add(new MachineName { Name = name, Description = serial, Workcenter = workcenter ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
+        }
+        context.SaveChanges();
+    }
+
+    public static void ResetMachineWorkcenters(ApplicationDbContext context)
+    {
+        if (context.MachineWorkcenters == null) return;
+        context.MachineWorkcenters.RemoveRange(context.MachineWorkcenters.ToList());
+        context.SaveChanges();
+        var workcenters = "2X-01|2X-02|2X-03|2X-04|2X-06|2X-07|2X-08|2X-09|2X-10|2X-11|3X-01|3X-02|3X-03|3X-07|3X-08|3X-09|3X-09i|3X-10|3X-11|3X-14|3X-18|3X-19|3X-20|3X-21|3X-22|3X-23|3X-26|3X-27|3X-28|3X-29|3X-30|3X-31|3X-32|4X-01|4X-02|4X-03|4X-07|4X-08|4X-10|4X-11|4X-13|4X-14|4X-15|4X-16|5X-01|5X-02|5X-03|5X-04|5X-05|5X-06|5X-07|5X-08|5X-09|5X-10|5X-11|5X-12|5X-13|5X-14|5X-15|NA".Split('|');
+        foreach (var wc in workcenters)
+        {
+            var axis = wc == "NA" ? "N/A" : wc.StartsWith("2X") ? "2-Axis" : wc.StartsWith("3X") ? "3-Axis" : wc.StartsWith("4X") ? "4-Axis" : wc.StartsWith("5X") ? "5-Axis" : "3-Axis";
+            context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = wc, Description = axis, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        }
+        context.SaveChanges();
+    }
+
+    public static void ResetMachineModels(ApplicationDbContext context)
+    {
+        if (context.MachineModels == null) return;
+        context.MachineModels.RemoveRange(context.MachineModels.ToList());
+        context.SaveChanges();
+        var seed = new[] {
+            ("AERO-426", "Hartford", "Heidenhain", "Mill"), ("CMX1100V", "DMG", "Fanuc", "Mill"), ("DMC1150V", "DMG", "Heidenhain", "Mill"), ("DMC60H", "DMG", "Heidenhain", "Mill"),
+            ("DMC80 U duoBLOCK", "DMG", "Heidenhain", "Mill"), ("DMU50", "DMG", "Heidenhain", "Mill"), ("DMU60 Evo", "DMG", "Heidenhain", "Mill"), ("DMU65 monoBLOCK", "DMG", "Heidenhain", "Mill"),
+            ("DMU95 monoBLOCK", "DMG", "Heidenhain", "Mill"), ("DNM500HS", "Doosan", "Fanuc", "Mill"), ("DNM750L-II", "Doosan", "Fanuc", "Mill"), ("E17040-V2", "Ares Seiki", "Siemens", "Mill"),
+            ("FANUC Robodrill a-T21iFb", "Fanuc", "Fanuc", "Mill"), ("DVD5200 Dual Spindle", "FFG DMC", "Fanuc", "Mill"), ("HCN4000 II", "Mazak", "Mazatrol", "Mill"), ("HCN4000 III", "Mazak", "Mazatrol", "Mill"),
+            ("HCN6000 C", "Mazak", "Mazatrol", "Mill"), ("HCN6000 II", "Mazak", "Mazatrol", "Mill"), ("HiREX-4000", "Hwacheon", "Fanuc", "Mill"), ("HTC 4000-II", "Mazak", "Mazatrol", "Mill"),
+            ("Integrex i-200", "Mazak", "Mazatrol", "MillTurn"), ("Integrex i-630V", "Mazak", "Mazatrol", "MillTurn"), ("Integrex j-200", "Mazak", "Mazatrol", "MillTurn"), ("Integrex j-200s", "Mazak", "Mazatrol", "MillTurn"),
+            ("MYNX 9500", "Doosan", "Heidenhain", "Mill"), ("NLX1500", "DMG", "Celos", "MillTurn"), ("NVX5060", "DMG", "Celos", "Mill"), ("NVX5060 HT", "DMG", "Celos", "Mill"),
+            ("NVX5100 (3X + Indexer)", "DMG", "Celos", "Mill"), ("NVX7000 (3X + Indexer)", "DMG", "Celos", "Mill"), ("PFH4800", "Mazak", "Mazatrol", "Mill"),
+            ("QT200", "Mazak", "Mazatrol", "Lathe"), ("QTC200MSY L", "Mazak", "Mazatrol", "Lathe"), ("QTE200", "Mazak", "Mazatrol", "Lathe"), ("QTN100", "Mazak", "Mazatrol", "Lathe"),
+            ("QTN100-II MSY", "Mazak", "Mazatrol", "Lathe"), ("QTN150", "Mazak", "Mazatrol", "Lathe"), ("QTN200", "Mazak", "Mazatrol", "Lathe"), ("SIRIUS-650", "Hwacheon", "Fanuc", "Mill"),
+            ("TMV1600A", "TongTai", "Fanuc", "Mill"), ("TMV1600A (Indexer)", "TongTai", "Fanuc", "Mill"), ("TMV510A-II (Indexer)", "TongTai", "Fanuc", "Mill"), ("TMV1500A (3X + Indexer)", "TongTai", "Fanuc", "Mill"),
+            ("Tornos Delta 38-5A", "Tornos", "Fanuc", "Lathe"), ("UM Dual Spindle Machine", "UGINT", "Mitsubishi", "Mill"), ("UM500DH", "UGINT", "Mitsubishi", "Mill"), ("UM500DH (3X + Indexer)", "UGINT", "Mitsubishi", "Mill"),
+            ("UM-V500", "UGINT", "Mitsubishi", "Mill"), ("VCN410A", "Mazak", "Mazatrol", "Mill"), ("VCN410A Indexer", "Mazak", "Mazatrol", "Mill"), ("VCN410A-II", "Mazak", "Mazatrol", "Mill"),
+            ("VCN430A-II HS", "Mazak", "Mazatrol", "Mill"), ("VCN510C", "Mazak", "Mazatrol", "Mill"), ("VCN510C-II", "Mazak", "Mazatrol", "Mill"), ("VCN515C", "Mazak", "Mazatrol", "Mill"),
+            ("VCN530C-HS (3X + Indexer)", "Mazak", "Mazatrol", "Mill"), ("VCN535", "Mazak", "Mazatrol", "Mill"), ("VCN700D (3X + Indexer)", "Mazak", "Mazatrol", "Mill"), ("VCS430A", "Mazak", "Mazatrol", "Mill"),
+            ("Victor Turning", "Victor", "Fanuc", "Lathe"), ("Vortex i-630V/6", "Mazak", "Mazatrol", "Mill"), ("VRX500", "Mazak", "Mazatrol", "Mill"), ("VRX730-5X II", "Mazak", "Mazatrol", "Mill"),
+            ("VRXi-500", "Mazak", "Mazatrol", "Mill"), ("VTC200C", "Mazak", "Mazatrol", "Mill"),
+        };
+        foreach (var (model, builder, controller, type) in seed)
+            context.MachineModels.Add(new MachineModel { Model = model, Description = builder, Type = type, Controller = controller, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        context.SaveChanges();
+    }
+
+    public static void ResetCamLeaders(ApplicationDbContext context)
+    {
+        if (context.CamLeaders == null) return;
+        context.CamLeaders.RemoveRange(context.CamLeaders.ToList());
+        context.SaveChanges();
+        foreach (var (name, position) in new[] { ("Venkatesan", "Director"), ("Desmond", "HOD"), ("Adib Jamil", "CAM Manager") })
+            context.CamLeaders.Add(new CamLeader { Name = name, Description = position, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        context.SaveChanges();
+    }
+
+    public static void ResetCamProgrammers(ApplicationDbContext context)
+    {
+        if (context.CamProgrammers == null) return;
+        context.CamProgrammers.RemoveRange(context.CamProgrammers.ToList());
+        context.SaveChanges();
+        foreach (var (name, location) in new[] { ("Adib Jamil", "Subang Plant"), ("Bakhari Hussin", "Shah Alam Plant"), ("Faiq Faizul", "Subang Plant"), ("Hakim Hisham", "Subang Plant"), ("Hakim Ramaly", "Shah Alam Plant"), ("Ismail Jahrin", "Subang Plant"), ("Low Boon Bao", "Shah Alam Plant"), ("Nik Faiszal Abdullah", "Subang Plant"), ("Tan Chee Wei", "Shah Alam Plant") })
+            context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        context.SaveChanges();
+    }
+
+    public static void ResetMaterialSpecs(ApplicationDbContext context)
+    {
+        if (context.MaterialSpecs == null) return;
+        context.MaterialSpecs.RemoveRange(context.MaterialSpecs.ToList());
+        context.SaveChanges();
+        var pairs = new[] {
+            ("ABP3-2101", "Aluminum Alloy 7075"), ("ABP3-2304", "Aluminum Alloy 2024"), ("ABP3-4001", "Titanium Alloy Ti-6Al-4V"), ("ABP3-4201", "Titanium Alloy Plate"),
+            ("ABP3-7101", "15-5PH Stainless Steel"), ("BMS7-304", "Aluminum Alloy 7075"), ("BMS7-26", "Aluminum Alloy 2024"), ("AMS4928", "Titanium Alloy Ti-6Al-4V"),
+            ("AMS5643", "Stainless Steel 321"), ("AMS5662", "Inconel 718 Nickel Alloy"), ("BMS7-304", "Aluminum Alloy 7075-T6/T73"), ("BMS7-26", "Aluminum Alloy 2024-T3/T351"),
+            ("BMS7-331", "Titanium Alloy 6AL-4V"), ("BMS7-380", "Stainless Steel 15-5PH"), ("BMS7-430", "Inconel 718 Nickel Alloy"),
+        };
+        foreach (var (spec, material) in pairs)
+            context.MaterialSpecs.Add(new MaterialSpec { Spec = spec, Material = material, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        context.SaveChanges();
+    }
+
+    public static void ResetPartNumbers(ApplicationDbContext context)
+    {
+        if (context.PartNumbers == null) return;
+        context.PartNumbers.RemoveRange(context.PartNumbers.ToList());
+        context.SaveChanges();
+        var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
+        var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
+        var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
+        var partSeed = new[] {
+            ("351-2123-13", "HINGES-LH", "A00", "A00", "V12345", "AG01", "ABP3-2101"), ("351-2123-14", "BRACKET RH", "B00", "B00", "351-2261", "AG02", "ABP3-2304"),
+            ("351-2123-15", "LINK LH", "A", "A", "D123456", "AG03", "ABP3-4001"), ("351-2123-16", "HINGES-RH", "NA", "NA", "V12346", "AH01", "ABP3-7101"),
+            ("351-2123-21", "BRACKET LH", "A00", "B00", "351-2262", "AL01", "BMS7-304"), ("351-2123-22", "LINK RH", "B00", "A00", "D123457", "AL02", "AMS4928"),
+            ("351-2123-23", "FITTING", "A", "NA", "V12347", "AM01", "AMS5643"), ("351-2123-24", "PLATE ASSY", "NA", "A", "351-2263", "AP02", "AMS5662"),
+            ("351-2123-25", "BRACKET ASSY", "A00", "A00", "D123458", "SA01", "BMS7-331"), ("351-2123-26", "HINGES-CENTER", "B00", "B00", "V12348", "SB01", "BMS7-380"),
+            ("351-2123-27", "LINK ASSY", "A", "A", "351-2264", "AG04", "BMS7-430"), ("351-2123-29", "FITTING LH", "NA", "NA", "D123459", "AE01", "ABP3-2304"),
+        };
+        foreach (var (name, desc, partRev, drawRev, refDraw, pcCode, msSpec) in partSeed)
+        {
+            var pcId = projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
+            var msId = matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
+            context.PartNumbers.Add(new PartNumber { Name = name, Description = desc, ProjectCodeId = pcId, PartRev = partRev, DrawingRev = drawRev, MaterialSpecId = msId, RefDrawing = refDraw, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        }
+        context.SaveChanges();
+    }
 }

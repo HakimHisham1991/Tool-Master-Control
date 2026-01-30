@@ -10,13 +10,22 @@
 
 <div class="module-header">
     <h2>Part Number Management</h2>
-    <button type="button" class="btn btn-primary" onclick="openCreateModal()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Add Part Number
-    </button>
+    <div style="display: flex; gap: 0.5rem;">
+        <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Part Number
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="resetFromSeed()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Reset
+        </button>
+    </div>
 </div>
 
 <div class="search-bar">
@@ -312,6 +321,14 @@
             else alert('Error: ' + data.message);
         })
         .catch(error => alert('Error: ' + error.message));
+    }
+    
+    function resetFromSeed() {
+        if (!confirm('This will delete all current part number data and restore seed data only. This action cannot be undone.\n\nDo you want to continue?')) return;
+        fetch('/Settings/ResetPartNumber', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
+            .then(r => r.json())
+            .then(data => { if (data.success) location.reload(); else alert('Error: ' + data.message); })
+            .catch(e => alert('Error: ' + e.message));
     }
     
     function closeModal() {
