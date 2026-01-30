@@ -86,7 +86,7 @@
     <div class="form-row">
         <div class="form-group">
             <label for="projectCode">Project Code</label>
-            <select id="projectCode" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+            <select id="projectCode" class="form-control" disabled title="Set by Part Number (Settings &gt; Part Number Management)">
                 <option value="">-- Select Project Code --</option>
             </select>
         </div>
@@ -522,10 +522,7 @@
         });
     });
     
-    // Track changes on dropdowns
-    document.getElementById('projectCode').addEventListener('change', function() {
-        hasUnsavedChanges = true;
-    });
+    // Track changes on dropdowns (Project Code is read-only, set by Part Number)
     document.getElementById('machineName').addEventListener('change', function() {
         hasUnsavedChanges = true;
     });
