@@ -41,12 +41,12 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th>No.</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Created By</th>
-                <th>Created Date</th>
-                <th>Status</th>
+                <th onclick="sortBy('id')">No. @Html.Raw(GetSortIcon("id", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('name')">Name @Html.Raw(GetSortIcon("name", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('description')">Description @Html.Raw(GetSortIcon("description", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('createdby')">Created By @Html.Raw(GetSortIcon("createdby", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('createddate')">Created Date @Html.Raw(GetSortIcon("createddate", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('isactive')">Status @Html.Raw(GetSortIcon("isactive", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -163,7 +163,7 @@
         params.set('sortColumn', column);
         params.set('sortDirection', (currentSort === column && currentDir === 'asc') ? 'desc' : 'asc');
         params.set('page', '1');
-        window.location.href = '/Settings/Operation?' + params.toString();
+        window.location.href = window.location.pathname + '?' + params.toString();
     }
     function openCreateModal() {
         document.getElementById('modalTitle').textContent = 'Add Operation';

@@ -213,6 +213,16 @@
         }, 300);
     });
     
+    function sortBy(column) {
+        const params = new URLSearchParams(window.location.search);
+        const currentSort = params.get('sortColumn');
+        const currentDir = params.get('sortDirection');
+        params.set('sortColumn', column);
+        params.set('sortDirection', (currentSort === column && currentDir === 'asc') ? 'desc' : 'asc');
+        params.set('page', '1');
+        window.location.href = window.location.pathname + '?' + params.toString();
+    }
+    
     function fillProjectCodeOptions(selectedId) {
         const sel = document.getElementById('projectCode');
         sel.innerHTML = '<option value="">-- Select Project Code --</option>';
