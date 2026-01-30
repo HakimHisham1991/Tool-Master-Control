@@ -20,7 +20,7 @@ public class SettingsController : Controller
     }
     
     // User Management
-    public async Task<IActionResult> UserManagement(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> UserManagement(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.Users.AsQueryable();
@@ -33,21 +33,30 @@ public class SettingsController : Controller
                 u.DisplayName.ToLower().Contains(term));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(u => u.Id) : query.OrderBy(u => u.Id),
+            "username" => isDesc ? query.OrderByDescending(u => u.Username) : query.OrderBy(u => u.Username),
+            "displayname" => isDesc ? query.OrderByDescending(u => u.DisplayName) : query.OrderBy(u => u.DisplayName),
+            "createddate" => isDesc ? query.OrderByDescending(u => u.CreatedDate) : query.OrderBy(u => u.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(u => u.IsActive) : query.OrderBy(u => u.IsActive),
+            _ => query.OrderBy(u => u.Username)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
-        var users = await query
-            .OrderBy(u => u.Username)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var users = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
-        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         
         return View("User", users);
     }
@@ -127,7 +136,7 @@ public class SettingsController : Controller
     }
     
     // Project Code Management
-    public async Task<IActionResult> ProjectCode(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> ProjectCode(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.ProjectCodes.AsQueryable();
@@ -141,21 +150,32 @@ public class SettingsController : Controller
                 (p.Project != null && p.Project.ToLower().Contains(term)));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(p => p.Id) : query.OrderBy(p => p.Id),
+            "code" => isDesc ? query.OrderByDescending(p => p.Code) : query.OrderBy(p => p.Code),
+            "description" or "customer" => isDesc ? query.OrderByDescending(p => p.Description ?? "") : query.OrderBy(p => p.Description ?? ""),
+            "project" => isDesc ? query.OrderByDescending(p => p.Project ?? "") : query.OrderBy(p => p.Project ?? ""),
+            "createdby" => isDesc ? query.OrderByDescending(p => p.CreatedBy) : query.OrderBy(p => p.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(p => p.CreatedDate) : query.OrderBy(p => p.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(p => p.IsActive) : query.OrderBy(p => p.IsActive),
+            _ => query.OrderBy(p => p.Code)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
-        var projectCodes = await query
-            .OrderBy(p => p.Code)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var projectCodes = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
-        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         
         return View(projectCodes);
     }
@@ -237,7 +257,7 @@ public class SettingsController : Controller
     }
     
     // Machine Name Management
-    public async Task<IActionResult> MachineName(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> MachineName(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.MachineNames.Include(m => m.MachineModel).AsQueryable();
@@ -251,21 +271,33 @@ public class SettingsController : Controller
                 (m.Workcenter != null && m.Workcenter.ToLower().Contains(term)));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(m => m.Id) : query.OrderBy(m => m.Id),
+            "name" => isDesc ? query.OrderByDescending(m => m.Name) : query.OrderBy(m => m.Name),
+            "description" or "serialnumber" => isDesc ? query.OrderByDescending(m => m.Description ?? "") : query.OrderBy(m => m.Description ?? ""),
+            "workcenter" => isDesc ? query.OrderByDescending(m => m.Workcenter ?? "") : query.OrderBy(m => m.Workcenter ?? ""),
+            "machinemodel" => isDesc ? query.OrderByDescending(m => m.MachineModel != null ? m.MachineModel.Model : "") : query.OrderBy(m => m.MachineModel != null ? m.MachineModel.Model : ""),
+            "createdby" => isDesc ? query.OrderByDescending(m => m.CreatedBy) : query.OrderBy(m => m.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(m => m.CreatedDate) : query.OrderBy(m => m.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(m => m.IsActive) : query.OrderBy(m => m.IsActive),
+            _ => query.OrderBy(m => m.Name)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
-        var machineNames = await query
-            .OrderBy(m => m.Name)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var machineNames = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
-        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         
         return View(machineNames);
     }
@@ -371,8 +403,9 @@ public class SettingsController : Controller
     }
     
     // Machine Workcenter Management
-    public async Task<IActionResult> MachineWorkcenter(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> MachineWorkcenter(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.MachineWorkcenters.AsQueryable();
         
         if (!string.IsNullOrWhiteSpace(search))
@@ -383,21 +416,31 @@ public class SettingsController : Controller
                 (w.Description != null && w.Description.ToLower().Contains(term)));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(w => w.Id) : query.OrderBy(w => w.Id),
+            "workcenter" => isDesc ? query.OrderByDescending(w => w.Workcenter) : query.OrderBy(w => w.Workcenter),
+            "description" or "axis" => isDesc ? query.OrderByDescending(w => w.Description ?? "") : query.OrderBy(w => w.Description ?? ""),
+            "createdby" => isDesc ? query.OrderByDescending(w => w.CreatedBy) : query.OrderBy(w => w.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(w => w.CreatedDate) : query.OrderBy(w => w.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(w => w.IsActive) : query.OrderBy(w => w.IsActive),
+            _ => query.OrderBy(w => w.Workcenter)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
-        var workcenters = await query
-            .OrderBy(w => w.Workcenter)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var workcenters = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
-        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         
         return View(workcenters);
     }
@@ -477,7 +520,7 @@ public class SettingsController : Controller
     }
     
     // Machine Model Management
-    public async Task<IActionResult> MachineModel(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> MachineModel(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.MachineModels.AsQueryable();
@@ -492,20 +535,33 @@ public class SettingsController : Controller
                 (m.Controller != null && m.Controller.ToLower().Contains(term)));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(m => m.Id) : query.OrderBy(m => m.Id),
+            "model" => isDesc ? query.OrderByDescending(m => m.Model) : query.OrderBy(m => m.Model),
+            "description" or "machinebuilder" => isDesc ? query.OrderByDescending(m => m.Description ?? "") : query.OrderBy(m => m.Description ?? ""),
+            "type" => isDesc ? query.OrderByDescending(m => m.Type ?? "") : query.OrderBy(m => m.Type ?? ""),
+            "controller" => isDesc ? query.OrderByDescending(m => m.Controller ?? "") : query.OrderBy(m => m.Controller ?? ""),
+            "createdby" => isDesc ? query.OrderByDescending(m => m.CreatedBy) : query.OrderBy(m => m.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(m => m.CreatedDate) : query.OrderBy(m => m.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(m => m.IsActive) : query.OrderBy(m => m.IsActive),
+            _ => query.OrderBy(m => m.Model)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
-        var models = await query
-            .OrderBy(m => m.Model)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var models = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         
         return View(models);
     }
@@ -578,7 +634,7 @@ public class SettingsController : Controller
     }
     
     // CAM Leader Management
-    public async Task<IActionResult> CamLeader(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> CamLeader(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.CamLeaders.AsQueryable();
@@ -591,21 +647,31 @@ public class SettingsController : Controller
                 (c.Description != null && c.Description.ToLower().Contains(term)));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(c => c.Id) : query.OrderBy(c => c.Id),
+            "name" => isDesc ? query.OrderByDescending(c => c.Name) : query.OrderBy(c => c.Name),
+            "description" or "position" => isDesc ? query.OrderByDescending(c => c.Description ?? "") : query.OrderBy(c => c.Description ?? ""),
+            "createdby" => isDesc ? query.OrderByDescending(c => c.CreatedBy) : query.OrderBy(c => c.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(c => c.CreatedDate) : query.OrderBy(c => c.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(c => c.IsActive) : query.OrderBy(c => c.IsActive),
+            _ => query.OrderBy(c => c.Name)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
-        var list = await query
-            .OrderBy(c => c.Name)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var list = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
-        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         
         return View(list);
     }
@@ -671,7 +737,7 @@ public class SettingsController : Controller
     }
     
     // CAM Programmer Management
-    public async Task<IActionResult> CamProgrammer(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> CamProgrammer(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.CamProgrammers.AsQueryable();
@@ -684,21 +750,31 @@ public class SettingsController : Controller
                 (c.Description != null && c.Description.ToLower().Contains(term)));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(c => c.Id) : query.OrderBy(c => c.Id),
+            "name" => isDesc ? query.OrderByDescending(c => c.Name) : query.OrderBy(c => c.Name),
+            "description" or "location" => isDesc ? query.OrderByDescending(c => c.Description ?? "") : query.OrderBy(c => c.Description ?? ""),
+            "createdby" => isDesc ? query.OrderByDescending(c => c.CreatedBy) : query.OrderBy(c => c.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(c => c.CreatedDate) : query.OrderBy(c => c.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(c => c.IsActive) : query.OrderBy(c => c.IsActive),
+            _ => query.OrderBy(c => c.Name)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
-        var list = await query
-            .OrderBy(c => c.Name)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var list = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
-        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         
         return View(list);
     }
@@ -764,7 +840,7 @@ public class SettingsController : Controller
     }
     
     // Operation Management
-    public async Task<IActionResult> Operation(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> Operation(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.Operations.AsQueryable();
@@ -775,16 +851,30 @@ public class SettingsController : Controller
             query = query.Where(o => o.Name.ToLower().Contains(term) || (o.Description != null && o.Description.ToLower().Contains(term)));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(o => o.Id) : query.OrderBy(o => o.Id),
+            "name" => isDesc ? query.OrderByDescending(o => o.Name) : query.OrderBy(o => o.Name),
+            "description" => isDesc ? query.OrderByDescending(o => o.Description ?? "") : query.OrderBy(o => o.Description ?? ""),
+            "createdby" => isDesc ? query.OrderByDescending(o => o.CreatedBy) : query.OrderBy(o => o.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(o => o.CreatedDate) : query.OrderBy(o => o.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(o => o.IsActive) : query.OrderBy(o => o.IsActive),
+            _ => query.OrderBy(o => o.Name)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-        var list = await query.OrderBy(o => o.Name).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var list = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
-        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         return View(list);
     }
     
@@ -829,7 +919,7 @@ public class SettingsController : Controller
     }
     
     // Revision Management
-    public async Task<IActionResult> Revision(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> Revision(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.Revisions.AsQueryable();
@@ -840,16 +930,30 @@ public class SettingsController : Controller
             query = query.Where(r => r.Name.ToLower().Contains(term) || (r.Description != null && r.Description.ToLower().Contains(term)));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(r => r.Id) : query.OrderBy(r => r.Id),
+            "name" => isDesc ? query.OrderByDescending(r => r.Name) : query.OrderBy(r => r.Name),
+            "description" => isDesc ? query.OrderByDescending(r => r.Description ?? "") : query.OrderBy(r => r.Description ?? ""),
+            "createdby" => isDesc ? query.OrderByDescending(r => r.CreatedBy) : query.OrderBy(r => r.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(r => r.CreatedDate) : query.OrderBy(r => r.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(r => r.IsActive) : query.OrderBy(r => r.IsActive),
+            _ => query.OrderBy(r => r.Name)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-        var list = await query.OrderBy(r => r.Name).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var list = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
-        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         return View(list);
     }
     
@@ -917,8 +1021,9 @@ public class SettingsController : Controller
     }
     
     // Part Number Management
-    public async Task<IActionResult> PartNumber(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> PartNumber(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.PartNumbers
             .Include(p => p.ProjectCode)
             .Include(p => p.MaterialSpec)
@@ -937,21 +1042,35 @@ public class SettingsController : Controller
                 (p.MaterialSpec != null && (p.MaterialSpec.Spec.ToLower().Contains(term) || p.MaterialSpec.Material.ToLower().Contains(term))));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(p => p.Id) : query.OrderBy(p => p.Id),
+            "name" or "partnumber" => isDesc ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
+            "description" => isDesc ? query.OrderByDescending(p => p.Description ?? "") : query.OrderBy(p => p.Description ?? ""),
+            "partrev" => isDesc ? query.OrderByDescending(p => p.PartRev ?? "") : query.OrderBy(p => p.PartRev ?? ""),
+            "drawingrev" => isDesc ? query.OrderByDescending(p => p.DrawingRev ?? "") : query.OrderBy(p => p.DrawingRev ?? ""),
+            "projectcode" => isDesc ? query.OrderByDescending(p => p.ProjectCode != null ? p.ProjectCode.Code : "") : query.OrderBy(p => p.ProjectCode != null ? p.ProjectCode.Code : ""),
+            "refdrawing" => isDesc ? query.OrderByDescending(p => p.RefDrawing ?? "") : query.OrderBy(p => p.RefDrawing ?? ""),
+            "createdby" => isDesc ? query.OrderByDescending(p => p.CreatedBy) : query.OrderBy(p => p.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(p => p.CreatedDate) : query.OrderBy(p => p.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(p => p.IsActive) : query.OrderBy(p => p.IsActive),
+            _ => query.OrderBy(p => p.Name)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
-        var list = await query
-            .OrderBy(p => p.Name)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var list = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
-        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         
         var projectCodes = await _context.ProjectCodes
             .Where(p => p.IsActive)
@@ -1041,8 +1160,9 @@ public class SettingsController : Controller
     }
     
     // Material Spec. Management
-    public async Task<IActionResult> MaterialSpec(string? search, int page = 1, int pageSize = 250)
+    public async Task<IActionResult> MaterialSpec(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.MaterialSpecs.AsQueryable();
         
         if (!string.IsNullOrWhiteSpace(search))
@@ -1053,22 +1173,31 @@ public class SettingsController : Controller
                 m.Material.ToLower().Contains(term));
         }
         
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(m => m.Id) : query.OrderBy(m => m.Id),
+            "spec" or "materialspec" => isDesc ? query.OrderByDescending(m => m.Spec).ThenByDescending(m => m.Material) : query.OrderBy(m => m.Spec).ThenBy(m => m.Material),
+            "material" => isDesc ? query.OrderByDescending(m => m.Material).ThenByDescending(m => m.Spec) : query.OrderBy(m => m.Material).ThenBy(m => m.Spec),
+            "createdby" => isDesc ? query.OrderByDescending(m => m.CreatedBy) : query.OrderBy(m => m.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(m => m.CreatedDate) : query.OrderBy(m => m.CreatedDate),
+            "isactive" => isDesc ? query.OrderByDescending(m => m.IsActive) : query.OrderBy(m => m.IsActive),
+            _ => query.OrderBy(m => m.Spec).ThenBy(m => m.Material)
+        };
+        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
-        var items = await query
-            .OrderBy(m => m.Spec)
-            .ThenBy(m => m.Material)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
-        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
         
         return View(items);
     }
@@ -1149,5 +1278,14 @@ public class SettingsController : Controller
         {
             return Json(new { success = false, message = ex.Message });
         }
+    }
+    
+    private static string BuildPaginationQuery(string? search, string? sortColumn, string? sortDirection)
+    {
+        var qb = new List<string>();
+        if (!string.IsNullOrEmpty(search)) qb.Add("search=" + Uri.EscapeDataString(search));
+        if (!string.IsNullOrEmpty(sortColumn)) qb.Add("sortColumn=" + Uri.EscapeDataString(sortColumn));
+        if (!string.IsNullOrEmpty(sortDirection)) qb.Add("sortDirection=" + Uri.EscapeDataString(sortDirection));
+        return string.Join("&", qb);
     }
 }

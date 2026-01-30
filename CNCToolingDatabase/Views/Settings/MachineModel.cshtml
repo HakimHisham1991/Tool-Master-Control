@@ -26,6 +26,8 @@
 
 <div class="search-bar">
     <form method="get" id="searchForm">
+        <input type="hidden" name="sortColumn" value="@ViewBag.SortColumn" />
+        <input type="hidden" name="sortDirection" value="@ViewBag.SortDirection" />
         <div class="search-input-group">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -40,14 +42,14 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th>No.</th>
-                <th>Model</th>
-                <th>Machine Builder</th>
-                <th>Type</th>
-                <th>Controller</th>
-                <th>Created By</th>
-                <th>Created Date</th>
-                <th>Status</th>
+                <th onclick="sortBy('id')">No. @Html.Raw(GetSortIcon("id", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('model')">Model @Html.Raw(GetSortIcon("model", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('machinebuilder')">Machine Builder @Html.Raw(GetSortIcon("machinebuilder", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('type')">Type @Html.Raw(GetSortIcon("type", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('controller')">Controller @Html.Raw(GetSortIcon("controller", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('createdby')">Created By @Html.Raw(GetSortIcon("createdby", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('createddate')">Created Date @Html.Raw(GetSortIcon("createddate", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('isactive')">Status @Html.Raw(GetSortIcon("isactive", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -176,6 +178,16 @@
         }, 300);
     });
     
+    function sortBy(column) {
+        const params = new URLSearchParams(window.location.search);
+        const currentSort = params.get('sortColumn');
+        const currentDir = params.get('sortDirection');
+        params.set('sortColumn', column);
+        params.set('sortDirection', (currentSort === column && currentDir === 'asc') ? 'desc' : 'asc');
+        params.set('page', '1');
+        window.location.href = '/Settings/MachineModel?' + params.toString();
+    }
+    
     function fillTypeOptions(selectedVal) {
         const sel = document.getElementById('typeSelect');
         sel.innerHTML = '<option value="">-- Select Type --</option>';
@@ -277,4 +289,13 @@
         } catch (err) { alert('Error: ' + err.message); }
     });
 </script>
+}
+
+@functions {
+    string GetSortIcon(string column, string sortColumn, string sortDirection)
+    {
+        if (sortColumn?.ToLower() == column?.ToLower())
+            return sortDirection?.ToLower() == "desc" ? "<span class='sort-icon'>&#9660;</span>" : "<span class='sort-icon'>&#9650;</span>";
+        return "<span class='sort-icon sort-inactive'>&#9650;&#9660;</span>";
+    }
 }

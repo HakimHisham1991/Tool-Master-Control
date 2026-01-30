@@ -25,6 +25,8 @@
 
 <div class="search-bar">
     <form method="get" id="searchForm">
+        <input type="hidden" name="sortColumn" value="@ViewBag.SortColumn" />
+        <input type="hidden" name="sortDirection" value="@ViewBag.SortDirection" />
         <div class="search-input-group">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -39,12 +41,12 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th>No.</th>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Created By</th>
-                <th>Created Date</th>
-                <th>Status</th>
+                <th onclick="sortBy('id')">No. @Html.Raw(GetSortIcon("id", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('name')">Name @Html.Raw(GetSortIcon("name", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('position')">Position @Html.Raw(GetSortIcon("position", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('createdby')">Created By @Html.Raw(GetSortIcon("createdby", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('createddate')">Created Date @Html.Raw(GetSortIcon("createddate", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('isactive')">Status @Html.Raw(GetSortIcon("isactive", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -255,4 +257,13 @@
         }
     });
 </script>
+}
+
+@functions {
+    string GetSortIcon(string column, string sortColumn, string sortDirection)
+    {
+        if (sortColumn?.ToLower() == column?.ToLower())
+            return sortDirection?.ToLower() == "desc" ? "<span class='sort-icon'>&#9660;</span>" : "<span class='sort-icon'>&#9650;</span>";
+        return "<span class='sort-icon sort-inactive'>&#9650;&#9660;</span>";
+    }
 }
