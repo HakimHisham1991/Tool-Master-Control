@@ -98,13 +98,13 @@
         </div>
         <div class="form-group">
             <label for="machineWorkcenter">Machine Workcenter</label>
-            <select id="machineWorkcenter" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+            <select id="machineWorkcenter" class="form-control" disabled title="Set by Machine Name (Settings &gt; Machine Name Management)">
                 <option value="">-- Select Machine Workcenter --</option>
             </select>
         </div>
         <div class="form-group">
             <label for="machineModel">Machine Model</label>
-            <select id="machineModel" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+            <select id="machineModel" class="form-control" disabled title="Set by Machine Name (Settings &gt; Machine Name Management)">
                 <option value="">-- Select Machine Model --</option>
             </select>
         </div>
@@ -289,7 +289,7 @@
             console.error('Error loading project codes:', error);
         }
         
-        // Populate Machine Names
+        // Populate Machine Names (with workcenter & machineModel from Settings > Machine Name Management for auto-fill)
         try {
             const machineNamesResponse = await fetch('/ToolListEditor/GetMachineNames');
             const machineNames = await machineNamesResponse.json();
@@ -298,6 +298,8 @@
                 const option = document.createElement('option');
                 option.value = name.value;
                 option.textContent = name.text;
+                if (name.workcenter != null && name.workcenter !== '') option.dataset.workcenter = name.workcenter;
+                if (name.machineModel != null && name.machineModel !== '') option.dataset.machineModel = name.machineModel;
                 if (name.value === currentMachineName) {
                     option.selected = true;
                 }
@@ -522,15 +524,27 @@
         });
     });
     
-    // Track changes on dropdowns (Project Code is read-only, set by Part Number)
+    // Track changes on dropdowns (Project Code, Machine Workcenter, Machine Model are read-only, set by Part Number / Machine Name)
     document.getElementById('machineName').addEventListener('change', function() {
         hasUnsavedChanges = true;
-    });
-    document.getElementById('machineWorkcenter').addEventListener('change', function() {
-        hasUnsavedChanges = true;
-    });
-    document.getElementById('machineModel').addEventListener('change', function() {
-        hasUnsavedChanges = true;
+        // Auto-populate Machine Workcenter & Machine Model from Settings > Machine Name Management
+        const machineNameSelect = document.getElementById('machineName');
+        const selectedOption = machineNameSelect.options[machineNameSelect.selectedIndex];
+        const workcenterSelect = document.getElementById('machineWorkcenter');
+        const modelSelect = document.getElementById('machineModel');
+        if (selectedOption && selectedOption.value) {
+            if (selectedOption.dataset.workcenter != null && workcenterSelect) {
+                const wc = selectedOption.dataset.workcenter;
+                workcenterSelect.value = Array.from(workcenterSelect.options).some(opt => opt.value === wc) ? wc : '';
+            }
+            if (selectedOption.dataset.machineModel != null && modelSelect) {
+                const model = selectedOption.dataset.machineModel;
+                modelSelect.value = Array.from(modelSelect.options).some(opt => opt.value === model) ? model : '';
+            }
+        } else if (workcenterSelect && modelSelect) {
+            workcenterSelect.value = '';
+            modelSelect.value = '';
+        }
     });
     document.getElementById('approvedBy').addEventListener('change', function() {
         hasUnsavedChanges = true;

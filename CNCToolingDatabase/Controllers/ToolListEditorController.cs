@@ -154,8 +154,15 @@ public class ToolListEditorController : Controller
     {
         var names = await _context.MachineNames
             .Where(m => m.IsActive)
+            .Include(m => m.MachineModel)
             .OrderBy(m => m.Name)
-            .Select(m => new { value = m.Name, text = m.Name })
+            .Select(m => new
+            {
+                value = m.Name,
+                text = m.Name,
+                workcenter = m.Workcenter ?? "",
+                machineModel = m.MachineModel != null ? m.MachineModel.Model : (string?)null
+            })
             .ToListAsync();
         return Json(names);
     }
