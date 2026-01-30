@@ -73,6 +73,22 @@ public static class DbSeeder
                         CreatedBy TEXT NOT NULL,
                         IsActive INTEGER NOT NULL DEFAULT 1
                     );
+                    CREATE TABLE IF NOT EXISTS Operations (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL UNIQUE,
+                        Description TEXT,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1
+                    );
+                    CREATE TABLE IF NOT EXISTS Revisions (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL UNIQUE,
+                        Description TEXT,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1
+                    );
                     CREATE TABLE IF NOT EXISTS PartNumbers (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
                         Name TEXT NOT NULL UNIQUE,
@@ -112,6 +128,8 @@ public static class DbSeeder
                     CREATE INDEX IF NOT EXISTS IX_MachineModels_Model ON MachineModels(Model);
                     CREATE INDEX IF NOT EXISTS IX_CamLeaders_Name ON CamLeaders(Name);
                     CREATE INDEX IF NOT EXISTS IX_CamProgrammers_Name ON CamProgrammers(Name);
+                    CREATE INDEX IF NOT EXISTS IX_Operations_Name ON Operations(Name);
+                    CREATE INDEX IF NOT EXISTS IX_Revisions_Name ON Revisions(Name);
                     CREATE INDEX IF NOT EXISTS IX_PartNumbers_Name ON PartNumbers(Name);
                     CREATE UNIQUE INDEX IF NOT EXISTS IX_MaterialSpecs_Spec_Material ON MaterialSpecs(Spec, Material);
                 ";
@@ -359,6 +377,34 @@ public static class DbSeeder
                 foreach (var (name, location) in camProgrammerSeed)
                 {
                     context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                }
+                context.SaveChanges();
+            }
+        }
+        catch { }
+        
+        try
+        {
+            if (context.Operations != null && !context.Operations.Any())
+            {
+                var operationSeed = new[] { "OP10", "OP20", "OP30", "OP40", "OP50", "OP60", "OP70", "OP80", "OP90" };
+                foreach (var name in operationSeed)
+                {
+                    context.Operations.Add(new Operation { Name = name, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                }
+                context.SaveChanges();
+            }
+        }
+        catch { }
+        
+        try
+        {
+            if (context.Revisions != null && !context.Revisions.Any())
+            {
+                var revisionSeed = new[] { "REV00", "REV01", "REV02", "REV03", "REV04", "REV05", "REV06", "REV07", "REV08", "REV09", "REV10" };
+                foreach (var name in revisionSeed)
+                {
+                    context.Revisions.Add(new Revision { Name = name, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }
@@ -796,6 +842,26 @@ public static class DbSeeder
         context.SaveChanges();
         foreach (var (name, location) in new[] { ("Adib Jamil", "Subang Plant"), ("Bakhari Hussin", "Shah Alam Plant"), ("Faiq Faizul", "Subang Plant"), ("Hakim Hisham", "Subang Plant"), ("Hakim Ramaly", "Shah Alam Plant"), ("Ismail Jahrin", "Subang Plant"), ("Low Boon Bao", "Shah Alam Plant"), ("Nik Faiszal Abdullah", "Subang Plant"), ("Tan Chee Wei", "Shah Alam Plant") })
             context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        context.SaveChanges();
+    }
+
+    public static void ResetOperations(ApplicationDbContext context)
+    {
+        if (context.Operations == null) return;
+        context.Operations.RemoveRange(context.Operations.ToList());
+        context.SaveChanges();
+        foreach (var name in new[] { "OP10", "OP20", "OP30", "OP40", "OP50", "OP60", "OP70", "OP80", "OP90" })
+            context.Operations.Add(new Operation { Name = name, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        context.SaveChanges();
+    }
+
+    public static void ResetRevisions(ApplicationDbContext context)
+    {
+        if (context.Revisions == null) return;
+        context.Revisions.RemoveRange(context.Revisions.ToList());
+        context.SaveChanges();
+        foreach (var name in new[] { "REV00", "REV01", "REV02", "REV03", "REV04", "REV05", "REV06", "REV07", "REV08", "REV09", "REV10" })
+            context.Revisions.Add(new Revision { Name = name, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
         context.SaveChanges();
     }
 

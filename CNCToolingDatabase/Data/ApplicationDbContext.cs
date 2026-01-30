@@ -19,6 +19,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<MachineModel> MachineModels { get; set; }
     public DbSet<CamLeader> CamLeaders { get; set; }
     public DbSet<CamProgrammer> CamProgrammers { get; set; }
+    public DbSet<Operation> Operations { get; set; }
+    public DbSet<Revision> Revisions { get; set; }
     public DbSet<PartNumber> PartNumbers { get; set; }
     public DbSet<MaterialSpec> MaterialSpecs { get; set; }
     public DbSet<ToolCodeUnique> ToolCodeUniques { get; set; }
@@ -89,6 +91,18 @@ public class ApplicationDbContext : DbContext
         });
         
         modelBuilder.Entity<CamProgrammer>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+        
+        modelBuilder.Entity<Operation>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+        
+        modelBuilder.Entity<Revision>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Name).IsUnique();

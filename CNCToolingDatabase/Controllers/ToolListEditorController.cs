@@ -211,6 +211,28 @@ public class ToolListEditorController : Controller
         return Json(programmers);
     }
     
+    [HttpGet]
+    public async Task<IActionResult> GetOperations()
+    {
+        var operations = await _context.Operations
+            .Where(o => o.IsActive)
+            .OrderBy(o => o.Name)
+            .Select(o => new { value = o.Name, text = o.Name })
+            .ToListAsync();
+        return Json(operations);
+    }
+    
+    [HttpGet]
+    public async Task<IActionResult> GetRevisions()
+    {
+        var revisions = await _context.Revisions
+            .Where(r => r.IsActive)
+            .OrderBy(r => r.Name)
+            .Select(r => new { value = r.Name, text = r.Name })
+            .ToListAsync();
+        return Json(revisions);
+    }
+    
     /// <summary>Consumable Tool Descriptions from Master Tool Code Database only. Used for dropdown in Create/Edit Tool List.</summary>
     [HttpGet]
     public async Task<IActionResult> GetConsumableToolDescriptions()

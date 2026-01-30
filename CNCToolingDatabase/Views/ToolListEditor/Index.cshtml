@@ -76,41 +76,15 @@
         </div>
         <div class="form-group">
             <label for="operation">Operation</label>
-            <div class="combo-wrapper">
-                <input type="text" id="operation" value="@Model.Operation" class="form-control combo-input" placeholder="e.g., OP10, OP20" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
-                <button type="button" class="combo-trigger" aria-label="Show options" tabindex="-1" @(Model.IsReadOnly ? "disabled" : "")></button>
-                <div class="combo-dropdown" id="operationDropdown" role="listbox" aria-hidden="true">
-                    <div class="combo-option" data-value="OP10">OP10</div>
-                    <div class="combo-option" data-value="OP20">OP20</div>
-                    <div class="combo-option" data-value="OP30">OP30</div>
-                    <div class="combo-option" data-value="OP40">OP40</div>
-                    <div class="combo-option" data-value="OP50">OP50</div>
-                    <div class="combo-option" data-value="OP60">OP60</div>
-                    <div class="combo-option" data-value="OP70">OP70</div>
-                    <div class="combo-option" data-value="OP80">OP80</div>
-                    <div class="combo-option" data-value="OP90">OP90</div>
-                </div>
-            </div>
+            <select id="operation" class="form-control" @(Model.IsReadOnly ? "disabled" : "") onchange="updateToolListName()">
+                <option value="">-- Select Operation --</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="revision">Revision</label>
-            <div class="combo-wrapper">
-                <input type="text" id="revision" value="@Model.Revision" class="form-control combo-input" placeholder="e.g., REV00" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
-                <button type="button" class="combo-trigger" aria-label="Show options" tabindex="-1" @(Model.IsReadOnly ? "disabled" : "")></button>
-                <div class="combo-dropdown" id="revisionDropdown" role="listbox" aria-hidden="true">
-                    <div class="combo-option" data-value="REV00">REV00</div>
-                    <div class="combo-option" data-value="REV01">REV01</div>
-                    <div class="combo-option" data-value="REV02">REV02</div>
-                    <div class="combo-option" data-value="REV03">REV03</div>
-                    <div class="combo-option" data-value="REV04">REV04</div>
-                    <div class="combo-option" data-value="REV05">REV05</div>
-                    <div class="combo-option" data-value="REV06">REV06</div>
-                    <div class="combo-option" data-value="REV07">REV07</div>
-                    <div class="combo-option" data-value="REV08">REV08</div>
-                    <div class="combo-option" data-value="REV09">REV09</div>
-                    <div class="combo-option" data-value="REV10">REV10</div>
-                </div>
-            </div>
+            <select id="revision" class="form-control" @(Model.IsReadOnly ? "disabled" : "") onchange="updateToolListName()">
+                <option value="">-- Select Revision --</option>
+            </select>
         </div>
     </div>
     <div class="form-row">
@@ -274,56 +248,11 @@
     const currentMachineModel = '@((Model.MachineModel ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentApprovedBy = '@((Model.ApprovedBy ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentCamProgrammer = '@((Model.CamProgrammer ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    const currentOperation = '@((Model.Operation ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    const currentRevision = '@((Model.Revision ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     let hasUnsavedChanges = false;
     let lockReleased = false;
     let heartbeatInterval = null;
-    
-    // Combo dropdowns: open only when arrow is clicked; full list shown; user can still type anything
-    (function initComboDropdowns() {
-        if (isReadOnly) return;
-        var operationInput = document.getElementById('operation');
-        var operationDropdown = document.getElementById('operationDropdown');
-        var revisionInput = document.getElementById('revision');
-        var revisionDropdown = document.getElementById('revisionDropdown');
-        var closeTimer = null;
-        function openDropdown(dropdown) {
-            clearTimeout(closeTimer);
-            document.querySelectorAll('.combo-dropdown.open').forEach(function(d) { d.classList.remove('open'); });
-            if (dropdown) dropdown.classList.add('open');
-        }
-        function closeAll() {
-            document.querySelectorAll('.combo-dropdown.open').forEach(function(d) { d.classList.remove('open'); });
-        }
-        function scheduleClose() {
-            clearTimeout(closeTimer);
-            closeTimer = setTimeout(closeAll, 150);
-        }
-        function bindCombo(inputEl, dropdownEl) {
-            if (!inputEl || !dropdownEl) return;
-            var trigger = inputEl.parentElement.querySelector('.combo-trigger');
-            if (trigger) {
-                trigger.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    if (dropdownEl.classList.contains('open')) closeAll();
-                    else openDropdown(dropdownEl);
-                });
-            }
-            dropdownEl.querySelectorAll('.combo-option').forEach(function(opt) {
-                opt.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    inputEl.value = opt.getAttribute('data-value');
-                    updateToolListName();
-                    hasUnsavedChanges = true;
-                    closeAll();
-                });
-            });
-        }
-        bindCombo(operationInput, operationDropdown);
-        bindCombo(revisionInput, revisionDropdown);
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.combo-wrapper')) closeAll();
-        });
-    })();
     
     // Populate dropdowns on page load
     async function populateDropdowns() {
@@ -346,6 +275,38 @@
             });
         } catch (error) {
             console.error('Error loading part numbers:', error);
+        }
+        
+        // Populate Operations (from Settings > Operation)
+        try {
+            const operationsResponse = await fetch('/ToolListEditor/GetOperations');
+            const operations = await operationsResponse.json();
+            const operationSelect = document.getElementById('operation');
+            operations.forEach(o => {
+                const option = document.createElement('option');
+                option.value = o.value;
+                option.textContent = o.text;
+                if (o.value === currentOperation) option.selected = true;
+                operationSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading operations:', error);
+        }
+        
+        // Populate Revisions (from Settings > Revision)
+        try {
+            const revisionsResponse = await fetch('/ToolListEditor/GetRevisions');
+            const revisions = await revisionsResponse.json();
+            const revisionSelect = document.getElementById('revision');
+            revisions.forEach(r => {
+                const option = document.createElement('option');
+                option.value = r.value;
+                option.textContent = r.text;
+                if (r.value === currentRevision) option.selected = true;
+                revisionSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading revisions:', error);
         }
         
         // Populate Project Codes
@@ -628,6 +589,14 @@
     });
     document.getElementById('camProgrammer').addEventListener('change', function() {
         hasUnsavedChanges = true;
+    });
+    document.getElementById('operation').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+        updateToolListName();
+    });
+    document.getElementById('revision').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+        updateToolListName();
     });
     document.getElementById('partNumber').addEventListener('change', function() {
         hasUnsavedChanges = true;

@@ -763,6 +763,136 @@ public class SettingsController : Controller
         }
     }
     
+    // Operation Management
+    public async Task<IActionResult> Operation(string? search, int page = 1, int pageSize = 250)
+    {
+        pageSize = Math.Clamp(pageSize, 10, 250);
+        var query = _context.Operations.AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(o => o.Name.ToLower().Contains(term) || (o.Description != null && o.Description.ToLower().Contains(term)));
+        }
+        
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        var list = await query.OrderBy(o => o.Name).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        
+        ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.PageSize = pageSize;
+        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        return View(list);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> CreateOperation(string name, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Json(new { success = false, message = "Name is required" });
+        if (await _context.Operations.AnyAsync(o => o.Name == name))
+            return Json(new { success = false, message = "Operation already exists" });
+        _context.Operations.Add(new Operation { Name = name, Description = description, CreatedDate = DateTime.UtcNow, CreatedBy = HttpContext.Session.GetString("Username") ?? "", IsActive = true });
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Operation created successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdateOperation(int id, string? description, bool? isActive)
+    {
+        var item = await _context.Operations.FindAsync(id);
+        if (item == null) return Json(new { success = false, message = "Operation not found" });
+        if (description != null) item.Description = description;
+        if (isActive.HasValue) item.IsActive = isActive.Value;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Operation updated successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> DeleteOperation(int id)
+    {
+        var item = await _context.Operations.FindAsync(id);
+        if (item == null) return Json(new { success = false, message = "Operation not found" });
+        _context.Operations.Remove(item);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Operation deleted successfully" });
+    }
+    
+    [HttpPost]
+    public IActionResult ResetOperation()
+    {
+        try { DbSeeder.ResetOperations(_context); return Json(new { success = true, message = "Operations reset to seed data successfully." }); }
+        catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+    
+    // Revision Management
+    public async Task<IActionResult> Revision(string? search, int page = 1, int pageSize = 250)
+    {
+        pageSize = Math.Clamp(pageSize, 10, 250);
+        var query = _context.Revisions.AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(r => r.Name.ToLower().Contains(term) || (r.Description != null && r.Description.ToLower().Contains(term)));
+        }
+        
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        var list = await query.OrderBy(r => r.Name).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        
+        ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.PageSize = pageSize;
+        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
+        return View(list);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> CreateRevision(string name, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Json(new { success = false, message = "Name is required" });
+        if (await _context.Revisions.AnyAsync(r => r.Name == name))
+            return Json(new { success = false, message = "Revision already exists" });
+        _context.Revisions.Add(new Revision { Name = name, Description = description, CreatedDate = DateTime.UtcNow, CreatedBy = HttpContext.Session.GetString("Username") ?? "", IsActive = true });
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Revision created successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdateRevision(int id, string? description, bool? isActive)
+    {
+        var item = await _context.Revisions.FindAsync(id);
+        if (item == null) return Json(new { success = false, message = "Revision not found" });
+        if (description != null) item.Description = description;
+        if (isActive.HasValue) item.IsActive = isActive.Value;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Revision updated successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> DeleteRevision(int id)
+    {
+        var item = await _context.Revisions.FindAsync(id);
+        if (item == null) return Json(new { success = false, message = "Revision not found" });
+        _context.Revisions.Remove(item);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Revision deleted successfully" });
+    }
+    
+    [HttpPost]
+    public IActionResult ResetRevision()
+    {
+        try { DbSeeder.ResetRevisions(_context); return Json(new { success = true, message = "Revisions reset to seed data successfully." }); }
+        catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+    
     [HttpGet]
     public async Task<IActionResult> GetProjectCodesForPartNumberDropdown()
     {
