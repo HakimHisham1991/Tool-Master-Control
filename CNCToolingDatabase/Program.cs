@@ -65,6 +65,7 @@ using (var scope = app.Services.CreateScope())
         EnsureColumn(conn, "ToolListHeaders", "MachineModel", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(conn, "ToolListHeaders", "ApprovedBy", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(conn, "ToolListHeaders", "CamProgrammer", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(conn, "MachineNames", "Workcenter", "TEXT NOT NULL DEFAULT ''");
     }
     finally
     {

@@ -200,12 +200,13 @@ public static class DbSeeder
             {
                 context.MachineNames.RemoveRange(context.MachineNames.ToList());
                 context.SaveChanges();
-                foreach (var (name, serial, isActive) in GetMachineNameSeedData())
+                foreach (var (name, serial, workcenter, isActive) in GetMachineNameSeedData())
                 {
                     context.MachineNames.Add(new MachineName
                     {
                         Name = name,
                         Description = serial,
+                        Workcenter = workcenter ?? "",
                         CreatedDate = DateTime.UtcNow,
                         CreatedBy = "system",
                         IsActive = isActive
@@ -220,7 +221,7 @@ public static class DbSeeder
         {
             if (context.MachineWorkcenters != null && !context.MachineWorkcenters.Any())
             {
-                var workcenters = "2X-01|2X-02|2X-03|2X-04|2X-06|2X-07|2X-08|2X-09|2X-10|2X-11|3X-01|3X-02|3X-03|3X-07|3X-08|3X-09|3X-09i|3X-10|3X-11|3X-14|3X-18|3X-19|3X-20|3X-21|3X-22|3X-23|3X-26|3X-27|3X-28|3X-29|3X-30|3X-31|3X-32|4X-01|4X-02|4X-03|4X-07|4X-08|4X-10|4X-11|4X-13|4X-14|4X-15|4X-16|5X-01|5X-02|5X-03|5X-04|5X-05|5X-06|5X-07|5X-08|5X-09|5X-10|5X-11|5X-12|5X-13|5X-14|5X-15".Split('|');
+                var workcenters = "2X-01|2X-02|2X-03|2X-04|2X-06|2X-07|2X-08|2X-09|2X-10|2X-11|3X-01|3X-02|3X-03|3X-07|3X-08|3X-09|3X-09i|3X-10|3X-11|3X-14|3X-18|3X-19|3X-20|3X-21|3X-22|3X-23|3X-26|3X-27|3X-28|3X-29|3X-30|3X-31|3X-32|4X-01|4X-02|4X-03|4X-07|4X-08|4X-10|4X-11|4X-13|4X-14|4X-15|4X-16|5X-01|5X-02|5X-03|5X-04|5X-05|5X-06|5X-07|5X-08|5X-09|5X-10|5X-11|5X-12|5X-13|5X-14|5X-15|NA".Split('|');
                 foreach (var wc in workcenters)
                 {
                     var axis = wc.StartsWith("2X") ? "2-Axis" : wc.StartsWith("3X") ? "3-Axis" : wc.StartsWith("4X") ? "4-Axis" : wc.StartsWith("5X") ? "5-Axis" : "3-Axis";
@@ -565,8 +566,8 @@ public static class DbSeeder
         return 140;
     }
 
-    /// <summary>Machine Name seed: Name|Serial Number|Status. INACTIVE → IsActive false.</summary>
-    private static (string Name, string Serial, bool IsActive)[] GetMachineNameSeedData()
+    /// <summary>Machine Name seed: Name|Serial Number|Machine Workcenter|Status. INACTIVE → IsActive false.</summary>
+    private static (string Name, string Serial, string Workcenter, bool IsActive)[] GetMachineNameSeedData()
     {
         const string raw = @"A002|P117XK535|INACTIVE
 A003|G8952-0054|INACTIVE
@@ -861,8 +862,9 @@ TM02|267917|INACTIVE";
                 var p = l.Split('|');
                 var name = p.Length > 0 ? p[0].Trim() : "";
                 var serial = p.Length > 1 ? p[1].Trim() : "";
-                var active = p.Length > 2 && string.Equals(p[2].Trim(), "ACTIVE", StringComparison.OrdinalIgnoreCase);
-                return (name, serial, active);
+                var workcenter = p.Length > 2 ? p[2].Trim() : "";
+                var active = p.Length > 3 && string.Equals(p[3].Trim(), "ACTIVE", StringComparison.OrdinalIgnoreCase);
+                return (name, serial, workcenter, active);
             })
             .Where(t => !string.IsNullOrEmpty(t.name))
             .ToArray();
