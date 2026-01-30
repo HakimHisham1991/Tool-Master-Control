@@ -6,6 +6,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <!-- Exclude nested CNCToolingDatabase folder (duplicate copy) from compilation -->
+  <ItemGroup>
+    <Compile Remove="CNCToolingDatabase\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="CNCToolingDatabase\**" />
+    <None Remove="CNCToolingDatabase\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Include="Data\PART NUMBERS MASTER.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
