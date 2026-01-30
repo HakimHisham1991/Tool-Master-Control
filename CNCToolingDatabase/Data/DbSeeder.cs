@@ -847,7 +847,6 @@ TM02|267917|2X-07|INACTIVE";
             ("Facemill Ø32 R3.0 x 6-Flute", "7792VXD08-A032Z3R", "KENNAMETAL", 32.0m, 48.0m, 3.0m),
             ("Drill Ø24 x 180°", "7792VXP10CA024Z2R180", "KENNAMETAL", 24.0m, 60.0m, 1.8m),
             ("Facemill Ø120 R12.0 x 6-Flute", "7792VXD20-A120Z12R", "KENNAMETAL", 120.0m, 130.0m, 12.0m),
-            ("Facemill Ø90 R9.0 x 6-Flute", "7792VXD12-A090Z9R", "KENNAMETAL", 90.0m, 100.0m, 9.0m),
         };
     }
     
