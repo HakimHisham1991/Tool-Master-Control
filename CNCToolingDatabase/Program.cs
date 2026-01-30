@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.Common;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.EntityFrameworkCore;
 using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Repositories;
@@ -28,6 +29,12 @@ static void EnsureColumn(DbConnection conn, string table, string column, string 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+// When running from repo root, views live under CNCToolingDatabase/Views
+builder.Services.Configure<RazorViewEngineOptions>(options =>
+{
+    options.ViewLocationFormats.Add("CNCToolingDatabase/Views/{1}/{0}" + RazorViewEngine.ViewExtension);
+    options.ViewLocationFormats.Add("CNCToolingDatabase/Views/Shared/{0}" + RazorViewEngine.ViewExtension);
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite("Data Source=CNCTooling.db"));
