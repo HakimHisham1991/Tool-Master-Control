@@ -1212,27 +1212,36 @@ TM02|267917|2X-07|INACTIVE";
     public static void ResetToolCodeUniques(ApplicationDbContext context)
     {
         if (context.ToolCodeUniques == null) return;
-        context.ToolCodeUniques.RemoveRange(context.ToolCodeUniques.ToList());
-        context.SaveChanges();
-        var baseTime = DateTime.UtcNow.AddDays(-60);
-        foreach (var (consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
+        using var transaction = context.Database.BeginTransaction();
+        try
         {
-            var systemName = DeriveSystemToolName(consumable, dia, radius);
-            var created = baseTime.AddDays(Random.Shared.Next(0, 50));
-            var modified = created.AddDays(Random.Shared.Next(0, 20));
-            context.ToolCodeUniques.Add(new ToolCodeUnique
+            context.Database.ExecuteSqlRaw("DELETE FROM ToolCodeUniques");
+            var baseTime = DateTime.UtcNow.AddDays(-60);
+            foreach (var (consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
             {
-                SystemToolName = systemName,
-                ConsumableCode = consumable,
-                Supplier = supplier,
-                Diameter = dia,
-                FluteLength = flute,
-                CornerRadius = radius,
-                CreatedDate = created,
-                LastModifiedDate = modified
-            });
+                var systemName = DeriveSystemToolName(consumable, dia, radius);
+                var created = baseTime.AddDays(Random.Shared.Next(0, 50));
+                var modified = created.AddDays(Random.Shared.Next(0, 20));
+                context.ToolCodeUniques.Add(new ToolCodeUnique
+                {
+                    SystemToolName = systemName,
+                    ConsumableCode = consumable,
+                    Supplier = supplier,
+                    Diameter = dia,
+                    FluteLength = flute,
+                    CornerRadius = radius,
+                    CreatedDate = created,
+                    LastModifiedDate = modified
+                });
+            }
+            context.SaveChanges();
+            transaction.Commit();
         }
-        context.SaveChanges();
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 
     public static void ResetToolLists(ApplicationDbContext context)
