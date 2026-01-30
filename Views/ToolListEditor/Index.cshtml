@@ -76,7 +76,18 @@
         </div>
         <div class="form-group">
             <label for="operation">Operation</label>
-            <input type="text" id="operation" value="@Model.Operation" class="form-control" placeholder="e.g., OP10, OP20" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+            <input type="text" id="operation" list="operationList" value="@Model.Operation" class="form-control" placeholder="e.g., OP10, OP20" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+            <datalist id="operationList">
+                <option value="OP10">
+                <option value="OP20">
+                <option value="OP30">
+                <option value="OP40">
+                <option value="OP50">
+                <option value="OP60">
+                <option value="OP70">
+                <option value="OP80">
+                <option value="OP90">
+            </datalist>
         </div>
         <div class="form-group">
             <label for="revision">Revision</label>
