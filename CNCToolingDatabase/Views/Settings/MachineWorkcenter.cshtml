@@ -66,7 +66,7 @@
                 @for (int i = 0; i < Model.Count; i++)
                 {
                     var item = Model[i];
-                    var no = ((int)(ViewBag.CurrentPage ?? 1) - 1) * (int)(ViewBag.PageSize ?? 50) + i + 1;
+                    var no = ((int)(ViewBag.CurrentPage ?? 1) - 1) * (int)(ViewBag.PageSize ?? 250) + i + 1;
                     <tr>
                         <td>@no</td>
                         <td>@item.Workcenter</td>

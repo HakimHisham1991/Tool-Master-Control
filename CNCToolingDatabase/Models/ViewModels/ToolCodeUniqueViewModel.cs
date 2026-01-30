@@ -24,7 +24,7 @@ public class ToolCodeUniqueListViewModel
     public int CurrentPage { get; set; } = 1;
     public int TotalPages { get; set; }
     public int TotalItems { get; set; }
-    public int PageSize { get; set; } = 100;
+    public int PageSize { get; set; } = 250;
     public List<string> AvailableConsumableCodes { get; set; } = new();
     public List<string> AvailableSuppliers { get; set; } = new();
 }

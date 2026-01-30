@@ -20,7 +20,7 @@ public class SettingsController : Controller
     }
     
     // User Management
-    public async Task<IActionResult> UserManagement(string? search, int page = 1, int pageSize = 50)
+    public async Task<IActionResult> UserManagement(string? search, int page = 1, int pageSize = 250)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.Users.AsQueryable();
@@ -127,7 +127,7 @@ public class SettingsController : Controller
     }
     
     // Project Code Management
-    public async Task<IActionResult> ProjectCode(string? search, int page = 1, int pageSize = 50)
+    public async Task<IActionResult> ProjectCode(string? search, int page = 1, int pageSize = 250)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.ProjectCodes.AsQueryable();
@@ -237,7 +237,7 @@ public class SettingsController : Controller
     }
     
     // Machine Name Management
-    public async Task<IActionResult> MachineName(string? search, int page = 1, int pageSize = 50)
+    public async Task<IActionResult> MachineName(string? search, int page = 1, int pageSize = 250)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.MachineNames.Include(m => m.MachineModel).AsQueryable();
@@ -371,7 +371,7 @@ public class SettingsController : Controller
     }
     
     // Machine Workcenter Management
-    public async Task<IActionResult> MachineWorkcenter(string? search, int page = 1, int pageSize = 50)
+    public async Task<IActionResult> MachineWorkcenter(string? search, int page = 1, int pageSize = 250)
     {
         var query = _context.MachineWorkcenters.AsQueryable();
         
@@ -477,7 +477,7 @@ public class SettingsController : Controller
     }
     
     // Machine Model Management
-    public async Task<IActionResult> MachineModel(string? search, int page = 1, int pageSize = 50)
+    public async Task<IActionResult> MachineModel(string? search, int page = 1, int pageSize = 250)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.MachineModels.AsQueryable();
@@ -578,7 +578,7 @@ public class SettingsController : Controller
     }
     
     // CAM Leader Management
-    public async Task<IActionResult> CamLeader(string? search, int page = 1, int pageSize = 50)
+    public async Task<IActionResult> CamLeader(string? search, int page = 1, int pageSize = 250)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.CamLeaders.AsQueryable();
@@ -671,7 +671,7 @@ public class SettingsController : Controller
     }
     
     // CAM Programmer Management
-    public async Task<IActionResult> CamProgrammer(string? search, int page = 1, int pageSize = 50)
+    public async Task<IActionResult> CamProgrammer(string? search, int page = 1, int pageSize = 250)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.CamProgrammers.AsQueryable();
@@ -787,7 +787,7 @@ public class SettingsController : Controller
     }
     
     // Part Number Management
-    public async Task<IActionResult> PartNumber(string? search, int page = 1, int pageSize = 50)
+    public async Task<IActionResult> PartNumber(string? search, int page = 1, int pageSize = 250)
     {
         var query = _context.PartNumbers
             .Include(p => p.ProjectCode)
@@ -911,7 +911,7 @@ public class SettingsController : Controller
     }
     
     // Material Spec. Management
-    public async Task<IActionResult> MaterialSpec(string? search, int page = 1, int pageSize = 50)
+    public async Task<IActionResult> MaterialSpec(string? search, int page = 1, int pageSize = 250)
     {
         var query = _context.MaterialSpecs.AsQueryable();
         
