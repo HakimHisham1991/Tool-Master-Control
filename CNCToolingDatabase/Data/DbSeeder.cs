@@ -1057,6 +1057,13 @@ TM02|267917|2X-07|INACTIVE";
     public static void ResetProjectCodes(ApplicationDbContext context)
     {
         if (context.ProjectCodes == null) return;
+        // Null FK references first to avoid constraint issues when deleting project codes
+        if (context.PartNumbers != null)
+        {
+            foreach (var pn in context.PartNumbers.Where(p => p.ProjectCodeId != null))
+                pn.ProjectCodeId = null;
+            context.SaveChanges();
+        }
         context.ProjectCodes.RemoveRange(context.ProjectCodes.ToList());
         context.SaveChanges();
         var trios = new[] {
