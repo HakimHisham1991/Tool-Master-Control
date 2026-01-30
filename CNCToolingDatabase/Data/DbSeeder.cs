@@ -1208,4 +1208,59 @@ TM02|267917|2X-07|INACTIVE";
         }
         context.SaveChanges();
     }
+
+    public static void ResetToolCodeUniques(ApplicationDbContext context)
+    {
+        if (context.ToolCodeUniques == null) return;
+        context.ToolCodeUniques.RemoveRange(context.ToolCodeUniques.ToList());
+        context.SaveChanges();
+        var baseTime = DateTime.UtcNow.AddDays(-60);
+        foreach (var (consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
+        {
+            var systemName = DeriveSystemToolName(consumable, dia, radius);
+            var created = baseTime.AddDays(Random.Shared.Next(0, 50));
+            var modified = created.AddDays(Random.Shared.Next(0, 20));
+            context.ToolCodeUniques.Add(new ToolCodeUnique
+            {
+                SystemToolName = systemName,
+                ConsumableCode = consumable,
+                Supplier = supplier,
+                Diameter = dia,
+                FluteLength = flute,
+                CornerRadius = radius,
+                CreatedDate = created,
+                LastModifiedDate = modified
+            });
+        }
+        context.SaveChanges();
+    }
+
+    public static void ResetToolLists(ApplicationDbContext context)
+    {
+        context.ToolListHeaders.RemoveRange(context.ToolListHeaders.ToList());
+        context.SaveChanges();
+        var toolLists = new List<ToolListHeader>
+        {
+            CreateToolListWithDetails("PART-001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham"),
+            CreateToolListWithDetails("PART-001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham"),
+            CreateToolListWithDetails("PART-002", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil"),
+            CreateToolListWithDetails("PART-003", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul"),
+            CreateToolListWithDetails("PART-003", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul"),
+        };
+        context.ToolListHeaders.AddRange(toolLists);
+        context.SaveChanges();
+        var processedCodes = new HashSet<string>();
+        foreach (var header in toolLists)
+        {
+            foreach (var detail in header.Details)
+            {
+                if (!string.IsNullOrWhiteSpace(detail.ConsumableCode) && !processedCodes.Contains(detail.ConsumableCode))
+                {
+                    UpdateToolMaster(context, detail);
+                    processedCodes.Add(detail.ConsumableCode);
+                    context.SaveChanges();
+                }
+            }
+        }
+    }
 }

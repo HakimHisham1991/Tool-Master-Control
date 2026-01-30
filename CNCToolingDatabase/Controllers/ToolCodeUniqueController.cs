@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Services;
 using System.Text;
 using OfficeOpenXml;
@@ -9,10 +10,12 @@ namespace CNCToolingDatabase.Controllers;
 public class ToolCodeUniqueController : Controller
 {
     private readonly IToolCodeUniqueService _service;
+    private readonly ApplicationDbContext _context;
 
-    public ToolCodeUniqueController(IToolCodeUniqueService service)
+    public ToolCodeUniqueController(IToolCodeUniqueService service, ApplicationDbContext context)
     {
         _service = service;
+        _context = context;
     }
 
     public async Task<IActionResult> Index(
@@ -123,5 +126,19 @@ public class ToolCodeUniqueController : Controller
         if (separator == "," && (value.Contains(',') || value.Contains('"')))
             return $"\"{value.Replace("\"", "\"\"")}\"";
         return value;
+    }
+
+    [HttpPost]
+    public IActionResult Reset()
+    {
+        try
+        {
+            DbSeeder.ResetToolCodeUniques(_context);
+            return Json(new { success = true, message = "Master Tool Code Database reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
     }
 }

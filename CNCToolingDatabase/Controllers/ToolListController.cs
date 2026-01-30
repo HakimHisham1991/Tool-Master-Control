@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Services;
 using System.Text;
 using OfficeOpenXml;
@@ -9,10 +10,12 @@ namespace CNCToolingDatabase.Controllers;
 public class ToolListController : Controller
 {
     private readonly IToolListService _toolListService;
-    
-    public ToolListController(IToolListService toolListService)
+    private readonly ApplicationDbContext _context;
+
+    public ToolListController(IToolListService toolListService, ApplicationDbContext context)
     {
         _toolListService = toolListService;
+        _context = context;
     }
     
     public async Task<IActionResult> Index(
@@ -151,5 +154,19 @@ public class ToolListController : Controller
             return $"\"{value.Replace("\"", "\"\"")}\"";
         }
         return value;
+    }
+
+    [HttpPost]
+    public IActionResult Reset()
+    {
+        try
+        {
+            DbSeeder.ResetToolLists(_context);
+            return Json(new { success = true, message = "Tool List Database reset to seed data successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
     }
 }
