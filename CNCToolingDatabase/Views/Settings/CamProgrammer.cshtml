@@ -258,7 +258,7 @@
 }
 
 @functions {
-    string GetSortIcon(string column, string sortColumn, string sortDirection)
+    string GetSortIcon(string column, string? sortColumn, string? sortDirection)
     {
         if (sortColumn?.ToLower() == column?.ToLower())
             return sortDirection?.ToLower() == "desc" ? "<span class='sort-icon'>&#9660;</span>" : "<span class='sort-icon'>&#9650;</span>";
