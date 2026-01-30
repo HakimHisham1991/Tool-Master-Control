@@ -76,11 +76,17 @@
         </div>
         <div class="form-group">
             <label for="operation">Operation</label>
-            <input type="text" id="operation" value="@Model.Operation" class="form-control" placeholder="e.g., OP10, OP20" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+            <input type="text" id="operation" list="operationList" value="@Model.Operation" class="form-control" placeholder="e.g., OP10, OP20" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+            <datalist id="operationList">
+                <option value="OP10"><option value="OP20"><option value="OP30"><option value="OP40"><option value="OP50"><option value="OP60"><option value="OP70"><option value="OP80"><option value="OP90">
+            </datalist>
         </div>
         <div class="form-group">
             <label for="revision">Revision</label>
-            <input type="text" id="revision" value="@Model.Revision" class="form-control" placeholder="e.g., REV00" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+            <input type="text" id="revision" list="revisionList" value="@Model.Revision" class="form-control" placeholder="e.g., REV00" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
+            <datalist id="revisionList">
+                <option value="REV00"><option value="REV01"><option value="REV02"><option value="REV03"><option value="REV04"><option value="REV05"><option value="REV06"><option value="REV07"><option value="REV08"><option value="REV09"><option value="REV10">
+            </datalist>
         </div>
     </div>
     <div class="form-row">
