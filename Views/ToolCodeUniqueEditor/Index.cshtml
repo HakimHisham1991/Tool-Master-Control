@@ -1,0 +1,119 @@
+@model ToolCodeUniqueEditorViewModel
+@{
+    ViewData["Title"] = Model.Id.HasValue ? "Edit Tool Code" : "Create Tool Code";
+}
+
+<div class="module-header">
+    <h2>@(Model.Id.HasValue ? "Edit Tool Code" : "Create Tool Code")</h2>
+    <div class="export-buttons">
+        <a href="/ToolCodeUnique" class="btn btn-secondary btn-sm">Back to Master Tool Code Database</a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-error">@Model.ErrorMessage</div>
+}
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success">@Model.SuccessMessage</div>
+}
+
+<div class="header-form">
+    <div class="form-row">
+        <div class="form-group">
+            <label for="systemToolName">System Tool Name</label>
+            <input type="text" id="systemToolName" class="form-control" value="@Model.SystemToolName" placeholder="User-defined name" />
+        </div>
+        <div class="form-group">
+            <label for="consumableCode">Consumable Tool Description</label>
+            <input type="text" id="consumableCode" class="form-control" value="@Model.ConsumableCode" placeholder="e.g. 553120Z3.0-SIRON-A" />
+        </div>
+        <div class="form-group">
+            <label for="supplier">Tool Supplier</label>
+            <input type="text" id="supplier" class="form-control" value="@Model.Supplier" placeholder="e.g. SECO" />
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="diameter">Tool Diameter (D1)</label>
+            <input type="number" id="diameter" class="form-control" step="0.01" value="@(Model.Diameter == 0 && !Model.Id.HasValue ? "" : Model.Diameter.ToString("0.##"))" placeholder="0" />
+        </div>
+        <div class="form-group">
+            <label for="fluteLength">Flute Length (L1)</label>
+            <input type="number" id="fluteLength" class="form-control" step="0.01" value="@(Model.FluteLength == 0 && !Model.Id.HasValue ? "" : Model.FluteLength.ToString("0.##"))" placeholder="0" />
+        </div>
+        <div class="form-group">
+            <label for="cornerRadius">Tool Corner Radius</label>
+            <input type="number" id="cornerRadius" class="form-control" step="0.01" value="@(Model.CornerRadius == 0 && !Model.Id.HasValue ? "" : Model.CornerRadius.ToString("0.##"))" placeholder="0" />
+        </div>
+    </div>
+    @if (Model.Id.HasValue && (Model.CreatedDate.HasValue || Model.LastModifiedDate.HasValue))
+    {
+        <div class="form-row">
+            @if (Model.CreatedDate.HasValue)
+            {
+                <div class="form-group">
+                    <label>Created Date</label>
+                    <input type="text" class="form-control" readonly value="@Model.CreatedDate!.Value.ToString("yyyy-MM-dd HH:mm")" />
+                </div>
+            }
+            @if (Model.LastModifiedDate.HasValue)
+            {
+                <div class="form-group">
+                    <label>Last Modified</label>
+                    <input type="text" class="form-control" readonly value="@Model.LastModifiedDate!.Value.ToString("yyyy-MM-dd HH:mm")" />
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<div class="table-actions">
+    <a href="/ToolCodeUnique" class="btn btn-secondary">Open</a>
+    <button type="button" class="btn btn-primary" onclick="saveToolCode()">Save</button>
+    <a href="/ToolCodeUnique" class="btn btn-secondary">Close</a>
+</div>
+
+<input type="hidden" id="toolCodeId" value="@(Model.Id.HasValue ? Model.Id.Value.ToString() : "")" />
+
+@section Scripts {
+<script>
+    const toolCodeId = document.getElementById('toolCodeId').value;
+    async function saveToolCode() {
+        const id = toolCodeId ? parseInt(toolCodeId, 10) : null;
+        const data = {
+            id: id,
+            systemToolName: document.getElementById('systemToolName').value.trim(),
+            consumableCode: document.getElementById('consumableCode').value.trim(),
+            supplier: document.getElementById('supplier').value.trim(),
+            diameter: parseFloat(document.getElementById('diameter').value) || 0,
+            fluteLength: parseFloat(document.getElementById('fluteLength').value) || 0,
+            cornerRadius: parseFloat(document.getElementById('cornerRadius').value) || 0
+        };
+        if (!data.consumableCode) {
+            alert('Consumable Tool Description is required.');
+            return;
+        }
+        try {
+            const r = await fetch('/ToolCodeUniqueEditor/Save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await r.json();
+            if (result.success) {
+                alert(result.message || 'Saved.');
+                if (result.id && !toolCodeId)
+                    window.location.href = '/ToolCodeUniqueEditor?id=' + result.id;
+                else
+                    window.location.reload();
+            } else {
+                alert('Error: ' + (result.message || 'Could not save.'));
+            }
+        } catch (e) {
+            alert('Error saving: ' + e.message);
+        }
+    }
+</script>
+}
