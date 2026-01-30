@@ -335,7 +335,7 @@ html, body {
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
     cursor: pointer;
-    user-select: none;
+    user-select: text;
 }
 
 .data-table th:hover {
