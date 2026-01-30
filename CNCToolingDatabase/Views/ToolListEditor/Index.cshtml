@@ -78,14 +78,24 @@
             <label for="operation">Operation</label>
             <input type="text" id="operation" list="operationList" value="@Model.Operation" class="form-control" placeholder="e.g., OP10, OP20" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
             <datalist id="operationList">
-                <option value="OP10"><option value="OP20"><option value="OP30"><option value="OP40"><option value="OP50"><option value="OP60"><option value="OP70"><option value="OP80"><option value="OP90">
+                <option value="OP10"></option><option value="OP20"></option><option value="OP30"></option><option value="OP40"></option><option value="OP50"></option><option value="OP60"></option><option value="OP70"></option><option value="OP80"></option><option value="OP90"></option>
             </datalist>
         </div>
         <div class="form-group">
             <label for="revision">Revision</label>
             <input type="text" id="revision" list="revisionList" value="@Model.Revision" class="form-control" placeholder="e.g., REV00" @(Model.IsReadOnly ? "readonly" : "") onchange="updateToolListName()" />
             <datalist id="revisionList">
-                <option value="REV00"><option value="REV01"><option value="REV02"><option value="REV03"><option value="REV04"><option value="REV05"><option value="REV06"><option value="REV07"><option value="REV08"><option value="REV09"><option value="REV10">
+                <option value="REV00"></option>
+                <option value="REV01"></option>
+                <option value="REV02"></option>
+                <option value="REV03"></option>
+                <option value="REV04"></option>
+                <option value="REV05"></option>
+                <option value="REV06"></option>
+                <option value="REV07"></option>
+                <option value="REV08"></option>
+                <option value="REV09"></option>
+                <option value="REV10"></option>
             </datalist>
         </div>
     </div>
@@ -253,6 +263,19 @@
     let hasUnsavedChanges = false;
     let lockReleased = false;
     let heartbeatInterval = null;
+    
+    // Populate revision datalist via JS so all options show (browser quirk workaround)
+    (function() {
+        var list = document.getElementById('revisionList');
+        if (list) {
+            list.innerHTML = '';
+            ['REV00','REV01','REV02','REV03','REV04','REV05','REV06','REV07','REV08','REV09','REV10'].forEach(function(v) {
+                var o = document.createElement('option');
+                o.value = v;
+                list.appendChild(o);
+            });
+        }
+    })();
     
     // Populate dropdowns on page load
     async function populateDropdowns() {
