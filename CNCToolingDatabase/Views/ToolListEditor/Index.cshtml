@@ -278,7 +278,7 @@
     let lockReleased = false;
     let heartbeatInterval = null;
     
-    // Custom combo dropdowns: always show full list when opened (not filtered by current value)
+    // Combo dropdowns: open only when arrow is clicked; full list shown; user can still type anything
     (function initComboDropdowns() {
         if (isReadOnly) return;
         var operationInput = document.getElementById('operation');
@@ -287,33 +287,34 @@
         var revisionDropdown = document.getElementById('revisionDropdown');
         var closeTimer = null;
         function openDropdown(dropdown) {
+            clearTimeout(closeTimer);
             document.querySelectorAll('.combo-dropdown.open').forEach(function(d) { d.classList.remove('open'); });
             if (dropdown) dropdown.classList.add('open');
-        }
-        function closeDropdown(dropdown) {
-            if (dropdown) dropdown.classList.remove('open');
         }
         function closeAll() {
             document.querySelectorAll('.combo-dropdown.open').forEach(function(d) { d.classList.remove('open'); });
         }
         function scheduleClose() {
             clearTimeout(closeTimer);
-            closeTimer = setTimeout(closeAll, 200);
+            closeTimer = setTimeout(closeAll, 150);
         }
         function bindCombo(inputEl, dropdownEl) {
             if (!inputEl || !dropdownEl) return;
             var trigger = inputEl.parentElement.querySelector('.combo-trigger');
-            inputEl.addEventListener('focus', function() { openDropdown(dropdownEl); });
-            inputEl.addEventListener('blur', scheduleClose);
-            if (trigger) trigger.addEventListener('mousedown', function(e) { e.preventDefault(); openDropdown(dropdownEl); inputEl.focus(); });
+            if (trigger) {
+                trigger.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (dropdownEl.classList.contains('open')) closeAll();
+                    else openDropdown(dropdownEl);
+                });
+            }
             dropdownEl.querySelectorAll('.combo-option').forEach(function(opt) {
-                opt.addEventListener('mousedown', function(e) {
+                opt.addEventListener('click', function(e) {
                     e.preventDefault();
                     inputEl.value = opt.getAttribute('data-value');
                     updateToolListName();
                     hasUnsavedChanges = true;
-                    closeDropdown(dropdownEl);
-                    inputEl.focus();
+                    closeAll();
                 });
             });
         }
