@@ -1164,6 +1164,13 @@ TM02|267917|2X-07|INACTIVE";
     public static void ResetMaterialSpecs(ApplicationDbContext context)
     {
         if (context.MaterialSpecs == null) return;
+        // Null FK references first to avoid constraint issues when deleting material specs
+        if (context.PartNumbers != null)
+        {
+            foreach (var pn in context.PartNumbers.Where(p => p.MaterialSpecId != null))
+                pn.MaterialSpecId = null;
+            context.SaveChanges();
+        }
         context.MaterialSpecs.RemoveRange(context.MaterialSpecs.ToList());
         context.SaveChanges();
         var pairs = new[] {
