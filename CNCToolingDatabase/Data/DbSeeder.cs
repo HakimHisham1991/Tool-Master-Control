@@ -1128,6 +1128,12 @@ TM02|267917|2X-07|INACTIVE";
                 delCmd.CommandText = "DELETE FROM ToolCodeUniques";
                 delCmd.ExecuteNonQuery();
             }
+            using (var seqCmd = conn.CreateCommand())
+            {
+                seqCmd.Transaction = dbTrans;
+                seqCmd.CommandText = "DELETE FROM sqlite_sequence WHERE name='ToolCodeUniques'";
+                seqCmd.ExecuteNonQuery();
+            }
             const string insertSql = @"INSERT INTO ToolCodeUniques (SystemToolName, ConsumableCode, Supplier, Diameter, FluteLength, CornerRadius, CreatedDate, LastModifiedDate)
                 VALUES (@sn, @cc, @su, @di, @fl, @cr, @cd, @lm)";
             var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
