@@ -1,0 +1,189 @@
+@model ToolCodeUniqueListViewModel
+@{
+    ViewData["Title"] = "Master Tool Code Database";
+}
+
+<div class="module-header">
+    <h2>Master Tool Code Database</h2>
+    <div class="export-buttons">
+        <a href="/ToolCodeUniqueEditor" class="btn btn-primary btn-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Create new code
+        </a>
+        <button type="button" id="btnResetMasterToolCode" class="btn btn-secondary btn-sm" onclick="resetFromSeed()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            Reset
+        </button>
+        <a href="/ToolCodeUnique/Export?format=excel&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter" class="btn btn-secondary btn-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Excel
+        </a>
+        <a href="/ToolCodeUnique/Export?format=csv&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter" class="btn btn-secondary btn-sm">CSV</a>
+        <a href="/ToolCodeUnique/Export?format=txt&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter" class="btn btn-secondary btn-sm">TXT</a>
+    </div>
+</div>
+
+<div class="search-bar">
+    <form method="get" id="searchForm">
+        <div class="search-input-group">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" name="search" value="@Model.SearchTerm" placeholder="Search tool codes..." class="search-input" id="searchInput" />
+        </div>
+    </form>
+</div>
+
+<div class="filter-row">
+    <select name="consumableCode" id="filterConsumableCode" class="filter-select" onchange="applyFilters()">
+        <option value="">All Consumable Tool Descriptions</option>
+        @foreach (var code in Model.AvailableConsumableCodes)
+        {
+            if (Model.ConsumableCodeFilter == code)
+            { <option value="@code" selected>@code</option> }
+            else
+            { <option value="@code">@code</option> }
+        }
+    </select>
+    <select name="supplier" id="filterSupplier" class="filter-select" onchange="applyFilters()">
+        <option value="">All Tool Suppliers</option>
+        @foreach (var s in Model.AvailableSuppliers)
+        {
+            if (Model.SupplierFilter == s)
+            { <option value="@s" selected>@s</option> }
+            else
+            { <option value="@s">@s</option> }
+        }
+    </select>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear Filters</button>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th onclick="sortBy('no')">No. @Html.Raw(GetSortIcon("no"))</th>
+                <th onclick="sortBy('systemToolName')">System Tool Name @Html.Raw(GetSortIcon("systemToolName"))</th>
+                <th onclick="sortBy('consumableCode')">Consumable Tool Description @Html.Raw(GetSortIcon("consumableCode"))</th>
+                <th onclick="sortBy('supplier')">Tool Supplier @Html.Raw(GetSortIcon("supplier"))</th>
+                <th onclick="sortBy('diameter')">Tool Diameter (D1) @Html.Raw(GetSortIcon("diameter"))</th>
+                <th onclick="sortBy('fluteLength')">Flute Length (L1) @Html.Raw(GetSortIcon("fluteLength"))</th>
+                <th onclick="sortBy('cornerRadius')">Tool Corner Radius @Html.Raw(GetSortIcon("cornerRadius"))</th>
+                <th onclick="sortBy('createdDate')">Created Date @Html.Raw(GetSortIcon("createdDate"))</th>
+                <th onclick="sortBy('lastModifiedDate')">Last Modified @Html.Raw(GetSortIcon("lastModifiedDate"))</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Tools.Count == 0)
+            {
+                <tr>
+                    <td colspan="10" class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <p>No tool codes match your filters</p>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="clearFilters()">Reset Filters</button>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var t in Model.Tools)
+                {
+                    <tr>
+                        <td>@t.No</td>
+                        <td>@t.SystemToolName</td>
+                        <td><a href="/ToolCodeUniqueEditor?id=@t.No" class="cell-link">@t.ConsumableCode</a></td>
+                        <td>@t.Supplier</td>
+                        <td>@t.Diameter.ToString("0.##")</td>
+                        <td>@t.FluteLength.ToString("0.##")</td>
+                        <td>@t.CornerRadius.ToString("0.##")</td>
+                        <td>@t.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@t.LastModifiedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td><a href="/ToolCodeUniqueEditor?id=@t.No" class="btn btn-primary btn-sm">Edit</a></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalItems > 0)
+{
+    var qb = new List<string>();
+    if (!string.IsNullOrEmpty(Model.SearchTerm)) qb.Add("search=" + Uri.EscapeDataString(Model.SearchTerm));
+    if (!string.IsNullOrEmpty(Model.ConsumableCodeFilter)) qb.Add("consumableCode=" + Uri.EscapeDataString(Model.ConsumableCodeFilter));
+    if (!string.IsNullOrEmpty(Model.SupplierFilter)) qb.Add("supplier=" + Uri.EscapeDataString(Model.SupplierFilter));
+    if (!string.IsNullOrEmpty(Model.SortColumn)) qb.Add("sortColumn=" + Uri.EscapeDataString(Model.SortColumn));
+    if (!string.IsNullOrEmpty(Model.SortDirection)) qb.Add("sortDirection=" + Uri.EscapeDataString(Model.SortDirection));
+    @await Html.PartialAsync("_Pagination", new PaginationViewModel
+    {
+        CurrentPage = Model.CurrentPage,
+        TotalPages = Math.Max(1, Model.TotalPages),
+        TotalItems = Model.TotalItems,
+        PageSize = Model.PageSize,
+        QueryBase = string.Join("&", qb)
+    });
+}
+
+@section Scripts {
+<script>
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() { applyFilters(); }, 300);
+    });
+    searchForm.addEventListener('submit', function(e) { e.preventDefault(); applyFilters(); });
+    function applyFilters() {
+        const params = new URLSearchParams();
+        const search = document.getElementById('searchInput').value;
+        const consumableCode = document.getElementById('filterConsumableCode').value;
+        const supplier = document.getElementById('filterSupplier').value;
+        if (search) params.set('search', search);
+        if (consumableCode) params.set('consumableCode', consumableCode);
+        if (supplier) params.set('supplier', supplier);
+        window.location.href = '/ToolCodeUnique?' + params.toString();
+    }
+    function clearFilters() { window.location.href = '/ToolCodeUnique'; }
+    function sortBy(column) {
+        const params = new URLSearchParams(window.location.search);
+        const currentSort = params.get('sortColumn');
+        const currentDir = params.get('sortDirection');
+        params.set('sortColumn', column);
+        params.set('sortDirection', (currentSort === column && currentDir === 'asc') ? 'desc' : 'asc');
+        params.set('page', '1');
+        window.location.href = '/ToolCodeUnique?' + params.toString();
+    }
+    function resetFromSeed() {
+        if (!confirm('This will delete all Master Tool Code data and restore seed data only. This action cannot be undone.\n\nDo you want to continue?')) return;
+        const btn = document.getElementById('btnResetMasterToolCode');
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = 'Resetting...'; }
+        fetch('/ToolCodeUnique/Reset', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) location.reload();
+                else { alert('Error: ' + data.message); if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; } }
+            })
+            .catch(e => { alert('Error: ' + e.message); if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; } });
+    }
+</script>
+}
+
+@functions {
+    string GetSortIcon(string column)
+    {
+        if (Model.SortColumn?.ToLower() == column.ToLower())
+        {
+            return Model.SortDirection?.ToLower() == "desc"
+                ? "<span class='sort-icon'>&#9660;</span>"
+                : "<span class='sort-icon'>&#9650;</span>";
+        }
+        return "<span class='sort-icon sort-inactive'>&#9650;&#9660;</span>";
+    }
+}
