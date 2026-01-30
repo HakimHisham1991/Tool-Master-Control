@@ -156,6 +156,10 @@ html, body {
     font-size: 24px;
     font-weight: 700;
     color: var(--text-primary);
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
 }
 
 .header-title-area {
@@ -335,7 +339,10 @@ html, body {
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
     cursor: pointer;
-    user-select: text;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
 }
 
 .data-table th:hover {
@@ -480,6 +487,10 @@ html, body {
     font-size: 13px;
     font-weight: 500;
     color: var(--text-secondary);
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
 }
 
 .form-control {
@@ -628,6 +639,10 @@ select.form-control {
 .modal-header h3 {
     font-size: 18px;
     font-weight: 600;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
 }
 
 .modal-body {
