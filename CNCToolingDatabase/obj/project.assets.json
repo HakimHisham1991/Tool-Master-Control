@@ -3251,7 +3251,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\User\\.nuget\\packages\\": {}
+    "C:\\Users\\hakim.hisham\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -3259,11 +3259,11 @@
       "projectUniqueName": "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
       "projectName": "CNCToolingDatabase",
       "projectPath": "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
-      "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\hakim.hisham\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\hakim.hisham\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
