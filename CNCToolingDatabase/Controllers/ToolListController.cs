@@ -23,7 +23,7 @@ public class ToolListController : Controller
         string? sortColumn,
         string? sortDirection,
         int page = 1,
-        int pageSize = 50)
+        int pageSize = 250)
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var username = HttpContext.Session.GetString("Username") ?? "";
