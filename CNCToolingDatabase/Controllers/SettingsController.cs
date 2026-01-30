@@ -22,6 +22,7 @@ public class SettingsController : Controller
     // User Management
     public async Task<IActionResult> UserManagement(string? search, int page = 1, int pageSize = 50)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.Users.AsQueryable();
         
         if (!string.IsNullOrWhiteSpace(search))
@@ -46,6 +47,7 @@ public class SettingsController : Controller
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
+        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
         
         return View("User", users);
     }
@@ -127,6 +129,7 @@ public class SettingsController : Controller
     // Project Code Management
     public async Task<IActionResult> ProjectCode(string? search, int page = 1, int pageSize = 50)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.ProjectCodes.AsQueryable();
         
         if (!string.IsNullOrWhiteSpace(search))
@@ -152,6 +155,7 @@ public class SettingsController : Controller
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
+        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
         
         return View(projectCodes);
     }
@@ -235,6 +239,7 @@ public class SettingsController : Controller
     // Machine Name Management
     public async Task<IActionResult> MachineName(string? search, int page = 1, int pageSize = 50)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.MachineNames.AsQueryable();
         
         if (!string.IsNullOrWhiteSpace(search))
@@ -260,6 +265,7 @@ public class SettingsController : Controller
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
+        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
         
         return View(machineNames);
     }
@@ -378,6 +384,7 @@ public class SettingsController : Controller
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
+        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
         
         return View(workcenters);
     }
@@ -459,6 +466,7 @@ public class SettingsController : Controller
     // Machine Model Management
     public async Task<IActionResult> MachineModel(string? search, int page = 1, int pageSize = 50)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.MachineModels.AsQueryable();
         
         if (!string.IsNullOrWhiteSpace(search))
@@ -559,6 +567,7 @@ public class SettingsController : Controller
     // CAM Leader Management
     public async Task<IActionResult> CamLeader(string? search, int page = 1, int pageSize = 50)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.CamLeaders.AsQueryable();
         
         if (!string.IsNullOrWhiteSpace(search))
@@ -583,6 +592,7 @@ public class SettingsController : Controller
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
+        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
         
         return View(list);
     }
@@ -650,6 +660,7 @@ public class SettingsController : Controller
     // CAM Programmer Management
     public async Task<IActionResult> CamProgrammer(string? search, int page = 1, int pageSize = 50)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var query = _context.CamProgrammers.AsQueryable();
         
         if (!string.IsNullOrWhiteSpace(search))
@@ -674,6 +685,7 @@ public class SettingsController : Controller
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
+        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
         
         return View(list);
     }
@@ -796,6 +808,7 @@ public class SettingsController : Controller
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
+        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
         
         var projectCodes = await _context.ProjectCodes
             .Where(p => p.IsActive)
@@ -912,6 +925,7 @@ public class SettingsController : Controller
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
         ViewBag.PageSize = pageSize;
+        ViewBag.PaginationQuery = string.IsNullOrEmpty(search) ? "" : "search=" + Uri.EscapeDataString(search);
         
         return View(items);
     }

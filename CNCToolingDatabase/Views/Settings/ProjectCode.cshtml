@@ -97,25 +97,16 @@
     </table>
 </div>
 
-@if (ViewBag.TotalPages > 1)
+@if (ViewBag.TotalItems > 0)
 {
-    <div class="pagination">
-        <span class="page-info">Showing @((ViewBag.CurrentPage - 1) * ViewBag.PageSize + 1) - @Math.Min(ViewBag.CurrentPage * ViewBag.PageSize, ViewBag.TotalItems) of @ViewBag.TotalItems</span>
-        <div class="page-buttons">
-            @if (ViewBag.CurrentPage > 1)
-            {
-                <a href="?page=@(ViewBag.CurrentPage - 1)&search=@ViewBag.Search" class="btn btn-secondary btn-sm">Previous</a>
-            }
-            @for (int i = Math.Max(1, ViewBag.CurrentPage - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2); i++)
-            {
-                <a href="?page=@i&search=@ViewBag.Search" class="btn @(i == ViewBag.CurrentPage ? "btn-primary" : "btn-secondary") btn-sm">@i</a>
-            }
-            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
-            {
-                <a href="?page=@(ViewBag.CurrentPage + 1)&search=@ViewBag.Search" class="btn btn-secondary btn-sm">Next</a>
-            }
-        </div>
-    </div>
+    @await Html.PartialAsync("_Pagination", new PaginationViewModel
+    {
+        CurrentPage = (int)ViewBag.CurrentPage,
+        TotalPages = Math.Max(1, (int)ViewBag.TotalPages),
+        TotalItems = (int)ViewBag.TotalItems,
+        PageSize = (int)ViewBag.PageSize,
+        QueryBase = (string)(ViewBag.PaginationQuery ?? "")
+    })
 }
 
 <!-- Create/Edit Modal -->

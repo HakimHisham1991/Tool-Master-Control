@@ -25,12 +25,14 @@ public class ToolCodeController : Controller
         string? toolListName,
         string? sortColumn,
         string? sortDirection,
-        int page = 1)
+        int page = 1,
+        int pageSize = 50)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var viewModel = await _toolCodeService.GetToolCodesAsync(
             search, consumableCode, diameter, arborCode, 
             holderExtension, partNumber, toolListName, sortColumn, sortDirection, 
-            page, 100);
+            page, pageSize);
         
         return View(viewModel);
     }

@@ -424,12 +424,35 @@ html, body {
     font-size: 15px;
 }
 
-.pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.pagination-wrapper {
     margin-top: 16px;
     padding: 12px 0;
+}
+
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.pagination-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pagination-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-right {
+    font-size: 13px;
+    color: var(--text-secondary);
 }
 
 .page-info {
@@ -437,9 +460,54 @@ html, body {
     color: var(--text-secondary);
 }
 
+.page-size-select {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.page-size-select label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.page-size-select select {
+    width: auto;
+    min-width: 60px;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
 .page-buttons {
     display: flex;
+    flex-wrap: wrap;
     gap: 4px;
+    justify-content: center;
+}
+
+.page-ellipsis {
+    padding: 4px 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.jump-to-page {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.jump-to-page label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.jump-to-page input {
+    width: 60px;
+    padding: 4px 8px;
+    font-size: 13px;
+    text-align: center;
 }
 
 .editor-toolbar {

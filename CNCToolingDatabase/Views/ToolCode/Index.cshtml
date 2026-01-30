@@ -174,26 +174,26 @@
     </table>
 </div>
 
-@if (Model.TotalPages > 1)
+@if (Model.TotalItems > 0)
 {
-    <div class="pagination">
-        <span class="page-info">Showing @((Model.CurrentPage - 1) * Model.PageSize + 1) - @Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems) of @Model.TotalItems</span>
-        <div class="page-buttons">
-            @if (Model.CurrentPage > 1)
-            {
-                <a href="?page=@(Model.CurrentPage - 1)&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" class="btn btn-secondary btn-sm">Previous</a>
-            }
-            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
-            {
-                <a href="?page=@i&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" 
-                   class="btn @(i == Model.CurrentPage ? "btn-primary" : "btn-secondary") btn-sm">@i</a>
-            }
-            @if (Model.CurrentPage < Model.TotalPages)
-            {
-                <a href="?page=@(Model.CurrentPage + 1)&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")&sortColumn=@Model.SortColumn&sortDirection=@Model.SortDirection" class="btn btn-secondary btn-sm">Next</a>
-            }
-        </div>
-    </div>
+    var qb = new List<string>();
+    if (!string.IsNullOrEmpty(Model.SearchTerm)) qb.Add("search=" + Uri.EscapeDataString(Model.SearchTerm));
+    if (!string.IsNullOrEmpty(Model.ConsumableCodeFilter)) qb.Add("consumableCode=" + Uri.EscapeDataString(Model.ConsumableCodeFilter));
+    if (!string.IsNullOrEmpty(Model.DiameterFilter)) qb.Add("diameter=" + Uri.EscapeDataString(Model.DiameterFilter));
+    if (!string.IsNullOrEmpty(Model.ArborCodeFilter)) qb.Add("arborCode=" + Uri.EscapeDataString(Model.ArborCodeFilter));
+    if (!string.IsNullOrEmpty(Model.HolderExtensionFilter)) qb.Add("holderExtension=" + Uri.EscapeDataString(Model.HolderExtensionFilter));
+    if (!string.IsNullOrEmpty(Model.PartNumberFilter)) qb.Add("partNumber=" + Uri.EscapeDataString(Model.PartNumberFilter));
+    if (!string.IsNullOrEmpty(Model.ToolListNameFilter)) qb.Add("toolListName=" + Uri.EscapeDataString(Model.ToolListNameFilter));
+    if (!string.IsNullOrEmpty(Model.SortColumn)) qb.Add("sortColumn=" + Uri.EscapeDataString(Model.SortColumn));
+    if (!string.IsNullOrEmpty(Model.SortDirection)) qb.Add("sortDirection=" + Uri.EscapeDataString(Model.SortDirection));
+    @await Html.PartialAsync("_Pagination", new PaginationViewModel
+    {
+        CurrentPage = Model.CurrentPage,
+        TotalPages = Math.Max(1, Model.TotalPages),
+        TotalItems = Model.TotalItems,
+        PageSize = Model.PageSize,
+        QueryBase = string.Join("&", qb)
+    });
 }
 
 @section Scripts {

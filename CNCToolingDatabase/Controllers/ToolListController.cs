@@ -22,11 +22,13 @@ public class ToolListController : Controller
         string? search,
         string? sortColumn,
         string? sortDirection,
-        int page = 1)
+        int page = 1,
+        int pageSize = 50)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var username = HttpContext.Session.GetString("Username") ?? "";
         var viewModel = await _toolListService.GetToolListsAsync(
-            search, sortColumn, sortDirection, page, 100, username);
+            search, sortColumn, sortDirection, page, pageSize, username);
         
         return View(viewModel);
     }

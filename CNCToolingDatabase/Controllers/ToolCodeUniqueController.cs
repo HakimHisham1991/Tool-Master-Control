@@ -24,10 +24,12 @@ public class ToolCodeUniqueController : Controller
         string? supplier,
         string? sortColumn,
         string? sortDirection,
-        int page = 1)
+        int page = 1,
+        int pageSize = 50)
     {
+        pageSize = Math.Clamp(pageSize, 10, 250);
         var viewModel = await _service.GetToolCodesAsync(
-            search, consumableCode, supplier, sortColumn, sortDirection, page, 100);
+            search, consumableCode, supplier, sortColumn, sortDirection, page, pageSize);
         return View(viewModel);
     }
 
