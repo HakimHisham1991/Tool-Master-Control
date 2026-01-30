@@ -427,11 +427,11 @@ public static class DbSeeder
                 .ToDictionary(t => t.Consumable, t => (t.SystemToolName, t.Supplier, t.Dia, t.Flute, t.Radius));
             var toolLists = new List<ToolListHeader>
             {
-                CreateToolListWithDetails("PART-001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
-                CreateToolListWithDetails("PART-001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
-                CreateToolListWithDetails("PART-002", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil", masterLookup),
-                CreateToolListWithDetails("PART-003", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
-                CreateToolListWithDetails("PART-003", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
+                CreateToolListWithDetails("V5754221420001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
+                CreateToolListWithDetails("V5754221420001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
+                CreateToolListWithDetails("351-2180-7", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil", masterLookup),
+                CreateToolListWithDetails("E5757332620000", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "adib.jamil", masterLookup),
+                CreateToolListWithDetails("E5757332620000", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "nik.faiszal", masterLookup),
             };
             
             context.ToolListHeaders.AddRange(toolLists);
@@ -841,11 +841,11 @@ TM02|267917|2X-07|INACTIVE";
     {
         return new[]
         {
-            ("PART-001", "OP10", new[] { "553120Z3.0-SIRON-A", "553160R050Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "553100Z3.0-SIRON-A", "553040Z3.0-SIRON-A" }),
-            ("PART-001", "OP20", new[] { "553100Z3.0-SIRON-A", "A3389DPL-9.8", "A3389DPL-12", "7792VXP06CA016Z2R140", "7792VXD09WA032Z3R", "553060Z3.0-SIRON-A" }),
-            ("PART-002", "OP10", new[] { "553140Z3.0-SIRON-A", "553180R100Z3.0-SIRON-A", "553200Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "553100R250Z3.0-SIRON-A", "553120R025Z3.0-SIRON-A", "7792VXD12-A052Z5R" }),
-            ("PART-003", "OP10", new[] { "7792VXD12-A080Z8R", "553040Z3.0-SIRON-A", "553060Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "A3389DPL-6.1" }),
-            ("PART-003", "OP20", new[] { "553100Z3.0-SIRON-A", "553120Z3.0-SIRON-A", "7792VXP06CA016Z2R140", "7792VXD09WA032Z3R", "553140Z3.0-SIRON-A", "553160R050Z3.0-SIRON-A" }),
+            ("V5754221420001", "OP10", new[] { "553120Z3.0-SIRON-A", "553160R050Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "553100Z3.0-SIRON-A", "553040Z3.0-SIRON-A" }),
+            ("V5754221420001", "OP20", new[] { "553100Z3.0-SIRON-A", "A3389DPL-9.8", "A3389DPL-12", "7792VXP06CA016Z2R140", "7792VXD09WA032Z3R", "553060Z3.0-SIRON-A" }),
+            ("351-2180-7", "OP10", new[] { "553140Z3.0-SIRON-A", "553180R100Z3.0-SIRON-A", "553200Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "553100R250Z3.0-SIRON-A", "553120R025Z3.0-SIRON-A", "7792VXD12-A052Z5R" }),
+            ("E5757332620000", "OP10", new[] { "7792VXD12-A080Z8R", "553040Z3.0-SIRON-A", "553060Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "A3389DPL-6.1" }),
+            ("E5757332620000", "OP20", new[] { "553100Z3.0-SIRON-A", "553120Z3.0-SIRON-A", "7792VXP06CA016Z2R140", "7792VXD09WA032Z3R", "553140Z3.0-SIRON-A", "553160R050Z3.0-SIRON-A" }),
         };
     }
 
@@ -1177,11 +1177,11 @@ TM02|267917|2X-07|INACTIVE";
             .ToDictionary(t => t.Consumable, t => (t.SystemToolName, t.Supplier, t.Dia, t.Flute, t.Radius));
         var toolLists = new List<ToolListHeader>
         {
-            CreateToolListWithDetails("PART-001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
-            CreateToolListWithDetails("PART-001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
-            CreateToolListWithDetails("PART-002", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil", masterLookup),
-            CreateToolListWithDetails("PART-003", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
-            CreateToolListWithDetails("PART-003", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
+            CreateToolListWithDetails("V5754221420001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
+            CreateToolListWithDetails("V5754221420001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
+            CreateToolListWithDetails("351-2180-7", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil", masterLookup),
+            CreateToolListWithDetails("E5757332620000", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
+            CreateToolListWithDetails("E5757332620000", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
         };
         context.ToolListHeaders.AddRange(toolLists);
         context.SaveChanges();
