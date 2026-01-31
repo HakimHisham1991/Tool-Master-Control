@@ -33,7 +33,10 @@
             </svg>
             <input type="text" name="search" value="@Model.SearchTerm" placeholder="Search tool codes..." class="search-input" id="searchInput" />
         </div>
-        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+        <div class="search-actions">
+            <button type="submit" class="btn btn-primary btn-sm">Search</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear</button>
+        </div>
     </form>
 </div>
 
@@ -113,9 +116,7 @@
                     </select>
                 </th>
                 <th></th>
-                <th>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear</button>
-                </th>
+                <th></th>
             </tr>
             <tr>
                 <th onclick="sortBy('no')">No. @Html.Raw(GetSortIcon("no"))</th>

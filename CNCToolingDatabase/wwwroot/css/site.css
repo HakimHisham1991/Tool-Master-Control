@@ -255,6 +255,20 @@ html, body {
     margin-bottom: 16px;
 }
 
+.search-bar form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.search-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
 .search-input-group {
     display: flex;
     align-items: center;
