@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using CNCToolingDatabase.Models;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
 
 namespace CNCToolingDatabase.Data;
 
@@ -920,6 +921,58 @@ public static class DbSeeder
         context.SaveChanges();
     }
 
+    /// <summary>Load Master Tool Code rows from TOOL CODE MASTER.xlsx. Columns: System Tool Name, Tool Description, Procurement channel, Tool Ø (DC), Flute / Cutting edge length (APMXS) cutting width (CW), Corner rad.</summary>
+    private static List<(string SystemToolName, string ConsumableCode, string Supplier, decimal Diameter, decimal FluteLength, decimal CornerRadius)> LoadToolCodeUniqueFromExcel(string path)
+    {
+        var result = new List<(string, string, string, decimal, decimal, decimal)>();
+        if (!File.Exists(path)) return result;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage(new FileInfo(path));
+        var ws = package.Workbook.Worksheets.FirstOrDefault();
+        if (ws?.Dimension == null) return result;
+        int cols = ws.Dimension.End.Column;
+        int rows = ws.Dimension.End.Row;
+        if (rows < 2) return result;
+        static int GetCol(ExcelWorksheet sheet, int totalCols, string headerName)
+        {
+            for (int c = 1; c <= totalCols; c++)
+            {
+                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                if (string.Equals(v, headerName, StringComparison.OrdinalIgnoreCase)) return c;
+            }
+            return -1;
+        }
+        int colSystemToolName = GetCol(ws, cols, "System Tool Name");
+        int colToolDescription = GetCol(ws, cols, "Tool Description");
+        int colProcurementChannel = GetCol(ws, cols, "Procurement channel");
+        int colToolDiameter = GetCol(ws, cols, "Tool Ø (DC)");
+        int colFluteLength = GetCol(ws, cols, "Flute / Cutting edge length (APMXS) cutting width (CW)");
+        int colCornerRad = GetCol(ws, cols, "Corner rad");
+        if (colSystemToolName < 0 && colToolDescription < 0) return result;
+        static decimal ParseDecimal(ExcelWorksheet sheet, int row, int col)
+        {
+            if (col < 1) return 0;
+            var v = sheet.Cells[row, col].Value;
+            if (v == null) return 0;
+            if (v is double d) return (decimal)d;
+            if (decimal.TryParse(v.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var dec)) return dec;
+            return 0;
+        }
+        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+        for (int r = 2; r <= rows; r++)
+        {
+            var systemName = GetStr(ws, r, colSystemToolName);
+            var consumable = GetStr(ws, r, colToolDescription);
+            var supplier = GetStr(ws, r, colProcurementChannel);
+            var diameter = ParseDecimal(ws, r, colToolDiameter);
+            var flute = ParseDecimal(ws, r, colFluteLength);
+            var radius = ParseDecimal(ws, r, colCornerRad);
+            if (string.IsNullOrWhiteSpace(systemName) && string.IsNullOrWhiteSpace(consumable)) continue;
+            result.Add((systemName ?? "", consumable ?? "", supplier ?? "", diameter, flute, radius));
+        }
+        return result;
+    }
+
     public static void ResetToolCodeUniques(ApplicationDbContext context)
     {
         if (context.ToolCodeUniques == null) return;
@@ -943,7 +996,11 @@ public static class DbSeeder
             const string insertSql = @"INSERT INTO ToolCodeUniques (SystemToolName, ConsumableCode, Supplier, Diameter, FluteLength, CornerRadius, CreatedDate, LastModifiedDate)
                 VALUES (@sn, @cc, @su, @di, @fl, @cr, @cd, @lm)";
             var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            foreach (var (systemName, consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
+            var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
+            var rowsToInsert = File.Exists(excelPath)
+                ? LoadToolCodeUniqueFromExcel(excelPath)
+                : GetToolCodeUniqueSeedData().Select(t => (t.SystemToolName, t.Consumable, t.Supplier, t.Dia, t.Flute, t.Radius)).ToList();
+            foreach (var (systemName, consumable, supplier, dia, flute, radius) in rowsToInsert)
             {
                 using var insCmd = conn.CreateCommand();
                 insCmd.Transaction = dbTrans;
