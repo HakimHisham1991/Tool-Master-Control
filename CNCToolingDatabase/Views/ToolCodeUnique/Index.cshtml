@@ -57,7 +57,8 @@
                         <option value="">All</option>
                         @foreach (var code in Model.AvailableConsumableCodes)
                         {
-                            <option value="@code" @(Model.ConsumableCodeFilter == code ? "selected" : null)>@code</option>
+                            if (Model.ConsumableCodeFilter == code) { <option value="@code" selected>@code</option> }
+                            else { <option value="@code">@code</option> }
                         }
                     </select>
                 </th>
@@ -76,7 +77,8 @@
                         <option value="">All</option>
                         @foreach (var d in Model.AvailableDiameters)
                         {
-                            <option value="@d" @(Model.DiameterFilter == d ? "selected" : null)>@d</option>
+                            if (Model.DiameterFilter == d) { <option value="@d" selected>@d</option> }
+                            else { <option value="@d">@d</option> }
                         }
                     </select>
                 </th>
@@ -95,7 +97,8 @@
                         <option value="">All</option>
                         @foreach (var r in Model.AvailableCornerRadii)
                         {
-                            <option value="@r" @(Model.CornerRadiusFilter == r ? "selected" : null)>@r</option>
+                            if (Model.CornerRadiusFilter == r) { <option value="@r" selected>@r</option> }
+                            else { <option value="@r">@r</option> }
                         }
                     </select>
                 </th>

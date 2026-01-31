@@ -107,7 +107,7 @@
                 <th>
                     <select id="filterCornerRadius" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableCornerRadii) { <option value="@v" @(Model.CornerRadiusFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableCornerRadii) { if (Model.CornerRadiusFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
@@ -149,7 +149,7 @@
                 <th>
                     <select id="filterMachineName" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableMachineNames) { <option value="@v" @(Model.MachineNameFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableMachineNames) { if (Model.MachineNameFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
