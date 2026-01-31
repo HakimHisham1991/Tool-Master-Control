@@ -201,9 +201,9 @@ public static class DbSeeder
         {
             if (context.ProjectCodes != null && !context.ProjectCodes.Any())
             {
-                foreach (var (code, description, project) in GetProjectCodeSeedData())
+                foreach (var (code, description, project, isActive) in GetProjectCodeSeedData())
                 {
-                    context.ProjectCodes.Add(new ProjectCode { Code = code, Description = description, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    context.ProjectCodes.Add(new ProjectCode { Code = code, Description = description, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
                 }
                 context.SaveChanges();
             }
@@ -789,9 +789,9 @@ public static class DbSeeder
         }
         context.ProjectCodes.RemoveRange(context.ProjectCodes.ToList());
         context.SaveChanges();
-        foreach (var (code, description, project) in GetProjectCodeSeedData())
+        foreach (var (code, description, project, isActive) in GetProjectCodeSeedData())
         {
-            context.ProjectCodes.Add(new ProjectCode { Code = code, Description = description, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+            context.ProjectCodes.Add(new ProjectCode { Code = code, Description = description, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
         }
         context.SaveChanges();
     }
