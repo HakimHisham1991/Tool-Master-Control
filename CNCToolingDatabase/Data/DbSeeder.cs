@@ -569,10 +569,10 @@ public static class DbSeeder
         return LoadMachineNameFromExcel(path).ToArray();
     }
 
-    /// <summary>Load Project Code rows from PROJECT CODE MASTER.xlsx. Columns: Code, Description (or Customer), Project.</summary>
-    private static List<(string Code, string Description, string Project)> LoadProjectCodeFromExcel(string path)
+    /// <summary>Load Project Code rows from PROJECT CODE MASTER.xlsx. Columns: Code, Description (or Customer), Project, Status (ACTIVE/INACTIVE).</summary>
+    private static List<(string Code, string Description, string Project, bool IsActive)> LoadProjectCodeFromExcel(string path)
     {
-        var result = new List<(string, string, string)>();
+        var result = new List<(string, string, string, bool)>();
         if (!File.Exists(path)) return result;
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         using var package = new ExcelPackage(new FileInfo(path));
@@ -595,6 +595,7 @@ public static class DbSeeder
         int colCode = GetCol(ws, cols, "Code", "Project Code");
         int colDescription = GetCol(ws, cols, "Description", "Customer");
         int colProject = GetCol(ws, cols, "Project");
+        int colStatus = GetCol(ws, cols, "Status", "IsActive");
         if (colCode < 1) return result;
         static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
         for (int r = 2; r <= rows; r++)
@@ -603,12 +604,19 @@ public static class DbSeeder
             if (string.IsNullOrWhiteSpace(code)) continue;
             var description = GetStr(ws, r, colDescription);
             var project = GetStr(ws, r, colProject);
-            result.Add((code, description ?? "", project ?? ""));
+            var statusVal = GetStr(ws, r, colStatus);
+            var isActive = string.IsNullOrWhiteSpace(statusVal) ||
+                string.Equals(statusVal, "ACTIVE", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(statusVal, "1", StringComparison.Ordinal) ||
+                string.Equals(statusVal, "Yes", StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(statusVal, "INACTIVE", StringComparison.OrdinalIgnoreCase) || string.Equals(statusVal, "0", StringComparison.Ordinal) || string.Equals(statusVal, "No", StringComparison.OrdinalIgnoreCase))
+                isActive = false;
+            result.Add((code, description ?? "", project ?? "", isActive));
         }
         return result;
     }
 
-    private static (string Code, string Description, string Project)[] GetProjectCodeSeedData()
+    private static (string Code, string Description, string Project, bool IsActive)[] GetProjectCodeSeedData()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Data", "PROJECT CODE MASTER.xlsx");
         return LoadProjectCodeFromExcel(path).ToArray();
