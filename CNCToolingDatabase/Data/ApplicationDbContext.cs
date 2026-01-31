@@ -111,7 +111,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<PartNumber>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.Name).IsUnique();
+            entity.HasIndex(e => e.Name);
             entity.HasOne(e => e.ProjectCode)
                 .WithMany()
                 .HasForeignKey(e => e.ProjectCodeId)

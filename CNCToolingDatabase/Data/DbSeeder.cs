@@ -141,7 +141,40 @@ public static class DbSeeder
                 try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN DrawingRev TEXT;"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN MaterialSpecId INTEGER REFERENCES MaterialSpecs(Id);"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN RefDrawing TEXT;"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE PartNumbers ADD COLUMN Sequence INTEGER;"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE MachineModels ADD COLUMN Type TEXT;"; command.ExecuteNonQuery(); } catch { }
+                // One-time migration: allow duplicate Part Number names and add Sequence for Excel order
+                command.CommandText = "SELECT 1 FROM RunOnce WHERE Key = 'PartNumbers_AllowDuplicateNames' LIMIT 1;";
+                var alreadyMigrated = command.ExecuteScalar() != null;
+                if (!alreadyMigrated)
+                {
+                    command.CommandText = @"CREATE TABLE PartNumbers_new (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL,
+                        Description TEXT,
+                        ProjectCodeId INTEGER,
+                        PartRev TEXT,
+                        DrawingRev TEXT,
+                        MaterialSpecId INTEGER,
+                        RefDrawing TEXT,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1,
+                        Sequence INTEGER NOT NULL DEFAULT 0
+                    );";
+                    command.ExecuteNonQuery();
+                    command.CommandText = @"INSERT INTO PartNumbers_new (Id, Name, Description, ProjectCodeId, PartRev, DrawingRev, MaterialSpecId, RefDrawing, CreatedDate, CreatedBy, IsActive, Sequence)
+                        SELECT Id, Name, Description, ProjectCodeId, PartRev, DrawingRev, MaterialSpecId, RefDrawing, CreatedDate, CreatedBy, IsActive, COALESCE(Sequence, Id) FROM PartNumbers;";
+                    command.ExecuteNonQuery();
+                    command.CommandText = "DROP TABLE PartNumbers;";
+                    command.ExecuteNonQuery();
+                    command.CommandText = "ALTER TABLE PartNumbers_new RENAME TO PartNumbers;";
+                    command.ExecuteNonQuery();
+                    command.CommandText = "CREATE INDEX IF NOT EXISTS IX_PartNumbers_Name ON PartNumbers(Name);";
+                    command.ExecuteNonQuery();
+                    command.CommandText = "INSERT INTO RunOnce (Key, DoneAt) VALUES ('PartNumbers_AllowDuplicateNames', datetime('now'));";
+                    command.ExecuteNonQuery();
+                }
                 try { command.CommandText = "ALTER TABLE MachineModels ADD COLUMN Controller TEXT;"; command.ExecuteNonQuery(); } catch { }
             }
             finally
@@ -449,11 +482,9 @@ public static class DbSeeder
                 var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
                 var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
                 var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
-                var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var (name, desc, partRev, drawRev, pcCode, refDrawing, msSpec) in GetPartNumberSeedData())
+                foreach (var (name, desc, partRev, drawRev, pcCode, refDrawing, msSpec, sequence) in GetPartNumberSeedData())
                 {
                     if (string.IsNullOrWhiteSpace(name)) continue;
-                    if (!seenNames.Add(name)) continue;
                     var pcId = !string.IsNullOrEmpty(pcCode) && projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
                     var msId = !string.IsNullOrEmpty(msSpec) && matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
                     context.PartNumbers.Add(new PartNumber
@@ -465,6 +496,7 @@ public static class DbSeeder
                         DrawingRev = drawRev,
                         MaterialSpecId = msId,
                         RefDrawing = refDrawing ?? "",
+                        Sequence = sequence,
                         CreatedDate = DateTime.UtcNow,
                         CreatedBy = "system",
                         IsActive = true
@@ -598,10 +630,10 @@ public static class DbSeeder
         };
     }
 
-    /// <summary>Load Part Number rows from PART NUMBERS MASTER.xlsx. Columns: Part Number, Description, Part Revision, Drawing Revision, Project Code, Ref. Drawing, Material Spec., Material</summary>
-    private static List<(string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec)> LoadPartNumberFromExcel(string path)
+    /// <summary>Load Part Number rows from PART NUMBERS MASTER.xlsx. Columns: Part Number, Description, Part Revision, Drawing Revision, Project Code, Ref. Drawing, Material Spec., Material. Sequence is 1-based Excel row order.</summary>
+    private static List<(string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec, int Sequence)> LoadPartNumberFromExcel(string path)
     {
-        var result = new List<(string, string, string, string, string, string, string)>();
+        var result = new List<(string, string, string, string, string, string, string, int)>();
         if (!File.Exists(path)) return result;
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         using var package = new ExcelPackage(new FileInfo(path));
@@ -630,22 +662,24 @@ public static class DbSeeder
         int colMaterialSpec = GetCol(ws, cols, "Material Spec.", "Material Spec");
         if (colPartNumber < 1) return result;
         static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+        int sequence = 0;
         for (int r = 2; r <= rows; r++)
         {
             var name = GetStr(ws, r, colPartNumber);
             if (string.IsNullOrWhiteSpace(name)) continue;
+            sequence++;
             var desc = GetStr(ws, r, colDescription);
             var partRev = GetStr(ws, r, colPartRev);
             var drawRev = GetStr(ws, r, colDrawingRev);
             var pcCode = GetStr(ws, r, colProjectCode);
             var refDrawing = GetStr(ws, r, colRefDrawing);
             var msSpec = GetStr(ws, r, colMaterialSpec);
-            result.Add((name, desc ?? "", partRev ?? "", drawRev ?? "", pcCode ?? "", refDrawing ?? "", msSpec ?? ""));
+            result.Add((name, desc ?? "", partRev ?? "", drawRev ?? "", pcCode ?? "", refDrawing ?? "", msSpec ?? "", sequence));
         }
         return result;
     }
 
-    private static (string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec)[] GetPartNumberSeedData()
+    private static (string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec, int Sequence)[] GetPartNumberSeedData()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Data", "PART NUMBERS MASTER.xlsx");
         return LoadPartNumberFromExcel(path).ToArray();
@@ -907,14 +941,12 @@ public static class DbSeeder
         var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
         var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
         var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
-        var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (name, desc, partRev, drawRev, pcCode, refDrawing, msSpec) in GetPartNumberSeedData())
+        foreach (var (name, desc, partRev, drawRev, pcCode, refDrawing, msSpec, sequence) in GetPartNumberSeedData())
         {
             if (string.IsNullOrWhiteSpace(name)) continue;
-            if (!seenNames.Add(name)) continue; // skip duplicate part number names (keep first)
             var pcId = !string.IsNullOrEmpty(pcCode) && projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
             var msId = !string.IsNullOrEmpty(msSpec) && matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
-            context.PartNumbers.Add(new PartNumber { Name = name, Description = desc, ProjectCodeId = pcId, PartRev = partRev, DrawingRev = drawRev, MaterialSpecId = msId, RefDrawing = refDrawing ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+            context.PartNumbers.Add(new PartNumber { Name = name, Description = desc, ProjectCodeId = pcId, PartRev = partRev, DrawingRev = drawRev, MaterialSpecId = msId, RefDrawing = refDrawing ?? "", Sequence = sequence, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
         }
         context.SaveChanges();
     }

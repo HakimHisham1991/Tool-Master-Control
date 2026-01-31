@@ -1046,6 +1046,7 @@ public class SettingsController : Controller
         query = (sortColumn?.ToLower()) switch
         {
             "id" => isDesc ? query.OrderByDescending(p => p.Id) : query.OrderBy(p => p.Id),
+            "sequence" => isDesc ? query.OrderByDescending(p => p.Sequence) : query.OrderBy(p => p.Sequence),
             "name" or "partnumber" => isDesc ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
             "description" => isDesc ? query.OrderByDescending(p => p.Description ?? "") : query.OrderBy(p => p.Description ?? ""),
             "partrev" => isDesc ? query.OrderByDescending(p => p.PartRev ?? "") : query.OrderBy(p => p.PartRev ?? ""),
@@ -1055,7 +1056,7 @@ public class SettingsController : Controller
             "createdby" => isDesc ? query.OrderByDescending(p => p.CreatedBy) : query.OrderBy(p => p.CreatedBy),
             "createddate" => isDesc ? query.OrderByDescending(p => p.CreatedDate) : query.OrderBy(p => p.CreatedDate),
             "isactive" => isDesc ? query.OrderByDescending(p => p.IsActive) : query.OrderBy(p => p.IsActive),
-            _ => query.OrderBy(p => p.Name)
+            _ => query.OrderBy(p => p.Sequence)
         };
         
         var totalItems = await query.CountAsync();
@@ -1098,6 +1099,7 @@ public class SettingsController : Controller
         if (await _context.PartNumbers.AnyAsync(p => p.Name == name))
             return Json(new { success = false, message = "Part number already exists" });
         
+        var nextSeq = await _context.PartNumbers.AnyAsync() ? await _context.PartNumbers.MaxAsync(p => p.Sequence) + 1 : 1;
         _context.PartNumbers.Add(new PartNumber
         {
             Name = name,
@@ -1107,6 +1109,7 @@ public class SettingsController : Controller
             PartRev = partRev,
             DrawingRev = drawingRev,
             RefDrawing = refDrawing,
+            Sequence = nextSeq,
             CreatedDate = DateTime.UtcNow,
             CreatedBy = HttpContext.Session.GetString("Username") ?? "",
             IsActive = true

@@ -46,7 +46,7 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th onclick="sortBy('id')">No. @Html.Raw(GetSortIcon("id", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('sequence')">No. @Html.Raw(GetSortIcon("sequence", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('partnumber')">Part Number @Html.Raw(GetSortIcon("partnumber", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('description')">Description @Html.Raw(GetSortIcon("description", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('partrev')">Part Rev. @Html.Raw(GetSortIcon("partrev", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
@@ -77,7 +77,7 @@
                 @for (int i = 0; i < Model.Count; i++)
                 {
                     var item = Model[i];
-                    var no = ((int)(ViewBag.CurrentPage ?? 1) - 1) * (int)(ViewBag.PageSize ?? 250) + i + 1;
+                    var no = item.Sequence > 0 ? item.Sequence : ((int)(ViewBag.CurrentPage ?? 1) - 1) * (int)(ViewBag.PageSize ?? 250) + i + 1;
                     <tr data-edit="@Html.Raw(System.Net.WebUtility.HtmlEncode(JsonSerializer.Serialize(new { id = item.Id, name = item.Name, description = item.Description ?? "", project = item.ProjectCode?.Project ?? "", customer = item.ProjectCode?.Description ?? "", projectCodeId = item.ProjectCodeId ?? 0, partRev = item.PartRev ?? "", drawingRev = item.DrawingRev ?? "", materialSpecId = item.MaterialSpecId ?? 0, material = item.MaterialSpec?.Material ?? "", refDrawing = item.RefDrawing ?? "", isActive = item.IsActive })))">
                         <td>@no</td>
                         <td>@item.Name</td>

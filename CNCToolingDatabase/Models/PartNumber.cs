@@ -12,6 +12,8 @@ public class PartNumber
     public int? MaterialSpecId { get; set; }
     public MaterialSpec? MaterialSpec { get; set; }
     public string? RefDrawing { get; set; }
+    /// <summary>1-based row order from source Excel; used for display order.</summary>
+    public int Sequence { get; set; }
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public string CreatedBy { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
