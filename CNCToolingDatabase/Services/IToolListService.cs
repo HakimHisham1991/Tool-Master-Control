@@ -7,6 +7,11 @@ public interface IToolListService
 {
     Task<ToolListDatabaseViewModel> GetToolListsAsync(
         string? searchTerm,
+        string? toolListNameFilter,
+        string? partNumberFilter,
+        string? operationFilter,
+        string? revisionFilter,
+        string? numberOfToolingFilter,
         string? sortColumn,
         string? sortDirection,
         int page,

@@ -10,12 +10,13 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             Reset
         </button>
-        <a href="/ToolList/Export?format=excel&search=@Model.SearchTerm" class="btn btn-secondary btn-sm">
+        @{ var toolListExportQ = new List<string> { "format=excel" }; if (!string.IsNullOrEmpty(Model.SearchTerm)) toolListExportQ.Add("search=" + Uri.EscapeDataString(Model.SearchTerm)); if (!string.IsNullOrEmpty(Model.ToolListNameFilter)) toolListExportQ.Add("toolListName=" + Uri.EscapeDataString(Model.ToolListNameFilter)); if (!string.IsNullOrEmpty(Model.PartNumberFilter)) toolListExportQ.Add("partNumber=" + Uri.EscapeDataString(Model.PartNumberFilter)); if (!string.IsNullOrEmpty(Model.OperationFilter)) toolListExportQ.Add("operation=" + Uri.EscapeDataString(Model.OperationFilter)); if (!string.IsNullOrEmpty(Model.RevisionFilter)) toolListExportQ.Add("revision=" + Uri.EscapeDataString(Model.RevisionFilter)); if (!string.IsNullOrEmpty(Model.NumberOfToolingFilter)) toolListExportQ.Add("numberOfTooling=" + Uri.EscapeDataString(Model.NumberOfToolingFilter)); var toolListExportQuery = "?" + string.Join("&", toolListExportQ); }
+        <a href="/ToolList/Export@(toolListExportQuery)" class="btn btn-secondary btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Excel
         </a>
-        <a href="/ToolList/Export?format=csv&search=@Model.SearchTerm" class="btn btn-secondary btn-sm">CSV</a>
-        <a href="/ToolList/Export?format=txt&search=@Model.SearchTerm" class="btn btn-secondary btn-sm">TXT</a>
+        <a href="/ToolList/Export@(toolListExportQuery.Replace("format=excel", "format=csv"))" class="btn btn-secondary btn-sm">CSV</a>
+        <a href="/ToolList/Export@(toolListExportQuery.Replace("format=excel", "format=txt"))" class="btn btn-secondary btn-sm">TXT</a>
     </div>
 </div>
 
@@ -35,6 +36,47 @@
 <div class="table-container">
     <table class="data-table">
         <thead>
+            <tr class="filter-row">
+                <th></th>
+                <th>
+                    <select id="filterToolListName" class="filter-cell-select" onchange="applyFilters();">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableToolListNames) { <option value="@v" @(Model.ToolListNameFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterPartNumber" class="filter-cell-select" onchange="applyFilters();">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailablePartNumbers) { <option value="@v" @(Model.PartNumberFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterOperation" class="filter-cell-select" onchange="applyFilters();">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableOperations) { <option value="@v" @(Model.OperationFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterRevision" class="filter-cell-select" onchange="applyFilters();">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableRevisions) { <option value="@v" @(Model.RevisionFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterNumberOfTooling" class="filter-cell-select" onchange="applyFilters();">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableNumberOfToolings) { <option value="@v" @(Model.NumberOfToolingFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear</button>
+                </th>
+            </tr>
             <tr>
                 <th onclick="sortBy('id')">No. @Html.Raw(GetSortIcon("id"))</th>
                 <th onclick="sortBy('toolListName')">Tool List Name @Html.Raw(GetSortIcon("toolListName"))</th>
@@ -132,6 +174,11 @@
 {
     var qb = new List<string>();
     if (!string.IsNullOrEmpty(Model.SearchTerm)) qb.Add("search=" + Uri.EscapeDataString(Model.SearchTerm));
+    if (!string.IsNullOrEmpty(Model.ToolListNameFilter)) qb.Add("toolListName=" + Uri.EscapeDataString(Model.ToolListNameFilter));
+    if (!string.IsNullOrEmpty(Model.PartNumberFilter)) qb.Add("partNumber=" + Uri.EscapeDataString(Model.PartNumberFilter));
+    if (!string.IsNullOrEmpty(Model.OperationFilter)) qb.Add("operation=" + Uri.EscapeDataString(Model.OperationFilter));
+    if (!string.IsNullOrEmpty(Model.RevisionFilter)) qb.Add("revision=" + Uri.EscapeDataString(Model.RevisionFilter));
+    if (!string.IsNullOrEmpty(Model.NumberOfToolingFilter)) qb.Add("numberOfTooling=" + Uri.EscapeDataString(Model.NumberOfToolingFilter));
     if (!string.IsNullOrEmpty(Model.SortColumn)) qb.Add("sortColumn=" + Uri.EscapeDataString(Model.SortColumn));
     if (!string.IsNullOrEmpty(Model.SortDirection)) qb.Add("sortDirection=" + Uri.EscapeDataString(Model.SortDirection));
     @await Html.PartialAsync("_Pagination", new PaginationViewModel
@@ -146,6 +193,24 @@
 
 @section Scripts {
 <script>
+    document.getElementById('searchForm').addEventListener('submit', function(e) { e.preventDefault(); applyFilters(); });
+    function applyFilters() {
+        const params = new URLSearchParams();
+        const search = document.getElementById('searchInput').value;
+        const toolListName = document.getElementById('filterToolListName').value;
+        const partNumber = document.getElementById('filterPartNumber').value;
+        const operation = document.getElementById('filterOperation').value;
+        const revision = document.getElementById('filterRevision').value;
+        const numberOfTooling = document.getElementById('filterNumberOfTooling').value;
+        if (search) params.set('search', search);
+        if (toolListName) params.set('toolListName', toolListName);
+        if (partNumber) params.set('partNumber', partNumber);
+        if (operation) params.set('operation', operation);
+        if (revision) params.set('revision', revision);
+        if (numberOfTooling) params.set('numberOfTooling', numberOfTooling);
+        window.location.href = '/ToolList?' + params.toString();
+    }
+    function clearFilters() { window.location.href = '/ToolList'; }
     function sortBy(column) {
         const params = new URLSearchParams(window.location.search);
         const currentSort = params.get('sortColumn');

@@ -17,6 +17,11 @@ public class ToolListService : IToolListService
     
     public async Task<ToolListDatabaseViewModel> GetToolListsAsync(
         string? searchTerm,
+        string? toolListNameFilter,
+        string? partNumberFilter,
+        string? operationFilter,
+        string? revisionFilter,
+        string? numberOfToolingFilter,
         string? sortColumn,
         string? sortDirection,
         int page,
@@ -37,6 +42,20 @@ public class ToolListService : IToolListService
                 h.Operation.ToLower().Contains(term) ||
                 h.CreatedBy.ToLower().Contains(term)).ToList();
         }
+        if (!string.IsNullOrWhiteSpace(toolListNameFilter))
+            headers = headers.Where(h => h.ToolListName == toolListNameFilter).ToList();
+        if (!string.IsNullOrWhiteSpace(partNumberFilter))
+            headers = headers.Where(h => h.PartNumber == partNumberFilter).ToList();
+        if (!string.IsNullOrWhiteSpace(operationFilter))
+            headers = headers.Where(h => h.Operation == operationFilter).ToList();
+        if (!string.IsNullOrWhiteSpace(revisionFilter))
+            headers = headers.Where(h => h.Revision == revisionFilter).ToList();
+        if (!string.IsNullOrWhiteSpace(numberOfToolingFilter) && int.TryParse(numberOfToolingFilter, out var nt))
+        {
+            var headerIds = headers.Select(h => h.Id).ToList();
+            var toolCounts = await _toolListRepository.GetToolCountsByHeaderIdsAsync(headerIds);
+            headers = headers.Where(h => toolCounts.GetValueOrDefault(h.Id, 0) == nt).ToList();
+        }
 
         headers = await ApplySortAsync(headers, sortColumn, sortDirection);
         
@@ -44,8 +63,8 @@ public class ToolListService : IToolListService
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         
         var pagedHeaders = headers.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-        var headerIds = pagedHeaders.Select(h => h.Id).ToList();
-        var toolCounts = await _toolListRepository.GetToolCountsByHeaderIdsAsync(headerIds);
+        var headerIdsForPage = pagedHeaders.Select(h => h.Id).ToList();
+        var toolCounts = await _toolListRepository.GetToolCountsByHeaderIdsAsync(headerIdsForPage);
         
         var toolLists = pagedHeaders
             .Select(h => new ToolListItemViewModel
@@ -67,16 +86,31 @@ public class ToolListService : IToolListService
                     : null
             }).ToList();
         
+        var allHeadersForAvailable = await _toolListRepository.GetAllHeadersAsync();
+        var allIds = allHeadersForAvailable.Select(h => h.Id).ToList();
+        var allCounts = await _toolListRepository.GetToolCountsByHeaderIdsAsync(allIds);
+        var distinctCounts = allCounts.Values.Distinct().OrderBy(x => x).Select(x => x.ToString()).ToList();
+        
         return new ToolListDatabaseViewModel
         {
             ToolLists = toolLists,
             SearchTerm = searchTerm,
+            ToolListNameFilter = toolListNameFilter,
+            PartNumberFilter = partNumberFilter,
+            OperationFilter = operationFilter,
+            RevisionFilter = revisionFilter,
+            NumberOfToolingFilter = numberOfToolingFilter,
             SortColumn = sortColumn,
             SortDirection = sortDirection,
             CurrentPage = page,
             TotalPages = totalPages,
             TotalItems = totalItems,
-            PageSize = pageSize
+            PageSize = pageSize,
+            AvailableToolListNames = allHeadersForAvailable.Select(h => h.ToolListName).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
+            AvailablePartNumbers = allHeadersForAvailable.Select(h => h.PartNumber).Distinct().OrderBy(x => x).ToList(),
+            AvailableOperations = allHeadersForAvailable.Select(h => h.Operation).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
+            AvailableRevisions = allHeadersForAvailable.Select(h => h.Revision).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
+            AvailableNumberOfToolings = distinctCounts
         };
     }
     

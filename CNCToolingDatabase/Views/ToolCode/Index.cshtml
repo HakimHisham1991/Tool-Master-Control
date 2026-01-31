@@ -3,15 +3,38 @@
     ViewData["Title"] = "Tool Code Database with Tool List";
 }
 
+@{
+    var toolCodeExportQ = new List<string> { "format=excel" };
+    if (!string.IsNullOrEmpty(Model.SearchTerm)) toolCodeExportQ.Add("search=" + Uri.EscapeDataString(Model.SearchTerm));
+    if (!string.IsNullOrEmpty(Model.ToolNumberFilter)) toolCodeExportQ.Add("toolNumber=" + Uri.EscapeDataString(Model.ToolNumberFilter));
+    if (!string.IsNullOrEmpty(Model.ToolDescriptionFilter)) toolCodeExportQ.Add("toolDescription=" + Uri.EscapeDataString(Model.ToolDescriptionFilter));
+    if (!string.IsNullOrEmpty(Model.ConsumableCodeFilter)) toolCodeExportQ.Add("consumableCode=" + Uri.EscapeDataString(Model.ConsumableCodeFilter));
+    if (!string.IsNullOrEmpty(Model.SupplierFilter)) toolCodeExportQ.Add("supplier=" + Uri.EscapeDataString(Model.SupplierFilter));
+    if (!string.IsNullOrEmpty(Model.HolderExtensionFilter)) toolCodeExportQ.Add("holderExtension=" + Uri.EscapeDataString(Model.HolderExtensionFilter));
+    if (!string.IsNullOrEmpty(Model.DiameterFilter)) toolCodeExportQ.Add("diameter=" + Uri.EscapeDataString(Model.DiameterFilter));
+    if (!string.IsNullOrEmpty(Model.FluteLengthFilter)) toolCodeExportQ.Add("fluteLength=" + Uri.EscapeDataString(Model.FluteLengthFilter));
+    if (!string.IsNullOrEmpty(Model.ProtrusionLengthFilter)) toolCodeExportQ.Add("protrusionLength=" + Uri.EscapeDataString(Model.ProtrusionLengthFilter));
+    if (!string.IsNullOrEmpty(Model.CornerRadiusFilter)) toolCodeExportQ.Add("cornerRadius=" + Uri.EscapeDataString(Model.CornerRadiusFilter));
+    if (!string.IsNullOrEmpty(Model.ArborCodeFilter)) toolCodeExportQ.Add("arborCode=" + Uri.EscapeDataString(Model.ArborCodeFilter));
+    if (!string.IsNullOrEmpty(Model.PartNumberFilter)) toolCodeExportQ.Add("partNumber=" + Uri.EscapeDataString(Model.PartNumberFilter));
+    if (!string.IsNullOrEmpty(Model.OperationFilter)) toolCodeExportQ.Add("operation=" + Uri.EscapeDataString(Model.OperationFilter));
+    if (!string.IsNullOrEmpty(Model.RevisionFilter)) toolCodeExportQ.Add("revision=" + Uri.EscapeDataString(Model.RevisionFilter));
+    if (!string.IsNullOrEmpty(Model.ToolListNameFilter)) toolCodeExportQ.Add("toolListName=" + Uri.EscapeDataString(Model.ToolListNameFilter));
+    if (!string.IsNullOrEmpty(Model.ProjectCodeFilter)) toolCodeExportQ.Add("projectCode=" + Uri.EscapeDataString(Model.ProjectCodeFilter));
+    if (!string.IsNullOrEmpty(Model.MachineNameFilter)) toolCodeExportQ.Add("machineName=" + Uri.EscapeDataString(Model.MachineNameFilter));
+    if (!string.IsNullOrEmpty(Model.MachineWorkcenterFilter)) toolCodeExportQ.Add("machineWorkcenter=" + Uri.EscapeDataString(Model.MachineWorkcenterFilter));
+    if (!string.IsNullOrEmpty(Model.CreatedByFilter)) toolCodeExportQ.Add("createdBy=" + Uri.EscapeDataString(Model.CreatedByFilter));
+    var toolCodeExportQuery = "?" + string.Join("&", toolCodeExportQ);
+}
 <div class="module-header">
     <h2>Tool Code Database with Tool List</h2>
     <div class="export-buttons">
-        <a href="/ToolCode/Export?format=excel&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")" class="btn btn-secondary btn-sm">
+        <a href="/ToolCode/Export@(toolCodeExportQuery)" class="btn btn-secondary btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Excel
         </a>
-        <a href="/ToolCode/Export?format=csv&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")" class="btn btn-secondary btn-sm">CSV</a>
-        <a href="/ToolCode/Export?format=txt&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&diameter=@Model.DiameterFilter&arborCode=@Model.ArborCodeFilter&holderExtension=@Model.HolderExtensionFilter&partNumber=@Model.PartNumberFilter&toolListName=@(Model.ToolListNameFilter != null ? Uri.EscapeDataString(Model.ToolListNameFilter) : "")" class="btn btn-secondary btn-sm">TXT</a>
+        <a href="/ToolCode/Export@(toolCodeExportQuery.Replace("format=excel", "format=csv"))" class="btn btn-secondary btn-sm">CSV</a>
+        <a href="/ToolCode/Export@(toolCodeExportQuery.Replace("format=excel", "format=txt"))" class="btn btn-secondary btn-sm">TXT</a>
     </div>
 </div>
 
@@ -28,84 +51,125 @@
     </form>
 </div>
 
-<div class="filter-row">
-    <select name="consumableCode" id="filterConsumableCode" class="filter-select" onchange="applyFilters()">
-        <option value="">All Consumable Codes</option>
-        @foreach (var code in Model.AvailableConsumableCodes)
-        {
-            if (Model.ConsumableCodeFilter == code)
-            {
-                <option value="@code" selected>@code</option>
-            }
-            else
-            {
-                <option value="@code">@code</option>
-            }
-        }
-    </select>
-    <select name="diameter" id="filterDiameter" class="filter-select" onchange="applyFilters()">
-        <option value="">All Diameters</option>
-        @foreach (var dia in Model.AvailableDiameters)
-        {
-            if (Model.DiameterFilter == dia)
-            {
-                <option value="@dia" selected>@dia mm</option>
-            }
-            else
-            {
-                <option value="@dia">@dia mm</option>
-            }
-        }
-    </select>
-    <select name="arborCode" id="filterArborCode" class="filter-select" onchange="applyFilters()">
-        <option value="">All Arbor Codes</option>
-        @foreach (var code in Model.AvailableArborCodes)
-        {
-            if (Model.ArborCodeFilter == code)
-            {
-                <option value="@code" selected>@code</option>
-            }
-            else
-            {
-                <option value="@code">@code</option>
-            }
-        }
-    </select>
-    <select name="holderExtension" id="filterHolderExtension" class="filter-select" onchange="applyFilters()">
-        <option value="">All Holder/Extension</option>
-        @foreach (var code in Model.AvailableHolderExtensions)
-        {
-            if (Model.HolderExtensionFilter == code)
-            {
-                <option value="@code" selected>@code</option>
-            }
-            else
-            {
-                <option value="@code">@code</option>
-            }
-        }
-    </select>
-    <select name="partNumber" id="filterPartNumber" class="filter-select" onchange="applyFilters()">
-        <option value="">All Part Numbers</option>
-        @foreach (var pn in Model.AvailablePartNumbers)
-        {
-            if (Model.PartNumberFilter == pn)
-            {
-                <option value="@pn" selected>@pn</option>
-            }
-            else
-            {
-                <option value="@pn">@pn</option>
-            }
-        }
-    </select>
-    <input type="hidden" id="filterToolListName" value="@(Model.ToolListNameFilter ?? "")" />
-    <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear Filters</button>
-</div>
-
 <div class="table-container">
     <table class="data-table">
         <thead>
+            <tr class="filter-row">
+                <th></th>
+                <th>
+                    <select id="filterToolNumber" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableToolNumbers) { <option value="@v" @(Model.ToolNumberFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterToolDescription" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableToolDescriptions) { <option value="@v" @(Model.ToolDescriptionFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterConsumableCode" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableConsumableCodes) { <option value="@v" @(Model.ConsumableCodeFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterSupplier" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableSuppliers) { <option value="@v" @(Model.SupplierFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterHolderExtension" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableHolderExtensions) { <option value="@v" @(Model.HolderExtensionFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterDiameter" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableDiameters) { <option value="@v" @(Model.DiameterFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterFluteLength" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableFluteLengths) { <option value="@v" @(Model.FluteLengthFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterProtrusionLength" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableProtrusionLengths) { <option value="@v" @(Model.ProtrusionLengthFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterCornerRadius" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableCornerRadii) { <option value="@v" @(Model.CornerRadiusFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterArborCode" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableArborCodes) { <option value="@v" @(Model.ArborCodeFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterPartNumber" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailablePartNumbers) { <option value="@v" @(Model.PartNumberFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterOperation" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableOperations) { <option value="@v" @(Model.OperationFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterRevision" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableRevisions) { <option value="@v" @(Model.RevisionFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterToolListName" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableToolListNames) { <option value="@v" @(Model.ToolListNameFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterProjectCode" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableProjectCodes) { <option value="@v" @(Model.ProjectCodeFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterMachineName" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableMachineNames) { <option value="@v" @(Model.MachineNameFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterMachineWorkcenter" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableMachineWorkcenters) { <option value="@v" @(Model.MachineWorkcenterFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterCreatedBy" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableCreatedBys) { <option value="@v" @(Model.CreatedByFilter == v ? "selected" : null)>@v</option> }
+                    </select>
+                </th>
+                <th></th>
+                <th></th>
+                <th>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear</button>
+                </th>
+            </tr>
             <tr>
                 <th onclick="sortBy('no')">No. @Html.Raw(GetSortIcon("no"))</th>
                 <th onclick="sortBy('toolNumber')">Tool No. @Html.Raw(GetSortIcon("toolNumber"))</th>
@@ -183,12 +247,24 @@
 {
     var qb = new List<string>();
     if (!string.IsNullOrEmpty(Model.SearchTerm)) qb.Add("search=" + Uri.EscapeDataString(Model.SearchTerm));
+    if (!string.IsNullOrEmpty(Model.ToolNumberFilter)) qb.Add("toolNumber=" + Uri.EscapeDataString(Model.ToolNumberFilter));
+    if (!string.IsNullOrEmpty(Model.ToolDescriptionFilter)) qb.Add("toolDescription=" + Uri.EscapeDataString(Model.ToolDescriptionFilter));
     if (!string.IsNullOrEmpty(Model.ConsumableCodeFilter)) qb.Add("consumableCode=" + Uri.EscapeDataString(Model.ConsumableCodeFilter));
-    if (!string.IsNullOrEmpty(Model.DiameterFilter)) qb.Add("diameter=" + Uri.EscapeDataString(Model.DiameterFilter));
-    if (!string.IsNullOrEmpty(Model.ArborCodeFilter)) qb.Add("arborCode=" + Uri.EscapeDataString(Model.ArborCodeFilter));
+    if (!string.IsNullOrEmpty(Model.SupplierFilter)) qb.Add("supplier=" + Uri.EscapeDataString(Model.SupplierFilter));
     if (!string.IsNullOrEmpty(Model.HolderExtensionFilter)) qb.Add("holderExtension=" + Uri.EscapeDataString(Model.HolderExtensionFilter));
+    if (!string.IsNullOrEmpty(Model.DiameterFilter)) qb.Add("diameter=" + Uri.EscapeDataString(Model.DiameterFilter));
+    if (!string.IsNullOrEmpty(Model.FluteLengthFilter)) qb.Add("fluteLength=" + Uri.EscapeDataString(Model.FluteLengthFilter));
+    if (!string.IsNullOrEmpty(Model.ProtrusionLengthFilter)) qb.Add("protrusionLength=" + Uri.EscapeDataString(Model.ProtrusionLengthFilter));
+    if (!string.IsNullOrEmpty(Model.CornerRadiusFilter)) qb.Add("cornerRadius=" + Uri.EscapeDataString(Model.CornerRadiusFilter));
+    if (!string.IsNullOrEmpty(Model.ArborCodeFilter)) qb.Add("arborCode=" + Uri.EscapeDataString(Model.ArborCodeFilter));
     if (!string.IsNullOrEmpty(Model.PartNumberFilter)) qb.Add("partNumber=" + Uri.EscapeDataString(Model.PartNumberFilter));
+    if (!string.IsNullOrEmpty(Model.OperationFilter)) qb.Add("operation=" + Uri.EscapeDataString(Model.OperationFilter));
+    if (!string.IsNullOrEmpty(Model.RevisionFilter)) qb.Add("revision=" + Uri.EscapeDataString(Model.RevisionFilter));
     if (!string.IsNullOrEmpty(Model.ToolListNameFilter)) qb.Add("toolListName=" + Uri.EscapeDataString(Model.ToolListNameFilter));
+    if (!string.IsNullOrEmpty(Model.ProjectCodeFilter)) qb.Add("projectCode=" + Uri.EscapeDataString(Model.ProjectCodeFilter));
+    if (!string.IsNullOrEmpty(Model.MachineNameFilter)) qb.Add("machineName=" + Uri.EscapeDataString(Model.MachineNameFilter));
+    if (!string.IsNullOrEmpty(Model.MachineWorkcenterFilter)) qb.Add("machineWorkcenter=" + Uri.EscapeDataString(Model.MachineWorkcenterFilter));
+    if (!string.IsNullOrEmpty(Model.CreatedByFilter)) qb.Add("createdBy=" + Uri.EscapeDataString(Model.CreatedByFilter));
     if (!string.IsNullOrEmpty(Model.SortColumn)) qb.Add("sortColumn=" + Uri.EscapeDataString(Model.SortColumn));
     if (!string.IsNullOrEmpty(Model.SortDirection)) qb.Add("sortDirection=" + Uri.EscapeDataString(Model.SortDirection));
     @await Html.PartialAsync("_Pagination", new PaginationViewModel
@@ -207,21 +283,26 @@
     function applyFilters() {
         const params = new URLSearchParams();
         const search = document.getElementById('searchInput').value;
-        const consumableCode = document.getElementById('filterConsumableCode').value;
-        const diameter = document.getElementById('filterDiameter').value;
-        const arborCode = document.getElementById('filterArborCode').value;
-        const holderExtension = document.getElementById('filterHolderExtension').value;
-        const partNumber = document.getElementById('filterPartNumber').value;
-        const toolListName = document.getElementById('filterToolListName').value;
-        
+        const add = (name, id) => { const v = document.getElementById(id); if (v && v.value) params.set(name, v.value); };
+        add('toolNumber', 'filterToolNumber');
+        add('toolDescription', 'filterToolDescription');
+        add('consumableCode', 'filterConsumableCode');
+        add('supplier', 'filterSupplier');
+        add('holderExtension', 'filterHolderExtension');
+        add('diameter', 'filterDiameter');
+        add('fluteLength', 'filterFluteLength');
+        add('protrusionLength', 'filterProtrusionLength');
+        add('cornerRadius', 'filterCornerRadius');
+        add('arborCode', 'filterArborCode');
+        add('partNumber', 'filterPartNumber');
+        add('operation', 'filterOperation');
+        add('revision', 'filterRevision');
+        add('toolListName', 'filterToolListName');
+        add('projectCode', 'filterProjectCode');
+        add('machineName', 'filterMachineName');
+        add('machineWorkcenter', 'filterMachineWorkcenter');
+        add('createdBy', 'filterCreatedBy');
         if (search) params.set('search', search);
-        if (consumableCode) params.set('consumableCode', consumableCode);
-        if (diameter) params.set('diameter', diameter);
-        if (arborCode) params.set('arborCode', arborCode);
-        if (holderExtension) params.set('holderExtension', holderExtension);
-        if (partNumber) params.set('partNumber', partNumber);
-        if (toolListName) params.set('toolListName', toolListName);
-        
         window.location.href = '/ToolCode?' + params.toString();
     }
     
@@ -260,13 +341,25 @@
         var q = new List<string>();
         var consumable = overrideConsumable ?? Model.ConsumableCodeFilter;
         var toolListName = overrideToolListName ?? Model.ToolListNameFilter;
-        if (!string.IsNullOrEmpty(consumable)) q.Add("consumableCode=" + Uri.EscapeDataString(consumable));
         if (!string.IsNullOrEmpty(Model.SearchTerm)) q.Add("search=" + Uri.EscapeDataString(Model.SearchTerm));
-        if (!string.IsNullOrEmpty(Model.DiameterFilter)) q.Add("diameter=" + Uri.EscapeDataString(Model.DiameterFilter));
-        if (!string.IsNullOrEmpty(Model.ArborCodeFilter)) q.Add("arborCode=" + Uri.EscapeDataString(Model.ArborCodeFilter));
+        if (!string.IsNullOrEmpty(Model.ToolNumberFilter)) q.Add("toolNumber=" + Uri.EscapeDataString(Model.ToolNumberFilter));
+        if (!string.IsNullOrEmpty(Model.ToolDescriptionFilter)) q.Add("toolDescription=" + Uri.EscapeDataString(Model.ToolDescriptionFilter));
+        if (!string.IsNullOrEmpty(consumable)) q.Add("consumableCode=" + Uri.EscapeDataString(consumable));
+        if (!string.IsNullOrEmpty(Model.SupplierFilter)) q.Add("supplier=" + Uri.EscapeDataString(Model.SupplierFilter));
         if (!string.IsNullOrEmpty(Model.HolderExtensionFilter)) q.Add("holderExtension=" + Uri.EscapeDataString(Model.HolderExtensionFilter));
+        if (!string.IsNullOrEmpty(Model.DiameterFilter)) q.Add("diameter=" + Uri.EscapeDataString(Model.DiameterFilter));
+        if (!string.IsNullOrEmpty(Model.FluteLengthFilter)) q.Add("fluteLength=" + Uri.EscapeDataString(Model.FluteLengthFilter));
+        if (!string.IsNullOrEmpty(Model.ProtrusionLengthFilter)) q.Add("protrusionLength=" + Uri.EscapeDataString(Model.ProtrusionLengthFilter));
+        if (!string.IsNullOrEmpty(Model.CornerRadiusFilter)) q.Add("cornerRadius=" + Uri.EscapeDataString(Model.CornerRadiusFilter));
+        if (!string.IsNullOrEmpty(Model.ArborCodeFilter)) q.Add("arborCode=" + Uri.EscapeDataString(Model.ArborCodeFilter));
         if (!string.IsNullOrEmpty(Model.PartNumberFilter)) q.Add("partNumber=" + Uri.EscapeDataString(Model.PartNumberFilter));
+        if (!string.IsNullOrEmpty(Model.OperationFilter)) q.Add("operation=" + Uri.EscapeDataString(Model.OperationFilter));
+        if (!string.IsNullOrEmpty(Model.RevisionFilter)) q.Add("revision=" + Uri.EscapeDataString(Model.RevisionFilter));
         if (!string.IsNullOrEmpty(toolListName)) q.Add("toolListName=" + Uri.EscapeDataString(toolListName));
+        if (!string.IsNullOrEmpty(Model.ProjectCodeFilter)) q.Add("projectCode=" + Uri.EscapeDataString(Model.ProjectCodeFilter));
+        if (!string.IsNullOrEmpty(Model.MachineNameFilter)) q.Add("machineName=" + Uri.EscapeDataString(Model.MachineNameFilter));
+        if (!string.IsNullOrEmpty(Model.MachineWorkcenterFilter)) q.Add("machineWorkcenter=" + Uri.EscapeDataString(Model.MachineWorkcenterFilter));
+        if (!string.IsNullOrEmpty(Model.CreatedByFilter)) q.Add("createdBy=" + Uri.EscapeDataString(Model.CreatedByFilter));
         if (!string.IsNullOrEmpty(Model.SortColumn)) q.Add("sortColumn=" + Uri.EscapeDataString(Model.SortColumn));
         if (!string.IsNullOrEmpty(Model.SortDirection)) q.Add("sortDirection=" + Uri.EscapeDataString(Model.SortDirection));
         q.Add("page=1");

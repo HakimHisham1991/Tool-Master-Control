@@ -28,12 +28,24 @@ public class ToolCodeListViewModel
 {
     public List<ToolCodeViewModel> Tools { get; set; } = new();
     public string? SearchTerm { get; set; }
+    public string? ToolNumberFilter { get; set; }
+    public string? ToolDescriptionFilter { get; set; }
     public string? ConsumableCodeFilter { get; set; }
-    public string? DiameterFilter { get; set; }
-    public string? ArborCodeFilter { get; set; }
+    public string? SupplierFilter { get; set; }
     public string? HolderExtensionFilter { get; set; }
+    public string? DiameterFilter { get; set; }
+    public string? FluteLengthFilter { get; set; }
+    public string? ProtrusionLengthFilter { get; set; }
+    public string? CornerRadiusFilter { get; set; }
+    public string? ArborCodeFilter { get; set; }
     public string? PartNumberFilter { get; set; }
+    public string? OperationFilter { get; set; }
+    public string? RevisionFilter { get; set; }
     public string? ToolListNameFilter { get; set; }
+    public string? ProjectCodeFilter { get; set; }
+    public string? MachineNameFilter { get; set; }
+    public string? MachineWorkcenterFilter { get; set; }
+    public string? CreatedByFilter { get; set; }
     public string? SortColumn { get; set; }
     public string? SortDirection { get; set; }
     public int CurrentPage { get; set; } = 1;
@@ -41,9 +53,22 @@ public class ToolCodeListViewModel
     public int TotalItems { get; set; }
     public int PageSize { get; set; } = 250;
     
+    public List<string> AvailableToolNumbers { get; set; } = new();
+    public List<string> AvailableToolDescriptions { get; set; } = new();
     public List<string> AvailableConsumableCodes { get; set; } = new();
-    public List<string> AvailableDiameters { get; set; } = new();
-    public List<string> AvailableArborCodes { get; set; } = new();
+    public List<string> AvailableSuppliers { get; set; } = new();
     public List<string> AvailableHolderExtensions { get; set; } = new();
+    public List<string> AvailableDiameters { get; set; } = new();
+    public List<string> AvailableFluteLengths { get; set; } = new();
+    public List<string> AvailableProtrusionLengths { get; set; } = new();
+    public List<string> AvailableCornerRadii { get; set; } = new();
+    public List<string> AvailableArborCodes { get; set; } = new();
     public List<string> AvailablePartNumbers { get; set; } = new();
+    public List<string> AvailableOperations { get; set; } = new();
+    public List<string> AvailableRevisions { get; set; } = new();
+    public List<string> AvailableToolListNames { get; set; } = new();
+    public List<string> AvailableProjectCodes { get; set; } = new();
+    public List<string> AvailableMachineNames { get; set; } = new();
+    public List<string> AvailableMachineWorkcenters { get; set; } = new();
+    public List<string> AvailableCreatedBys { get; set; } = new();
 }

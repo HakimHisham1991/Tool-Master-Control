@@ -17,12 +17,24 @@ public class ToolCodeController : Controller
     
     public async Task<IActionResult> Index(
         string? search,
+        string? toolNumber,
+        string? toolDescription,
         string? consumableCode,
-        string? diameter,
-        string? arborCode,
+        string? supplier,
         string? holderExtension,
+        string? diameter,
+        string? fluteLength,
+        string? protrusionLength,
+        string? cornerRadius,
+        string? arborCode,
         string? partNumber,
+        string? operation,
+        string? revision,
         string? toolListName,
+        string? projectCode,
+        string? machineName,
+        string? machineWorkcenter,
+        string? createdBy,
         string? sortColumn,
         string? sortDirection,
         int page = 1,
@@ -30,9 +42,11 @@ public class ToolCodeController : Controller
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var viewModel = await _toolCodeService.GetToolCodesAsync(
-            search, consumableCode, diameter, arborCode, 
-            holderExtension, partNumber, toolListName, sortColumn, sortDirection, 
-            page, pageSize);
+            search, toolNumber, toolDescription, consumableCode, supplier,
+            holderExtension, diameter, fluteLength, protrusionLength, cornerRadius,
+            arborCode, partNumber, operation, revision, toolListName,
+            projectCode, machineName, machineWorkcenter, createdBy,
+            sortColumn, sortDirection, page, pageSize);
         
         return View(viewModel);
     }
@@ -41,16 +55,31 @@ public class ToolCodeController : Controller
     public async Task<IActionResult> Export(
         string format,
         string? search,
+        string? toolNumber,
+        string? toolDescription,
         string? consumableCode,
-        string? diameter,
-        string? arborCode,
+        string? supplier,
         string? holderExtension,
+        string? diameter,
+        string? fluteLength,
+        string? protrusionLength,
+        string? cornerRadius,
+        string? arborCode,
         string? partNumber,
-        string? toolListName)
+        string? operation,
+        string? revision,
+        string? toolListName,
+        string? projectCode,
+        string? machineName,
+        string? machineWorkcenter,
+        string? createdBy)
     {
         var viewModel = await _toolCodeService.GetToolCodesAsync(
-            search, consumableCode, diameter, arborCode,
-            holderExtension, partNumber, toolListName, null, null, 1, int.MaxValue);
+            search, toolNumber, toolDescription, consumableCode, supplier,
+            holderExtension, diameter, fluteLength, protrusionLength, cornerRadius,
+            arborCode, partNumber, operation, revision, toolListName,
+            projectCode, machineName, machineWorkcenter, createdBy,
+            null, null, 1, int.MaxValue);
         
         var formatLower = format.ToLower();
         

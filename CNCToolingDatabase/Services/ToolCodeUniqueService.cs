@@ -16,11 +16,13 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
 
     public async Task<ToolCodeUniqueListViewModel> GetToolCodesAsync(
         string? searchTerm,
+        string? systemToolNameFilter,
         string? consumableCodeFilter,
         string? supplierFilter,
         string? diameterFilter,
         string? fluteLengthFilter,
         string? cornerRadiusFilter,
+        string? createdDateFilter,
         string? sortColumn,
         string? sortDirection,
         int page,
@@ -37,6 +39,9 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
                 (t.Supplier != null && t.Supplier.ToLower().Contains(term)));
         }
 
+        if (!string.IsNullOrWhiteSpace(systemToolNameFilter))
+            query = query.Where(t => t.SystemToolName == systemToolNameFilter);
+
         if (!string.IsNullOrWhiteSpace(consumableCodeFilter))
             query = query.Where(t => t.ConsumableCode == consumableCodeFilter);
 
@@ -51,6 +56,9 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
 
         if (!string.IsNullOrWhiteSpace(cornerRadiusFilter) && decimal.TryParse(cornerRadiusFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var radiusVal))
             query = query.Where(t => t.CornerRadius == radiusVal);
+
+        if (!string.IsNullOrWhiteSpace(createdDateFilter) && DateTime.TryParse(createdDateFilter, out var createdDateVal))
+            query = query.Where(t => t.CreatedDate.Date == createdDateVal.Date);
 
         query = ApplySort(query, sortColumn, sortDirection);
 
@@ -80,22 +88,26 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
         {
             Tools = items,
             SearchTerm = searchTerm,
+            SystemToolNameFilter = systemToolNameFilter,
             ConsumableCodeFilter = consumableCodeFilter,
             SupplierFilter = supplierFilter,
             DiameterFilter = diameterFilter,
             FluteLengthFilter = fluteLengthFilter,
             CornerRadiusFilter = cornerRadiusFilter,
+            CreatedDateFilter = createdDateFilter,
             SortColumn = sortColumn,
             SortDirection = sortDirection,
             CurrentPage = page,
             TotalPages = totalPages,
             TotalItems = totalItems,
             PageSize = pageSize,
+            AvailableSystemToolNames = all.Select(t => t.SystemToolName).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
             AvailableConsumableCodes = all.Select(t => t.ConsumableCode).Distinct().OrderBy(x => x).ToList(),
             AvailableSuppliers = all.Select(t => t.Supplier).Distinct().OrderBy(x => x).ToList(),
             AvailableDiameters = all.Select(t => t.Diameter.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
             AvailableFluteLengths = all.Select(t => t.FluteLength.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
-            AvailableCornerRadii = all.Select(t => t.CornerRadius.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList()
+            AvailableCornerRadii = all.Select(t => t.CornerRadius.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
+            AvailableCreatedDates = all.Select(t => t.CreatedDate.Date.ToString("yyyy-MM-dd")).Distinct().OrderByDescending(x => x).ToList()
         };
     }
 

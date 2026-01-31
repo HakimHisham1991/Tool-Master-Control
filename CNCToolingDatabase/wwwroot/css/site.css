@@ -349,6 +349,30 @@ html, body {
     background-color: #E5E7EB;
 }
 
+/* Filter row above column headers - aligned to columns */
+.data-table thead tr.filter-row th {
+    font-weight: normal;
+    padding: 6px 8px;
+    vertical-align: middle;
+    background-color: #EFF6FF;
+    cursor: default;
+}
+
+.data-table thead tr.filter-row th:hover {
+    background-color: #EFF6FF;
+}
+
+.data-table thead tr.filter-row th .filter-cell-select {
+    width: 100%;
+    min-width: 100px;
+    max-width: 200px;
+    padding: 4px 8px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background-color: var(--bg-surface);
+}
+
 .data-table td {
     padding: 10px 12px;
     border-bottom: 1px solid var(--border);

@@ -14,12 +14,13 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             Reset
         </button>
-        <a href="/ToolCodeUnique/Export?format=excel&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter&diameter=@Model.DiameterFilter&fluteLength=@Model.FluteLengthFilter&cornerRadius=@Model.CornerRadiusFilter" class="btn btn-secondary btn-sm">
+        @{ var eq = new List<string> { "format=excel" }; if (!string.IsNullOrEmpty(Model.SearchTerm)) { eq.Add("search=" + Uri.EscapeDataString(Model.SearchTerm)); } if (!string.IsNullOrEmpty(Model.SystemToolNameFilter)) { eq.Add("systemToolName=" + Uri.EscapeDataString(Model.SystemToolNameFilter)); } if (!string.IsNullOrEmpty(Model.ConsumableCodeFilter)) { eq.Add("consumableCode=" + Uri.EscapeDataString(Model.ConsumableCodeFilter)); } if (!string.IsNullOrEmpty(Model.SupplierFilter)) { eq.Add("supplier=" + Uri.EscapeDataString(Model.SupplierFilter)); } if (!string.IsNullOrEmpty(Model.DiameterFilter)) { eq.Add("diameter=" + Uri.EscapeDataString(Model.DiameterFilter)); } if (!string.IsNullOrEmpty(Model.FluteLengthFilter)) { eq.Add("fluteLength=" + Uri.EscapeDataString(Model.FluteLengthFilter)); } if (!string.IsNullOrEmpty(Model.CornerRadiusFilter)) { eq.Add("cornerRadius=" + Uri.EscapeDataString(Model.CornerRadiusFilter)); } if (!string.IsNullOrEmpty(Model.CreatedDateFilter)) { eq.Add("createdDate=" + Uri.EscapeDataString(Model.CreatedDateFilter)); } var exportQuery = "?" + string.Join("&", eq); }
+        <a href="/ToolCodeUnique/Export@(exportQuery)" class="btn btn-secondary btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Excel
         </a>
-        <a href="/ToolCodeUnique/Export?format=csv&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter&diameter=@Model.DiameterFilter&fluteLength=@Model.FluteLengthFilter&cornerRadius=@Model.CornerRadiusFilter" class="btn btn-secondary btn-sm">CSV</a>
-        <a href="/ToolCodeUnique/Export?format=txt&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter&diameter=@Model.DiameterFilter&fluteLength=@Model.FluteLengthFilter&cornerRadius=@Model.CornerRadiusFilter" class="btn btn-secondary btn-sm">TXT</a>
+        <a href="/ToolCodeUnique/Export@(exportQuery.Replace("format=excel", "format=csv"))" class="btn btn-secondary btn-sm">CSV</a>
+        <a href="/ToolCodeUnique/Export@(exportQuery.Replace("format=excel", "format=txt"))" class="btn btn-secondary btn-sm">TXT</a>
     </div>
 </div>
 
@@ -36,63 +37,79 @@
     </form>
 </div>
 
-<div class="filter-row">
-    <select name="consumableCode" id="filterConsumableCode" class="filter-select" onchange="applyFilters()">
-        <option value="">All Consumable Tool Descriptions</option>
-        @foreach (var code in Model.AvailableConsumableCodes)
-        {
-            if (Model.ConsumableCodeFilter == code)
-            { <option value="@code" selected>@code</option> }
-            else
-            { <option value="@code">@code</option> }
-        }
-    </select>
-    <select name="supplier" id="filterSupplier" class="filter-select" onchange="applyFilters()">
-        <option value="">All Tool Suppliers</option>
-        @foreach (var s in Model.AvailableSuppliers)
-        {
-            if (Model.SupplierFilter == s)
-            { <option value="@s" selected>@s</option> }
-            else
-            { <option value="@s">@s</option> }
-        }
-    </select>
-    <select name="diameter" id="filterDiameter" class="filter-select" onchange="applyFilters()">
-        <option value="">All Diameters (D1)</option>
-        @foreach (var d in Model.AvailableDiameters)
-        {
-            if (Model.DiameterFilter == d)
-            { <option value="@d" selected>@d</option> }
-            else
-            { <option value="@d">@d</option> }
-        }
-    </select>
-    <select name="fluteLength" id="filterFluteLength" class="filter-select" onchange="applyFilters()">
-        <option value="">All Flute Lengths (L1)</option>
-        @foreach (var f in Model.AvailableFluteLengths)
-        {
-            if (Model.FluteLengthFilter == f)
-            { <option value="@f" selected>@f</option> }
-            else
-            { <option value="@f">@f</option> }
-        }
-    </select>
-    <select name="cornerRadius" id="filterCornerRadius" class="filter-select" onchange="applyFilters()">
-        <option value="">All Corner Radii</option>
-        @foreach (var r in Model.AvailableCornerRadii)
-        {
-            if (Model.CornerRadiusFilter == r)
-            { <option value="@r" selected>@r</option> }
-            else
-            { <option value="@r">@r</option> }
-        }
-    </select>
-    <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear Filters</button>
-</div>
-
 <div class="table-container">
     <table class="data-table">
         <thead>
+            <tr class="filter-row">
+                <th></th>
+                <th>
+                    <select id="filterSystemToolName" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var s in Model.AvailableSystemToolNames)
+                        {
+                            <option value="@s" @(Model.SystemToolNameFilter == s ? "selected" : null)>@s</option>
+                        }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterConsumableCode" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var code in Model.AvailableConsumableCodes)
+                        {
+                            <option value="@code" @(Model.ConsumableCodeFilter == code ? "selected" : null)>@code</option>
+                        }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterSupplier" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var s in Model.AvailableSuppliers)
+                        {
+                            <option value="@s" @(Model.SupplierFilter == s ? "selected" : null)>@s</option>
+                        }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterDiameter" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var d in Model.AvailableDiameters)
+                        {
+                            <option value="@d" @(Model.DiameterFilter == d ? "selected" : null)>@d</option>
+                        }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterFluteLength" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var f in Model.AvailableFluteLengths)
+                        {
+                            <option value="@f" @(Model.FluteLengthFilter == f ? "selected" : null)>@f</option>
+                        }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterCornerRadius" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var r in Model.AvailableCornerRadii)
+                        {
+                            <option value="@r" @(Model.CornerRadiusFilter == r ? "selected" : null)>@r</option>
+                        }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterCreatedDate" class="filter-cell-select" onchange="applyFilters()">
+                        <option value="">All</option>
+                        @foreach (var d in Model.AvailableCreatedDates)
+                        {
+                            <option value="@d" @(Model.CreatedDateFilter == d ? "selected" : null)>@d</option>
+                        }
+                    </select>
+                </th>
+                <th></th>
+                <th>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear</button>
+                </th>
+            </tr>
             <tr>
                 <th onclick="sortBy('no')">No. @Html.Raw(GetSortIcon("no"))</th>
                 <th onclick="sortBy('systemToolName')">System Tool Name @Html.Raw(GetSortIcon("systemToolName"))</th>
@@ -146,11 +163,13 @@
 {
     var qb = new List<string>();
     if (!string.IsNullOrEmpty(Model.SearchTerm)) qb.Add("search=" + Uri.EscapeDataString(Model.SearchTerm));
+    if (!string.IsNullOrEmpty(Model.SystemToolNameFilter)) qb.Add("systemToolName=" + Uri.EscapeDataString(Model.SystemToolNameFilter));
     if (!string.IsNullOrEmpty(Model.ConsumableCodeFilter)) qb.Add("consumableCode=" + Uri.EscapeDataString(Model.ConsumableCodeFilter));
     if (!string.IsNullOrEmpty(Model.SupplierFilter)) qb.Add("supplier=" + Uri.EscapeDataString(Model.SupplierFilter));
     if (!string.IsNullOrEmpty(Model.DiameterFilter)) qb.Add("diameter=" + Uri.EscapeDataString(Model.DiameterFilter));
     if (!string.IsNullOrEmpty(Model.FluteLengthFilter)) qb.Add("fluteLength=" + Uri.EscapeDataString(Model.FluteLengthFilter));
     if (!string.IsNullOrEmpty(Model.CornerRadiusFilter)) qb.Add("cornerRadius=" + Uri.EscapeDataString(Model.CornerRadiusFilter));
+    if (!string.IsNullOrEmpty(Model.CreatedDateFilter)) qb.Add("createdDate=" + Uri.EscapeDataString(Model.CreatedDateFilter));
     if (!string.IsNullOrEmpty(Model.SortColumn)) qb.Add("sortColumn=" + Uri.EscapeDataString(Model.SortColumn));
     if (!string.IsNullOrEmpty(Model.SortDirection)) qb.Add("sortDirection=" + Uri.EscapeDataString(Model.SortDirection));
     @await Html.PartialAsync("_Pagination", new PaginationViewModel
@@ -170,17 +189,21 @@
     function applyFilters() {
         const params = new URLSearchParams();
         const search = document.getElementById('searchInput').value;
+        const systemToolName = document.getElementById('filterSystemToolName').value;
         const consumableCode = document.getElementById('filterConsumableCode').value;
         const supplier = document.getElementById('filterSupplier').value;
         const diameter = document.getElementById('filterDiameter').value;
         const fluteLength = document.getElementById('filterFluteLength').value;
         const cornerRadius = document.getElementById('filterCornerRadius').value;
+        const createdDate = document.getElementById('filterCreatedDate').value;
         if (search) params.set('search', search);
+        if (systemToolName) params.set('systemToolName', systemToolName);
         if (consumableCode) params.set('consumableCode', consumableCode);
         if (supplier) params.set('supplier', supplier);
         if (diameter) params.set('diameter', diameter);
         if (fluteLength) params.set('fluteLength', fluteLength);
         if (cornerRadius) params.set('cornerRadius', cornerRadius);
+        if (createdDate) params.set('createdDate', createdDate);
         window.location.href = '/ToolCodeUnique?' + params.toString();
     }
     function clearFilters() { window.location.href = '/ToolCodeUnique'; }

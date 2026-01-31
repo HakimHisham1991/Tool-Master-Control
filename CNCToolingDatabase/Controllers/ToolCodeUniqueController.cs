@@ -20,11 +20,13 @@ public class ToolCodeUniqueController : Controller
 
     public async Task<IActionResult> Index(
         string? search,
+        string? systemToolName,
         string? consumableCode,
         string? supplier,
         string? diameter,
         string? fluteLength,
         string? cornerRadius,
+        string? createdDate,
         string? sortColumn,
         string? sortDirection,
         int page = 1,
@@ -32,7 +34,7 @@ public class ToolCodeUniqueController : Controller
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var viewModel = await _service.GetToolCodesAsync(
-            search, consumableCode, supplier, diameter, fluteLength, cornerRadius, sortColumn, sortDirection, page, pageSize);
+            search, systemToolName, consumableCode, supplier, diameter, fluteLength, cornerRadius, createdDate, sortColumn, sortDirection, page, pageSize);
         return View(viewModel);
     }
 
@@ -40,14 +42,16 @@ public class ToolCodeUniqueController : Controller
     public async Task<IActionResult> Export(
         string format,
         string? search,
+        string? systemToolName,
         string? consumableCode,
         string? supplier,
         string? diameter,
         string? fluteLength,
-        string? cornerRadius)
+        string? cornerRadius,
+        string? createdDate)
     {
         var viewModel = await _service.GetToolCodesAsync(
-            search, consumableCode, supplier, diameter, fluteLength, cornerRadius, null, null, 1, int.MaxValue);
+            search, systemToolName, consumableCode, supplier, diameter, fluteLength, cornerRadius, createdDate, null, null, 1, int.MaxValue);
         var formatLower = format.ToLower();
 
         var headers = new[]

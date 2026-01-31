@@ -20,6 +20,11 @@ public class ToolListController : Controller
     
     public async Task<IActionResult> Index(
         string? search,
+        string? toolListName,
+        string? partNumber,
+        string? operation,
+        string? revision,
+        string? numberOfTooling,
         string? sortColumn,
         string? sortDirection,
         int page = 1,
@@ -28,17 +33,17 @@ public class ToolListController : Controller
         pageSize = Math.Clamp(pageSize, 10, 250);
         var username = HttpContext.Session.GetString("Username") ?? "";
         var viewModel = await _toolListService.GetToolListsAsync(
-            search, sortColumn, sortDirection, page, pageSize, username);
+            search, toolListName, partNumber, operation, revision, numberOfTooling, sortColumn, sortDirection, page, pageSize, username);
         
         return View(viewModel);
     }
     
     [HttpGet]
-    public async Task<IActionResult> Export(string format, string? search)
+    public async Task<IActionResult> Export(string format, string? search, string? toolListName, string? partNumber, string? operation, string? revision, string? numberOfTooling)
     {
         var username = HttpContext.Session.GetString("Username") ?? "";
         var viewModel = await _toolListService.GetToolListsAsync(
-            search, null, null, 1, int.MaxValue, username);
+            search, toolListName, partNumber, operation, revision, numberOfTooling, null, null, 1, int.MaxValue, username);
         
         var formatLower = format.ToLower();
         

@@ -21,10 +21,20 @@ public class ToolListDatabaseViewModel
 {
     public List<ToolListItemViewModel> ToolLists { get; set; } = new();
     public string? SearchTerm { get; set; }
+    public string? ToolListNameFilter { get; set; }
+    public string? PartNumberFilter { get; set; }
+    public string? OperationFilter { get; set; }
+    public string? RevisionFilter { get; set; }
+    public string? NumberOfToolingFilter { get; set; }
     public string? SortColumn { get; set; }
     public string? SortDirection { get; set; }
     public int CurrentPage { get; set; } = 1;
     public int TotalPages { get; set; }
     public int TotalItems { get; set; }
     public int PageSize { get; set; } = 250;
+    public List<string> AvailableToolListNames { get; set; } = new();
+    public List<string> AvailablePartNumbers { get; set; } = new();
+    public List<string> AvailableOperations { get; set; } = new();
+    public List<string> AvailableRevisions { get; set; } = new();
+    public List<string> AvailableNumberOfToolings { get; set; } = new();
 }
