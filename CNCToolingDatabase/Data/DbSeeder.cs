@@ -448,7 +448,7 @@ public static class DbSeeder
                 var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
                 var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
                 var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
-                foreach (var (name, desc, partRev, drawRev, pcCode, msSpec) in GetPartNumberSeedData())
+                foreach (var (name, desc, partRev, drawRev, pcCode, refDrawing, msSpec) in GetPartNumberSeedData())
                 {
                     var pcId = !string.IsNullOrEmpty(pcCode) && projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
                     var msId = !string.IsNullOrEmpty(msSpec) && matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
@@ -460,7 +460,7 @@ public static class DbSeeder
                         PartRev = partRev,
                         DrawingRev = drawRev,
                         MaterialSpecId = msId,
-                        RefDrawing = "",
+                        RefDrawing = refDrawing ?? "",
                         CreatedDate = DateTime.UtcNow,
                         CreatedBy = "system",
                         IsActive = true
@@ -617,25 +617,37 @@ public static class DbSeeder
         };
     }
 
-    /// <summary>Part Number seed from PART NUMBERS MASTER.txt. Format: Part Number|Description|Part Revision|Drawing Revision|Project Code|Material Spec.|Material</summary>
-    private static (string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string MaterialSpec)[] GetPartNumberSeedData()
+    /// <summary>Part Number seed from PART NUMBERS MASTER.txt. Format: Part Number|Description|Part Revision|Drawing Revision|Project Code|Ref. Drawing|Material Spec.|Material</summary>
+    private static (string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec)[] GetPartNumberSeedData()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Data", "PART NUMBERS MASTER.txt");
         if (!File.Exists(path))
-            return Array.Empty<(string, string, string, string, string, string)>();
+            return Array.Empty<(string, string, string, string, string, string, string)>();
         var lines = File.ReadAllLines(path);
-        var result = new List<(string, string, string, string, string, string)>();
+        var result = new List<(string, string, string, string, string, string, string)>();
         for (var i = 1; i < lines.Length; i++)
         {
             var cols = lines[i].Split('|');
+            // Support both formats: with Ref. Drawing (8 cols) or legacy (6 cols: no Ref. Drawing, Material Spec. at 5)
             if (cols.Length < 6 || string.IsNullOrWhiteSpace(cols[0])) continue;
             var name = cols[0].Trim();
             var desc = cols.Length > 1 ? cols[1].Trim() : "";
             var partRev = cols.Length > 2 ? cols[2].Trim() : "";
             var drawRev = cols.Length > 3 ? cols[3].Trim() : "";
             var pcCode = cols.Length > 4 ? cols[4].Trim() : "";
-            var msSpec = cols.Length > 5 ? cols[5].Trim() : "";
-            result.Add((name, desc, partRev, drawRev, pcCode, msSpec));
+            string refDrawing;
+            string msSpec;
+            if (cols.Length >= 7)
+            {
+                refDrawing = cols.Length > 5 ? cols[5].Trim() : "";
+                msSpec = cols.Length > 6 ? cols[6].Trim() : "";
+            }
+            else
+            {
+                refDrawing = "";
+                msSpec = cols.Length > 5 ? cols[5].Trim() : "";
+            }
+            result.Add((name, desc, partRev, drawRev, pcCode, refDrawing, msSpec));
         }
         return result.ToArray();
     }
@@ -897,13 +909,13 @@ public static class DbSeeder
         var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
         var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
         var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (name, desc, partRev, drawRev, pcCode, msSpec) in GetPartNumberSeedData())
+        foreach (var (name, desc, partRev, drawRev, pcCode, refDrawing, msSpec) in GetPartNumberSeedData())
         {
             if (string.IsNullOrWhiteSpace(name)) continue;
             if (!seenNames.Add(name)) continue; // skip duplicate part number names (keep first)
             var pcId = !string.IsNullOrEmpty(pcCode) && projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
             var msId = !string.IsNullOrEmpty(msSpec) && matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
-            context.PartNumbers.Add(new PartNumber { Name = name, Description = desc, ProjectCodeId = pcId, PartRev = partRev, DrawingRev = drawRev, MaterialSpecId = msId, RefDrawing = "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+            context.PartNumbers.Add(new PartNumber { Name = name, Description = desc, ProjectCodeId = pcId, PartRev = partRev, DrawingRev = drawRev, MaterialSpecId = msId, RefDrawing = refDrawing ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
         }
         context.SaveChanges();
     }
