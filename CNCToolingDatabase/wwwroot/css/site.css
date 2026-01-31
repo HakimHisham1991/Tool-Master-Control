@@ -370,8 +370,6 @@ html, body {
 
 .data-table thead tr.table-filter-row th {
     display: table-cell;
-
-.data-table thead tr.table-filter-row th {
     font-weight: normal;
     padding: 6px 8px;
     vertical-align: middle;
