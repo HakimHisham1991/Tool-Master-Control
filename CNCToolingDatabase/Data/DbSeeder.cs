@@ -474,8 +474,9 @@ public static class DbSeeder
         
         if (!context.ToolListHeaders.Any())
         {
-            var masterLookup = GetToolCodeUniqueSeedData()
-                .ToDictionary(t => t.Consumable, t => (t.SystemToolName, t.Supplier, t.Dia, t.Flute, t.Radius));
+            var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
+            var toolCodeList = LoadToolCodeUniqueFromExcel(excelPath);
+            var masterLookup = toolCodeList.ToDictionary(t => t.Item2, t => (t.Item1, t.Item3, t.Item4, t.Item5, t.Item6));
             var toolLists = new List<ToolListHeader>
             {
                 CreateToolListWithDetails("V5754221420001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
@@ -506,8 +507,9 @@ public static class DbSeeder
         
         if (context.ToolCodeUniques != null && !context.ToolCodeUniques.Any())
         {
+            var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
             var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            foreach (var (systemName, consumable, supplier, dia, flute, radius) in GetToolCodeUniqueSeedData())
+            foreach (var (systemName, consumable, supplier, dia, flute, radius) in LoadToolCodeUniqueFromExcel(excelPath))
             {
                 context.ToolCodeUniques.Add(new ToolCodeUnique
                 {
@@ -547,64 +549,6 @@ public static class DbSeeder
         return result.ToArray();
     }
 
-    /// <summary>Hard-coded Master Tool Code seed. Same data every reset, like Settings pages.</summary>
-    private static List<(string SystemToolName, string Consumable, string Supplier, decimal Dia, decimal Flute, decimal Radius)> GetToolCodeUniqueSeedData()
-    {
-        return new List<(string, string, string, decimal, decimal, decimal)>
-        {
-            ("Endmill Ø12 R0.0 x 3-Flute", "553120Z3.0-SIRON-A", "SECO", 12.0m, 28.0m, 0m),
-            ("Endmill Ø16 R0.5 x 3-Flute", "553160R050Z3.0-SIRON-A", "SECO", 16.0m, 32.0m, 0.5m),
-            ("Endmill Ø8 R0.0 x 3-Flute", "553080Z3.0-SIRON-A", "SECO", 8.0m, 22.0m, 0m),
-            ("Endmill Ø10 R0.25 x 3-Flute", "553100R250Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0.25m),
-            ("Endmill Ø10 R0.0 x 3-Flute", "553100Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0m),
-            ("Endmill Ø9.8 R0.0 x 3-Flute", "A3389DPL-9.8", "WALTER", 9.8m, 24.0m, 0m),
-            ("Endmill Ø12 R0.0 x 3-Flute", "A3389DPL-12", "WALTER", 12.0m, 30.0m, 0m),
-            ("Endmill Ø2.55 R0.0 x 3-Flute", "A3389AML-2.55", "WALTER", 2.55m, 8.0m, 0m),
-            ("Endmill Ø6.1 R0.0 x 3-Flute", "A3389DPL-6.1", "WALTER", 6.1m, 18.0m, 0m),
-            ("Endmill Ø8.5 R0.0 x 3-Flute", "A3389DPL-8.5", "WALTER", 8.5m, 22.0m, 0m),
-            ("Drill Ø16 x 140°", "7792VXP06CA016Z2R140", "KENNAMETAL", 16.0m, 45.0m, 1.4m),
-            ("Facemill Ø32 R3.0 x 6-Flute", "7792VXD09WA032Z3R", "KENNAMETAL", 32.0m, 55.0m, 3.0m),
-            ("Facemill Ø52 R5.0 x 6-Flute", "7792VXD12-A052Z5R", "KENNAMETAL", 52.0m, 65.0m, 5.0m),
-            ("Facemill Ø80 R8.0 x 6-Flute", "7792VXD12-A080Z8R", "KENNAMETAL", 80.0m, 85.0m, 8.0m),
-            ("Endmill Ø4 R0.0 x 3-Flute", "553040Z3.0-SIRON-A", "SECO", 4.0m, 14.0m, 0m),
-            ("Endmill Ø6 R0.0 x 3-Flute", "553060Z3.0-SIRON-A", "SECO", 6.0m, 18.0m, 0m),
-            ("Endmill Ø14 R0.0 x 3-Flute", "553140Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0m),
-            ("Endmill Ø18 R1.0 x 3-Flute", "553180R100Z3.0-SIRON-A", "SECO", 18.0m, 38.0m, 1.0m),
-            ("Endmill Ø20 R0.0 x 3-Flute", "553200Z3.0-SIRON-A", "SECO", 20.0m, 42.0m, 0m),
-            ("Endmill Ø25 R0.0 x 3-Flute", "553250Z3.0-SIRON-A", "SECO", 25.0m, 50.0m, 0m),
-            ("Endmill Ø12 R0.25 x 3-Flute", "553120R025Z3.0-SIRON-A", "SECO", 12.0m, 28.0m, 0.25m),
-            ("Endmill Ø14 R0.5 x 3-Flute", "553140R050Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0.5m),
-            ("Endmill Ø16 R0.0 x 3-Flute", "553160Z3.0-SIRON-A", "SECO", 16.0m, 36.0m, 0m),
-            ("Endmill Ø10 R0.2 x 3-Flute", "553100R200Z3.0-SIRON-A", "SECO", 10.0m, 26.0m, 0.2m),
-            ("Endmill Ø8 R0.5 x 3-Flute", "553080R050Z3.0-SIRON-A", "SECO", 8.0m, 22.0m, 0.5m),
-            ("Endmill Ø22 R0.0 x 3-Flute", "553220Z3.0-SIRON-A", "SECO", 22.0m, 46.0m, 0m),
-            ("Endmill Ø30 R0.0 x 3-Flute", "553300Z3.0-SIRON-A", "SECO", 30.0m, 58.0m, 0m),
-            ("Endmill Ø16 R1.0 x 3-Flute", "553160R100Z3.0-SIRON-A", "SECO", 16.0m, 36.0m, 1.0m),
-            ("Endmill Ø6 R0.25 x 3-Flute", "553060R025Z3.0-SIRON-A", "SECO", 6.0m, 18.0m, 0.25m),
-            ("Endmill Ø14 R0.25 x 3-Flute", "553140R025Z3.0-SIRON-A", "SECO", 14.0m, 32.0m, 0.25m),
-            ("Endmill Ø18 R0.0 x 3-Flute", "553180Z3.0-SIRON-A", "SECO", 18.0m, 38.0m, 0m),
-            ("Endmill Ø10 R0.0 x 3-Flute", "A3389DPL-10", "WALTER", 10.0m, 26.0m, 0m),
-            ("Endmill Ø11 R0.0 x 3-Flute", "A3389DPL-11", "WALTER", 11.0m, 28.0m, 0m),
-            ("Endmill Ø3 R0.0 x 3-Flute", "A3389AML-3.0", "WALTER", 3.0m, 10.0m, 0m),
-            ("Endmill Ø4 R0.0 x 3-Flute", "A3389AML-4.0", "WALTER", 4.0m, 12.0m, 0m),
-            ("Endmill Ø7 R0.0 x 3-Flute", "A3389DPL-7.0", "WALTER", 7.0m, 20.0m, 0m),
-            ("Endmill Ø2 R0.0 x 3-Flute", "A3389AML-2.0", "WALTER", 2.0m, 6.0m, 0m),
-            ("Endmill Ø5 R0.0 x 3-Flute", "A3389DPL-5.0", "WALTER", 5.0m, 16.0m, 0m),
-            ("Endmill Ø14 R0.0 x 3-Flute", "A3389DPL-14", "WALTER", 14.0m, 34.0m, 0m),
-            ("Endmill Ø5 R0.0 x 3-Flute", "A3389AML-5.0", "WALTER", 5.0m, 14.0m, 0m),
-            ("Endmill Ø15 R0.0 x 3-Flute", "A3389DPL-15", "WALTER", 15.0m, 36.0m, 0m),
-            ("Facemill Ø40 R4.0 x 6-Flute", "7792VXD10-A040Z4R", "KENNAMETAL", 40.0m, 60.0m, 4.0m),
-            ("Facemill Ø100 R10.0 x 6-Flute", "7792VXD16-A100Z10R", "KENNAMETAL", 100.0m, 110.0m, 10.0m),
-            ("Drill Ø20 x 160°", "7792VXP08CA020Z2R160", "KENNAMETAL", 20.0m, 55.0m, 1.6m),
-            ("Facemill Ø63 R6.0 x 6-Flute", "7792VXD12-A063Z6R", "KENNAMETAL", 63.0m, 75.0m, 6.0m),
-            ("Facemill Ø50 R5.0 x 6-Flute", "7792VXD12-A050Z5R", "KENNAMETAL", 50.0m, 62.0m, 5.0m),
-            ("Facemill Ø70 R7.0 x 6-Flute", "7792VXD14-A070Z7R", "KENNAMETAL", 70.0m, 82.0m, 7.0m),
-            ("Facemill Ø32 R3.0 x 6-Flute", "7792VXD08-A032Z3R", "KENNAMETAL", 32.0m, 48.0m, 3.0m),
-            ("Drill Ø24 x 180°", "7792VXP10CA024Z2R180", "KENNAMETAL", 24.0m, 60.0m, 1.8m),
-            ("Facemill Ø120 R12.0 x 6-Flute", "7792VXD20-A120Z12R", "KENNAMETAL", 120.0m, 130.0m, 12.0m),
-        };
-    }
-    
     /// <summary>Hard-coded tool list seed. Each (partNumber, operation) has fixed consumable codes from Master. Same every reset.</summary>
     private static (string PartNumber, string Operation, string[] ConsumableCodes)[] GetToolListDetailsSeedData()
     {
@@ -997,9 +941,7 @@ public static class DbSeeder
                 VALUES (@sn, @cc, @su, @di, @fl, @cr, @cd, @lm)";
             var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
-            var rowsToInsert = File.Exists(excelPath)
-                ? LoadToolCodeUniqueFromExcel(excelPath)
-                : GetToolCodeUniqueSeedData().Select(t => (t.SystemToolName, t.Consumable, t.Supplier, t.Dia, t.Flute, t.Radius)).ToList();
+            var rowsToInsert = LoadToolCodeUniqueFromExcel(excelPath);
             foreach (var (systemName, consumable, supplier, dia, flute, radius) in rowsToInsert)
             {
                 using var insCmd = conn.CreateCommand();
@@ -1036,8 +978,9 @@ public static class DbSeeder
     {
         context.ToolListHeaders.RemoveRange(context.ToolListHeaders.ToList());
         context.SaveChanges();
-        var masterLookup = GetToolCodeUniqueSeedData()
-            .ToDictionary(t => t.Consumable, t => (t.SystemToolName, t.Supplier, t.Dia, t.Flute, t.Radius));
+        var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
+        var toolCodeList = LoadToolCodeUniqueFromExcel(excelPath);
+        var masterLookup = toolCodeList.ToDictionary(t => t.Item2, t => (t.Item1, t.Item3, t.Item4, t.Item5, t.Item6));
         var toolLists = new List<ToolListHeader>
         {
             CreateToolListWithDetails("V5754221420001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),

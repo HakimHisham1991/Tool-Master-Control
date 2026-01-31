@@ -22,6 +22,9 @@ public class ToolCodeUniqueController : Controller
         string? search,
         string? consumableCode,
         string? supplier,
+        string? diameter,
+        string? fluteLength,
+        string? cornerRadius,
         string? sortColumn,
         string? sortDirection,
         int page = 1,
@@ -29,7 +32,7 @@ public class ToolCodeUniqueController : Controller
     {
         pageSize = Math.Clamp(pageSize, 10, 250);
         var viewModel = await _service.GetToolCodesAsync(
-            search, consumableCode, supplier, sortColumn, sortDirection, page, pageSize);
+            search, consumableCode, supplier, diameter, fluteLength, cornerRadius, sortColumn, sortDirection, page, pageSize);
         return View(viewModel);
     }
 
@@ -38,10 +41,13 @@ public class ToolCodeUniqueController : Controller
         string format,
         string? search,
         string? consumableCode,
-        string? supplier)
+        string? supplier,
+        string? diameter,
+        string? fluteLength,
+        string? cornerRadius)
     {
         var viewModel = await _service.GetToolCodesAsync(
-            search, consumableCode, supplier, null, null, 1, int.MaxValue);
+            search, consumableCode, supplier, diameter, fluteLength, cornerRadius, null, null, 1, int.MaxValue);
         var formatLower = format.ToLower();
 
         var headers = new[]

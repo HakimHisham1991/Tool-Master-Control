@@ -19,6 +19,9 @@ public class ToolCodeUniqueListViewModel
     public string? SearchTerm { get; set; }
     public string? ConsumableCodeFilter { get; set; }
     public string? SupplierFilter { get; set; }
+    public string? DiameterFilter { get; set; }
+    public string? FluteLengthFilter { get; set; }
+    public string? CornerRadiusFilter { get; set; }
     public string? SortColumn { get; set; }
     public string? SortDirection { get; set; }
     public int CurrentPage { get; set; } = 1;
@@ -27,4 +30,7 @@ public class ToolCodeUniqueListViewModel
     public int PageSize { get; set; } = 250;
     public List<string> AvailableConsumableCodes { get; set; } = new();
     public List<string> AvailableSuppliers { get; set; } = new();
+    public List<string> AvailableDiameters { get; set; } = new();
+    public List<string> AvailableFluteLengths { get; set; } = new();
+    public List<string> AvailableCornerRadii { get; set; } = new();
 }

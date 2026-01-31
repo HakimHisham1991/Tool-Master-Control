@@ -18,6 +18,9 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
         string? searchTerm,
         string? consumableCodeFilter,
         string? supplierFilter,
+        string? diameterFilter,
+        string? fluteLengthFilter,
+        string? cornerRadiusFilter,
         string? sortColumn,
         string? sortDirection,
         int page,
@@ -39,6 +42,15 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
 
         if (!string.IsNullOrWhiteSpace(supplierFilter))
             query = query.Where(t => t.Supplier == supplierFilter);
+
+        if (!string.IsNullOrWhiteSpace(diameterFilter) && decimal.TryParse(diameterFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var diameterVal))
+            query = query.Where(t => t.Diameter == diameterVal);
+
+        if (!string.IsNullOrWhiteSpace(fluteLengthFilter) && decimal.TryParse(fluteLengthFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var fluteVal))
+            query = query.Where(t => t.FluteLength == fluteVal);
+
+        if (!string.IsNullOrWhiteSpace(cornerRadiusFilter) && decimal.TryParse(cornerRadiusFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var radiusVal))
+            query = query.Where(t => t.CornerRadius == radiusVal);
 
         query = ApplySort(query, sortColumn, sortDirection);
 
@@ -70,6 +82,9 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
             SearchTerm = searchTerm,
             ConsumableCodeFilter = consumableCodeFilter,
             SupplierFilter = supplierFilter,
+            DiameterFilter = diameterFilter,
+            FluteLengthFilter = fluteLengthFilter,
+            CornerRadiusFilter = cornerRadiusFilter,
             SortColumn = sortColumn,
             SortDirection = sortDirection,
             CurrentPage = page,
@@ -77,7 +92,10 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
             TotalItems = totalItems,
             PageSize = pageSize,
             AvailableConsumableCodes = all.Select(t => t.ConsumableCode).Distinct().OrderBy(x => x).ToList(),
-            AvailableSuppliers = all.Select(t => t.Supplier).Distinct().OrderBy(x => x).ToList()
+            AvailableSuppliers = all.Select(t => t.Supplier).Distinct().OrderBy(x => x).ToList(),
+            AvailableDiameters = all.Select(t => t.Diameter.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
+            AvailableFluteLengths = all.Select(t => t.FluteLength.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
+            AvailableCornerRadii = all.Select(t => t.CornerRadius.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList()
         };
     }
 

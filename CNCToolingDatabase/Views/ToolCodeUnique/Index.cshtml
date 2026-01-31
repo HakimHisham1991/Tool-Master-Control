@@ -14,12 +14,12 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             Reset
         </button>
-        <a href="/ToolCodeUnique/Export?format=excel&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter" class="btn btn-secondary btn-sm">
+        <a href="/ToolCodeUnique/Export?format=excel&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter&diameter=@Model.DiameterFilter&fluteLength=@Model.FluteLengthFilter&cornerRadius=@Model.CornerRadiusFilter" class="btn btn-secondary btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Excel
         </a>
-        <a href="/ToolCodeUnique/Export?format=csv&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter" class="btn btn-secondary btn-sm">CSV</a>
-        <a href="/ToolCodeUnique/Export?format=txt&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter" class="btn btn-secondary btn-sm">TXT</a>
+        <a href="/ToolCodeUnique/Export?format=csv&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter&diameter=@Model.DiameterFilter&fluteLength=@Model.FluteLengthFilter&cornerRadius=@Model.CornerRadiusFilter" class="btn btn-secondary btn-sm">CSV</a>
+        <a href="/ToolCodeUnique/Export?format=txt&search=@Model.SearchTerm&consumableCode=@Model.ConsumableCodeFilter&supplier=@Model.SupplierFilter&diameter=@Model.DiameterFilter&fluteLength=@Model.FluteLengthFilter&cornerRadius=@Model.CornerRadiusFilter" class="btn btn-secondary btn-sm">TXT</a>
     </div>
 </div>
 
@@ -32,6 +32,7 @@
             </svg>
             <input type="text" name="search" value="@Model.SearchTerm" placeholder="Search tool codes..." class="search-input" id="searchInput" />
         </div>
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
     </form>
 </div>
 
@@ -54,6 +55,36 @@
             { <option value="@s" selected>@s</option> }
             else
             { <option value="@s">@s</option> }
+        }
+    </select>
+    <select name="diameter" id="filterDiameter" class="filter-select" onchange="applyFilters()">
+        <option value="">All Diameters (D1)</option>
+        @foreach (var d in Model.AvailableDiameters)
+        {
+            if (Model.DiameterFilter == d)
+            { <option value="@d" selected>@d</option> }
+            else
+            { <option value="@d">@d</option> }
+        }
+    </select>
+    <select name="fluteLength" id="filterFluteLength" class="filter-select" onchange="applyFilters()">
+        <option value="">All Flute Lengths (L1)</option>
+        @foreach (var f in Model.AvailableFluteLengths)
+        {
+            if (Model.FluteLengthFilter == f)
+            { <option value="@f" selected>@f</option> }
+            else
+            { <option value="@f">@f</option> }
+        }
+    </select>
+    <select name="cornerRadius" id="filterCornerRadius" class="filter-select" onchange="applyFilters()">
+        <option value="">All Corner Radii</option>
+        @foreach (var r in Model.AvailableCornerRadii)
+        {
+            if (Model.CornerRadiusFilter == r)
+            { <option value="@r" selected>@r</option> }
+            else
+            { <option value="@r">@r</option> }
         }
     </select>
     <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear Filters</button>
@@ -117,6 +148,9 @@
     if (!string.IsNullOrEmpty(Model.SearchTerm)) qb.Add("search=" + Uri.EscapeDataString(Model.SearchTerm));
     if (!string.IsNullOrEmpty(Model.ConsumableCodeFilter)) qb.Add("consumableCode=" + Uri.EscapeDataString(Model.ConsumableCodeFilter));
     if (!string.IsNullOrEmpty(Model.SupplierFilter)) qb.Add("supplier=" + Uri.EscapeDataString(Model.SupplierFilter));
+    if (!string.IsNullOrEmpty(Model.DiameterFilter)) qb.Add("diameter=" + Uri.EscapeDataString(Model.DiameterFilter));
+    if (!string.IsNullOrEmpty(Model.FluteLengthFilter)) qb.Add("fluteLength=" + Uri.EscapeDataString(Model.FluteLengthFilter));
+    if (!string.IsNullOrEmpty(Model.CornerRadiusFilter)) qb.Add("cornerRadius=" + Uri.EscapeDataString(Model.CornerRadiusFilter));
     if (!string.IsNullOrEmpty(Model.SortColumn)) qb.Add("sortColumn=" + Uri.EscapeDataString(Model.SortColumn));
     if (!string.IsNullOrEmpty(Model.SortDirection)) qb.Add("sortDirection=" + Uri.EscapeDataString(Model.SortDirection));
     @await Html.PartialAsync("_Pagination", new PaginationViewModel
@@ -131,22 +165,22 @@
 
 @section Scripts {
 <script>
-    let searchTimeout;
-    const searchInput = document.getElementById('searchInput');
     const searchForm = document.getElementById('searchForm');
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() { applyFilters(); }, 300);
-    });
     searchForm.addEventListener('submit', function(e) { e.preventDefault(); applyFilters(); });
     function applyFilters() {
         const params = new URLSearchParams();
         const search = document.getElementById('searchInput').value;
         const consumableCode = document.getElementById('filterConsumableCode').value;
         const supplier = document.getElementById('filterSupplier').value;
+        const diameter = document.getElementById('filterDiameter').value;
+        const fluteLength = document.getElementById('filterFluteLength').value;
+        const cornerRadius = document.getElementById('filterCornerRadius').value;
         if (search) params.set('search', search);
         if (consumableCode) params.set('consumableCode', consumableCode);
         if (supplier) params.set('supplier', supplier);
+        if (diameter) params.set('diameter', diameter);
+        if (fluteLength) params.set('fluteLength', fluteLength);
+        if (cornerRadius) params.set('cornerRadius', cornerRadius);
         window.location.href = '/ToolCodeUnique?' + params.toString();
     }
     function clearFilters() { window.location.href = '/ToolCodeUnique'; }
@@ -160,7 +194,7 @@
         window.location.href = '/ToolCodeUnique?' + params.toString();
     }
     function resetFromSeed() {
-        if (!confirm('This will delete all Master Tool Code data and restore seed data only. This action cannot be undone.\n\nDo you want to continue?')) return;
+        if (!confirm('This will delete all Master Tool Code data and replace it with data from TOOL CODE MASTER.xlsx. This action cannot be undone.\n\nDo you want to continue?')) return;
         const btn = document.getElementById('btnResetMasterToolCode');
         const originalHtml = btn ? btn.innerHTML : '';
         if (btn) { btn.disabled = true; btn.innerHTML = 'Resetting...'; }
