@@ -73,7 +73,7 @@
                     <tr>
                         <td>@no</td>
                         <td>@item.Workcenter</td>
-                        <td>@(item.Description ?? "-")</td>
+                        <td>@(item.Axis ?? "-")</td>
                         <td>@item.CreatedBy</td>
                         <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
@@ -87,7 +87,7 @@
                             }
                         </td>
                         <td>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@(item.Workcenter.Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Description ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', @item.IsActive.ToString().ToLower())">Edit</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@(item.Workcenter.Replace("'", "\\'").Replace("\"", "&quot;"))', '@((item.Axis ?? "").Replace("'", "\\'").Replace("\"", "&quot;"))', @item.IsActive.ToString().ToLower())">Edit</button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(@item.Id, '@item.Workcenter')">Delete</button>
                         </td>
                     </tr>
@@ -224,11 +224,11 @@
         const isActive = document.getElementById('isActive').checked;
         
         let url = '/Settings/CreateMachineWorkcenter';
-        let body = `workcenter=${encodeURIComponent(workcenter)}&description=${encodeURIComponent(axis)}`;
+        let body = `workcenter=${encodeURIComponent(workcenter)}&axis=${encodeURIComponent(axis)}`;
         
         if (itemId) {
             url = '/Settings/UpdateMachineWorkcenter';
-            body = `id=${itemId}&description=${encodeURIComponent(axis)}&isActive=${isActive}`;
+            body = `id=${itemId}&axis=${encodeURIComponent(axis)}&isActive=${isActive}`;
         }
         
         try {

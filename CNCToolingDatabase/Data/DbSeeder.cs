@@ -263,9 +263,9 @@ public static class DbSeeder
         {
             if (context.MachineWorkcenters != null && !context.MachineWorkcenters.Any())
             {
-                foreach (var (workcenter, description, isActive) in GetMachineWorkcenterSeedData())
+                foreach (var (workcenter, axis, isActive) in GetMachineWorkcenterSeedData())
                 {
-                    context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = workcenter, Description = description, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
+                    context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = workcenter, Axis = axis, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
                 }
                 context.SaveChanges();
             }
@@ -608,8 +608,8 @@ public static class DbSeeder
         return LoadProjectCodeFromExcel(path).ToArray();
     }
 
-    /// <summary>Load Machine Workcenter rows from MACHINE WORKCENTER MASTER.xlsx. Columns: Workcenter, Description, Status (ACTIVE/INACTIVE).</summary>
-    private static List<(string Workcenter, string Description, bool IsActive)> LoadMachineWorkcenterFromExcel(string path)
+    /// <summary>Load Machine Workcenter rows from MACHINE WORKCENTER MASTER.xlsx. Columns: Workcenter, Axis, Status (ACTIVE/INACTIVE).</summary>
+    private static List<(string Workcenter, string Axis, bool IsActive)> LoadMachineWorkcenterFromExcel(string path)
     {
         var result = new List<(string, string, bool)>();
         if (!File.Exists(path)) return result;
@@ -632,7 +632,7 @@ public static class DbSeeder
             return -1;
         }
         int colWorkcenter = GetCol(ws, cols, "Workcenter", "Machine Workcenter");
-        int colDescription = GetCol(ws, cols, "Description");
+        int colAxis = GetCol(ws, cols, "Axis");
         int colStatus = GetCol(ws, cols, "Status", "IsActive");
         if (colWorkcenter < 1) return result;
         static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
@@ -640,7 +640,7 @@ public static class DbSeeder
         {
             var workcenter = GetStr(ws, r, colWorkcenter);
             if (string.IsNullOrWhiteSpace(workcenter)) continue;
-            var description = GetStr(ws, r, colDescription);
+            var axis = GetStr(ws, r, colAxis);
             var statusVal = GetStr(ws, r, colStatus);
             var isActive = string.IsNullOrWhiteSpace(statusVal) ||
                 string.Equals(statusVal, "ACTIVE", StringComparison.OrdinalIgnoreCase) ||
@@ -648,12 +648,12 @@ public static class DbSeeder
                 string.Equals(statusVal, "Yes", StringComparison.OrdinalIgnoreCase);
             if (string.Equals(statusVal, "INACTIVE", StringComparison.OrdinalIgnoreCase) || string.Equals(statusVal, "0", StringComparison.Ordinal) || string.Equals(statusVal, "No", StringComparison.OrdinalIgnoreCase))
                 isActive = false;
-            result.Add((workcenter, description ?? "", isActive));
+            result.Add((workcenter, axis ?? "", isActive));
         }
         return result;
     }
 
-    private static (string Workcenter, string Description, bool IsActive)[] GetMachineWorkcenterSeedData()
+    private static (string Workcenter, string Axis, bool IsActive)[] GetMachineWorkcenterSeedData()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Data", "MACHINE WORKCENTER MASTER.xlsx");
         return LoadMachineWorkcenterFromExcel(path).ToArray();
@@ -861,9 +861,9 @@ public static class DbSeeder
         if (context.MachineWorkcenters == null) return;
         context.MachineWorkcenters.RemoveRange(context.MachineWorkcenters.ToList());
         context.SaveChanges();
-        foreach (var (workcenter, description, isActive) in GetMachineWorkcenterSeedData())
+        foreach (var (workcenter, axis, isActive) in GetMachineWorkcenterSeedData())
         {
-            context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = workcenter, Description = description, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
+            context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = workcenter, Axis = axis, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
         }
         context.SaveChanges();
     }

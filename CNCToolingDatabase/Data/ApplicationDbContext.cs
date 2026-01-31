@@ -76,6 +76,7 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Workcenter).IsUnique();
+            entity.Property(e => e.Axis).HasColumnName("Description");
         });
         
         modelBuilder.Entity<MachineModel>(entity =>

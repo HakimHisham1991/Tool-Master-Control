@@ -413,7 +413,7 @@ public class SettingsController : Controller
             var term = search.ToLower();
             query = query.Where(w => 
                 w.Workcenter.ToLower().Contains(term) ||
-                (w.Description != null && w.Description.ToLower().Contains(term)));
+                (w.Axis != null && w.Axis.ToLower().Contains(term)));
         }
         
         var isDesc = sortDirection?.ToLower() == "desc";
@@ -421,7 +421,7 @@ public class SettingsController : Controller
         {
             "id" => isDesc ? query.OrderByDescending(w => w.Id) : query.OrderBy(w => w.Id),
             "workcenter" => isDesc ? query.OrderByDescending(w => w.Workcenter) : query.OrderBy(w => w.Workcenter),
-            "description" or "axis" => isDesc ? query.OrderByDescending(w => w.Description ?? "") : query.OrderBy(w => w.Description ?? ""),
+            "axis" => isDesc ? query.OrderByDescending(w => w.Axis ?? "") : query.OrderBy(w => w.Axis ?? ""),
             "createdby" => isDesc ? query.OrderByDescending(w => w.CreatedBy) : query.OrderBy(w => w.CreatedBy),
             "createddate" => isDesc ? query.OrderByDescending(w => w.CreatedDate) : query.OrderBy(w => w.CreatedDate),
             "isactive" => isDesc ? query.OrderByDescending(w => w.IsActive) : query.OrderBy(w => w.IsActive),
@@ -446,7 +446,7 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> CreateMachineWorkcenter(string workcenter, string? description)
+    public async Task<IActionResult> CreateMachineWorkcenter(string workcenter, string? axis)
     {
         if (string.IsNullOrWhiteSpace(workcenter))
         {
@@ -461,7 +461,7 @@ public class SettingsController : Controller
         var machineWorkcenter = new MachineWorkcenter
         {
             Workcenter = workcenter,
-            Description = description,
+            Axis = axis,
             CreatedDate = DateTime.UtcNow,
             CreatedBy = HttpContext.Session.GetString("Username") ?? "",
             IsActive = true
@@ -474,7 +474,7 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> UpdateMachineWorkcenter(int id, string? description, bool? isActive)
+    public async Task<IActionResult> UpdateMachineWorkcenter(int id, string? axis, bool? isActive)
     {
         var machineWorkcenter = await _context.MachineWorkcenters.FindAsync(id);
         if (machineWorkcenter == null)
@@ -482,7 +482,7 @@ public class SettingsController : Controller
             return Json(new { success = false, message = "Machine workcenter not found" });
         }
         
-        if (description != null) machineWorkcenter.Description = description;
+        if (axis != null) machineWorkcenter.Axis = axis;
         if (isActive.HasValue) machineWorkcenter.IsActive = isActive.Value;
         
         await _context.SaveChangesAsync();
