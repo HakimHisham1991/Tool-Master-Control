@@ -24,6 +24,7 @@
             </svg>
             <input type="text" name="search" value="@Model.SearchTerm" placeholder="Search tools..." class="search-input" id="searchInput" />
         </div>
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
     </form>
 </div>
 
@@ -202,16 +203,7 @@
 
 @section Scripts {
 <script>
-    let searchTimeout;
-    const searchInput = document.getElementById('searchInput');
-    
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            applyFilters();
-        }, 300);
-    });
-    
+    document.getElementById('searchForm').addEventListener('submit', function(e) { e.preventDefault(); applyFilters(); });
     function applyFilters() {
         const params = new URLSearchParams();
         const search = document.getElementById('searchInput').value;

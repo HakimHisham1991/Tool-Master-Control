@@ -35,6 +35,7 @@
             </svg>
             <input type="text" name="search" value="@ViewBag.Search" placeholder="Search model, machine builder, type, controller..." class="search-input" id="searchInput" />
         </div>
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
     </form>
 </div>
 
@@ -167,16 +168,6 @@
 <script>
     const TYPE_OPTIONS = ['VerticalMachiningCenter', 'HorizontalMachiningCenter', 'Lathe', 'TurningCenter', 'MillTurn', 'SwissType', 'GantryMill', 'Router', 'EDM', 'LaserCutter', 'Waterjet', 'PlasmaCutter', 'AdditiveManufacturer', 'Mill', 'Other'];
     const CONTROLLER_OPTIONS = ['Celos', 'Fagor', 'Fanuc', 'Haas', 'Heidenhain', 'Mazatrol', 'Mitsubishi', 'Okuma', 'Siemens', 'Other'];
-    
-    let searchTimeout;
-    const searchInput = document.getElementById('searchInput');
-    
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            document.getElementById('searchForm').submit();
-        }, 300);
-    });
     
     function sortBy(column) {
         const params = new URLSearchParams(window.location.search);

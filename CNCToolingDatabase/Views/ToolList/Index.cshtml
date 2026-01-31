@@ -28,6 +28,7 @@
             </svg>
             <input type="text" name="search" value="@Model.SearchTerm" placeholder="Search tool lists..." class="search-input" id="searchInput" />
         </div>
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
     </form>
 </div>
 
@@ -145,16 +146,6 @@
 
 @section Scripts {
 <script>
-    let searchTimeout;
-    const searchInput = document.getElementById('searchInput');
-    
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            document.getElementById('searchForm').submit();
-        }, 300);
-    });
-    
     function sortBy(column) {
         const params = new URLSearchParams(window.location.search);
         const currentSort = params.get('sortColumn');

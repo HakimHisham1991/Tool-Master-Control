@@ -39,6 +39,7 @@
             </svg>
             <input type="text" name="search" value="@ViewBag.Search" placeholder="Search part numbers, description, revs, project code, material, ref. drawing..." class="search-input" id="searchInput" />
         </div>
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
     </form>
 </div>
 
@@ -201,17 +202,8 @@
     window.__materialSpecsForPartNumber = @Html.Raw(msJson);
 </script>
 <script>
-    let searchTimeout;
-    const searchInput = document.getElementById('searchInput');
     let projectCodesData = Array.isArray(window.__projectCodesForPartNumber) ? window.__projectCodesForPartNumber : [];
     let materialSpecsData = Array.isArray(window.__materialSpecsForPartNumber) ? window.__materialSpecsForPartNumber : [];
-    
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            document.getElementById('searchForm').submit();
-        }, 300);
-    });
     
     function sortBy(column) {
         const params = new URLSearchParams(window.location.search);
