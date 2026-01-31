@@ -201,57 +201,9 @@ public static class DbSeeder
         {
             if (context.ProjectCodes != null && !context.ProjectCodes.Any())
             {
-                var codeCustomerProjectTrios = new[] {
-                    ("AB01", "SAM", "Engine Casing"),
-                    ("AB02", "SAM", "Panther"),
-                    ("AB03", "SAM", "UTAS A350 Component"),
-                    ("AD01", "Meggitt Coventry", "MCS-C"),
-                    ("AD02", "Meggitt Sensing System", "MSS-F"),
-                    ("AD03", "Meggitt Akrons Braking Systems", "MABS A"),
-                    ("AE01", "Honeywell", "Honeywell"),
-                    ("AE02", "Honeywell", "Celestica Localisation"),
-                    ("AE03", "Honeywell", "DU1080"),
-                    ("AE04", "Plexus", "Plexus"),
-                    ("AE05", "Spirit Aerosystems", "VMI PULL"),
-                    ("AG01", "Spirit Aerosystems", "A350 XWB"),
-                    ("AG02", "Spirit Aerosystems", "A320 FTB-6B"),
-                    ("AG03", "Spirit Aerosystems", "Spirit Subang A320 6C"),
-                    ("AG04", "Spirit Aerosystems", "SPIRIT EPIPHRON TTI & CR"),
-                    ("AG05", "Spirit Aerosystems", "Spirit Wave 4"),
-                    ("AG06", "Spirit Aerosystems", "WAVE 5"),
-                    ("AG07", "Spirit Aerosystems", "A321 XLR"),
-                    ("AG08", "Spirit Aerosystems", "SPIRIT GOLD"),
-                    ("AG09", "Spirit Aerosystems", "SINARAN A320 CA"),
-                    ("AH01", "UTAS India", "Goodrich"),
-                    ("AH02", "UTAS / CTRM", "787 Fan Cowl"),
-                    ("AH03", "UTAS / CTRM", "A350 Fan Cowl"),
-                    ("AH04", "UTAS US", "Motor Controller Plates"),
-                    ("AH05", "UTAS US", "C-Series & MRJ Fan Cowl"),
-                    ("AJ01", "Celestica", "Celestica HS"),
-                    ("AL01", "SOGERMA, FRENCH", "A350 SOGERMA"),
-                    ("AL02", "SOGERMA, FRENCH", "A321 S14A SOGERMA"),
-                    ("AL03", "SOGERMA, FRENCH", "Celeste Seat"),
-                    ("AL04", "SOGERMA, FRENCH", "A350 MLGB"),
-                    ("AL05", "SOGERMA, FRENCH", "Celeste Seat 2nd Package"),
-                    ("AL06", "Stelia Aerospace", "AIRBUS D2P SBMSA"),
-                    ("AL07", "Stelia Aerospace", "STELIA D2P SBMSA"),
-                    ("AL08", "Senior Aerospace Thailand", "SAT D2P"),
-                    ("AL09", "Senior Aerospace Thailand", "SAT D2P"),
-                    ("AL10", "Airbus Atlantic", "Airbus Atlantic NPI & SB76"),
-                    ("AL11", "Airbus Germany", "AIRBUS GERMANY SA-A350"),
-                    ("AL12", "Airbus Germany", "AIRBUS GERMANY SA-A350-KPDD-VAR"),
-                    ("AM01", "GKN Aerospace", "MC130 & MC133"),
-                    ("AM03", "GKN Aerospace", "GKN A350 TE"),
-                    ("AM04", "GKN Aerospace", "GKN A330 BEARING ASSY"),
-                    ("AOG", "Airbus", "Airbus"),
-                    ("AP02", "Senior Aerospace Thailand", "FHI-SAT Fitting"),
-                    ("AQ01", "CTRM Aerosystems", "A350 XWB"),
-                    ("SA01", "Senior SSP", "SSP A320 Neo & C-Series Flanges"),
-                    ("SB01", "Senior Ermeto", "Senior Ermeto")
-                };
-                foreach (var (code, customer, project) in codeCustomerProjectTrios)
+                foreach (var (code, description, project) in GetProjectCodeSeedData())
                 {
-                    context.ProjectCodes.Add(new ProjectCode { Code = code, Description = customer, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    context.ProjectCodes.Add(new ProjectCode { Code = code, Description = description, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
                 }
                 context.SaveChanges();
             }
@@ -617,6 +569,51 @@ public static class DbSeeder
         return LoadMachineNameFromExcel(path).ToArray();
     }
 
+    /// <summary>Load Project Code rows from PROJECT CODE MASTER.xlsx. Columns: Code, Description (or Customer), Project.</summary>
+    private static List<(string Code, string Description, string Project)> LoadProjectCodeFromExcel(string path)
+    {
+        var result = new List<(string, string, string)>();
+        if (!File.Exists(path)) return result;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage(new FileInfo(path));
+        var ws = package.Workbook.Worksheets.FirstOrDefault();
+        if (ws?.Dimension == null) return result;
+        int cols = ws.Dimension.End.Column;
+        int rows = ws.Dimension.End.Row;
+        if (rows < 2) return result;
+        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+        {
+            for (int c = 1; c <= totalCols; c++)
+            {
+                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                if (string.IsNullOrEmpty(v)) continue;
+                foreach (var h in headerNames)
+                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+            }
+            return -1;
+        }
+        int colCode = GetCol(ws, cols, "Code", "Project Code");
+        int colDescription = GetCol(ws, cols, "Description", "Customer");
+        int colProject = GetCol(ws, cols, "Project");
+        if (colCode < 1) return result;
+        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+        for (int r = 2; r <= rows; r++)
+        {
+            var code = GetStr(ws, r, colCode);
+            if (string.IsNullOrWhiteSpace(code)) continue;
+            var description = GetStr(ws, r, colDescription);
+            var project = GetStr(ws, r, colProject);
+            result.Add((code, description ?? "", project ?? ""));
+        }
+        return result;
+    }
+
+    private static (string Code, string Description, string Project)[] GetProjectCodeSeedData()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "PROJECT CODE MASTER.xlsx");
+        return LoadProjectCodeFromExcel(path).ToArray();
+    }
+
     /// <summary>Hard-coded tool list seed. Each (partNumber, operation) has fixed consumable codes from Master. Same every reset.</summary>
     private static (string PartNumber, string Operation, string[] ConsumableCodes)[] GetToolListDetailsSeedData()
     {
@@ -792,23 +789,10 @@ public static class DbSeeder
         }
         context.ProjectCodes.RemoveRange(context.ProjectCodes.ToList());
         context.SaveChanges();
-        var trios = new[] {
-            ("AB01", "SAM", "Engine Casing"), ("AB02", "SAM", "Panther"), ("AB03", "SAM", "UTAS A350 Component"),
-            ("AD01", "Meggitt Coventry", "MCS-C"), ("AD02", "Meggitt Sensing System", "MSS-F"), ("AD03", "Meggitt Akrons Braking Systems", "MABS A"),
-            ("AE01", "Honeywell", "Honeywell"), ("AE02", "Honeywell", "Celestica Localisation"), ("AE03", "Honeywell", "DU1080"), ("AE04", "Plexus", "Plexus"), ("AE05", "Spirit Aerosystems", "VMI PULL"),
-            ("AG01", "Spirit Aerosystems", "A350 XWB"), ("AG02", "Spirit Aerosystems", "A320 FTB-6B"), ("AG03", "Spirit Aerosystems", "Spirit Subang A320 6C"), ("AG04", "Spirit Aerosystems", "SPIRIT EPIPHRON TTI & CR"),
-            ("AG05", "Spirit Aerosystems", "Spirit Wave 4"), ("AG06", "Spirit Aerosystems", "WAVE 5"), ("AG07", "Spirit Aerosystems", "A321 XLR"), ("AG08", "Spirit Aerosystems", "SPIRIT GOLD"), ("AG09", "Spirit Aerosystems", "SINARAN A320 CA"),
-            ("AH01", "UTAS India", "Goodrich"), ("AH02", "UTAS / CTRM", "787 Fan Cowl"), ("AH03", "UTAS / CTRM", "A350 Fan Cowl"), ("AH04", "UTAS US", "Motor Controller Plates"), ("AH05", "UTAS US", "C-Series & MRJ Fan Cowl"),
-            ("AJ01", "Celestica", "Celestica HS"),
-            ("AL01", "SOGERMA, FRENCH", "A350 SOGERMA"), ("AL02", "SOGERMA, FRENCH", "A321 S14A SOGERMA"), ("AL03", "SOGERMA, FRENCH", "Celeste Seat"), ("AL04", "SOGERMA, FRENCH", "A350 MLGB"), ("AL05", "SOGERMA, FRENCH", "Celeste Seat 2nd Package"),
-            ("AL06", "Stelia Aerospace", "AIRBUS D2P SBMSA"), ("AL07", "Stelia Aerospace", "STELIA D2P SBMSA"), ("AL08", "Senior Aerospace Thailand", "SAT D2P"), ("AL09", "Senior Aerospace Thailand", "SAT D2P"), ("AL10", "Airbus Atlantic", "Airbus Atlantic NPI & SB76"),
-            ("AL11", "Airbus Germany", "AIRBUS GERMANY SA-A350"), ("AL12", "Airbus Germany", "AIRBUS GERMANY SA-A350-KPDD-VAR"),
-            ("AM01", "GKN Aerospace", "MC130 & MC133"), ("AM03", "GKN Aerospace", "GKN A350 TE"), ("AM04", "GKN Aerospace", "GKN A330 BEARING ASSY"),
-            ("AOG", "Airbus", "Airbus"), ("AP02", "Senior Aerospace Thailand", "FHI-SAT Fitting"), ("AQ01", "CTRM Aerosystems", "A350 XWB"),
-            ("SA01", "Senior SSP", "SSP A320 Neo & C-Series Flanges"), ("SB01", "Senior Ermeto", "Senior Ermeto")
-        };
-        foreach (var (code, customer, project) in trios)
-            context.ProjectCodes.Add(new ProjectCode { Code = code, Description = customer, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        foreach (var (code, description, project) in GetProjectCodeSeedData())
+        {
+            context.ProjectCodes.Add(new ProjectCode { Code = code, Description = description, Project = project, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        }
         context.SaveChanges();
     }
 
