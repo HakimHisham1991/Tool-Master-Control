@@ -449,8 +449,11 @@ public static class DbSeeder
                 var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
                 var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
                 var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
+                var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var (name, desc, partRev, drawRev, pcCode, refDrawing, msSpec) in GetPartNumberSeedData())
                 {
+                    if (string.IsNullOrWhiteSpace(name)) continue;
+                    if (!seenNames.Add(name)) continue;
                     var pcId = !string.IsNullOrEmpty(pcCode) && projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
                     var msId = !string.IsNullOrEmpty(msSpec) && matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
                     context.PartNumbers.Add(new PartNumber
@@ -527,26 +530,59 @@ public static class DbSeeder
         }
     }
 
-    /// <summary>Machine Name seed from MACHINE NAME MASTER.txt. Format: Machine Name|Serial Number|Machine Workcenter|Machine Model|Status.</summary>
+    /// <summary>Load Machine Name rows from MACHINE NAME MASTER.xlsx. Columns: Machine Name, Serial Number, Machine Workcenter, Machine Model, Status.</summary>
+    private static List<(string Name, string Serial, string Workcenter, string MachineModel, bool IsActive)> LoadMachineNameFromExcel(string path)
+    {
+        var result = new List<(string, string, string, string, bool)>();
+        if (!File.Exists(path)) return result;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage(new FileInfo(path));
+        var ws = package.Workbook.Worksheets.FirstOrDefault();
+        if (ws?.Dimension == null) return result;
+        int cols = ws.Dimension.End.Column;
+        int rows = ws.Dimension.End.Row;
+        if (rows < 2) return result;
+        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+        {
+            for (int c = 1; c <= totalCols; c++)
+            {
+                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                if (string.IsNullOrEmpty(v)) continue;
+                foreach (var h in headerNames)
+                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+            }
+            return -1;
+        }
+        int colName = GetCol(ws, cols, "Machine Name", "Name");
+        int colSerial = GetCol(ws, cols, "Serial Number", "Serial");
+        int colWorkcenter = GetCol(ws, cols, "Machine Workcenter", "Workcenter");
+        int colModel = GetCol(ws, cols, "Machine Model", "Model");
+        int colStatus = GetCol(ws, cols, "Status", "IsActive");
+        if (colName < 1) return result;
+        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+        for (int r = 2; r <= rows; r++)
+        {
+            var name = GetStr(ws, r, colName);
+            if (string.IsNullOrWhiteSpace(name)) continue;
+            var serial = GetStr(ws, r, colSerial);
+            var workcenter = GetStr(ws, r, colWorkcenter);
+            var machineModel = GetStr(ws, r, colModel);
+            var statusVal = GetStr(ws, r, colStatus);
+            var isActive = string.IsNullOrWhiteSpace(statusVal) ||
+                string.Equals(statusVal, "ACTIVE", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(statusVal, "1", StringComparison.Ordinal) ||
+                string.Equals(statusVal, "Yes", StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(statusVal, "INACTIVE", StringComparison.OrdinalIgnoreCase) || string.Equals(statusVal, "0", StringComparison.Ordinal) || string.Equals(statusVal, "No", StringComparison.OrdinalIgnoreCase))
+                isActive = false;
+            result.Add((name, serial ?? "", workcenter ?? "", machineModel ?? "", isActive));
+        }
+        return result;
+    }
+
     private static (string Name, string Serial, string Workcenter, string MachineModel, bool IsActive)[] GetMachineNameSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MACHINE NAME MASTER.txt");
-        if (!File.Exists(path))
-            return Array.Empty<(string, string, string, string, bool)>();
-        var lines = File.ReadAllLines(path);
-        var result = new List<(string, string, string, string, bool)>();
-        for (var i = 1; i < lines.Length; i++)
-        {
-            var cols = lines[i].Split('|');
-            if (cols.Length < 5 || string.IsNullOrWhiteSpace(cols[0])) continue;
-            var name = cols[0].Trim();
-            var serial = cols.Length > 1 ? cols[1].Trim() : "";
-            var workcenter = cols.Length > 2 ? cols[2].Trim() : "";
-            var machineModel = cols.Length > 3 ? cols[3].Trim() : "";
-            var isActive = cols.Length > 4 && string.Equals(cols[4].Trim(), "ACTIVE", StringComparison.OrdinalIgnoreCase);
-            result.Add((name, serial, workcenter, machineModel, isActive));
-        }
-        return result.ToArray();
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MACHINE NAME MASTER.xlsx");
+        return LoadMachineNameFromExcel(path).ToArray();
     }
 
     /// <summary>Hard-coded tool list seed. Each (partNumber, operation) has fixed consumable codes from Master. Same every reset.</summary>
@@ -562,39 +598,57 @@ public static class DbSeeder
         };
     }
 
-    /// <summary>Part Number seed from PART NUMBERS MASTER.txt. Format: Part Number|Description|Part Revision|Drawing Revision|Project Code|Ref. Drawing|Material Spec.|Material</summary>
+    /// <summary>Load Part Number rows from PART NUMBERS MASTER.xlsx. Columns: Part Number, Description, Part Revision, Drawing Revision, Project Code, Ref. Drawing, Material Spec., Material</summary>
+    private static List<(string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec)> LoadPartNumberFromExcel(string path)
+    {
+        var result = new List<(string, string, string, string, string, string, string)>();
+        if (!File.Exists(path)) return result;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage(new FileInfo(path));
+        var ws = package.Workbook.Worksheets.FirstOrDefault();
+        if (ws?.Dimension == null) return result;
+        int cols = ws.Dimension.End.Column;
+        int rows = ws.Dimension.End.Row;
+        if (rows < 2) return result;
+        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+        {
+            for (int c = 1; c <= totalCols; c++)
+            {
+                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                if (string.IsNullOrEmpty(v)) continue;
+                foreach (var h in headerNames)
+                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+            }
+            return -1;
+        }
+        int colPartNumber = GetCol(ws, cols, "Part Number", "Name");
+        int colDescription = GetCol(ws, cols, "Description");
+        int colPartRev = GetCol(ws, cols, "Part Revision", "Part Rev.");
+        int colDrawingRev = GetCol(ws, cols, "Drawing Revision", "Drawing Rev.");
+        int colProjectCode = GetCol(ws, cols, "Project Code");
+        int colRefDrawing = GetCol(ws, cols, "Ref. Drawing", "Ref Drawing");
+        int colMaterialSpec = GetCol(ws, cols, "Material Spec.", "Material Spec");
+        if (colPartNumber < 1) return result;
+        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+        for (int r = 2; r <= rows; r++)
+        {
+            var name = GetStr(ws, r, colPartNumber);
+            if (string.IsNullOrWhiteSpace(name)) continue;
+            var desc = GetStr(ws, r, colDescription);
+            var partRev = GetStr(ws, r, colPartRev);
+            var drawRev = GetStr(ws, r, colDrawingRev);
+            var pcCode = GetStr(ws, r, colProjectCode);
+            var refDrawing = GetStr(ws, r, colRefDrawing);
+            var msSpec = GetStr(ws, r, colMaterialSpec);
+            result.Add((name, desc ?? "", partRev ?? "", drawRev ?? "", pcCode ?? "", refDrawing ?? "", msSpec ?? ""));
+        }
+        return result;
+    }
+
     private static (string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec)[] GetPartNumberSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "PART NUMBERS MASTER.txt");
-        if (!File.Exists(path))
-            return Array.Empty<(string, string, string, string, string, string, string)>();
-        var lines = File.ReadAllLines(path);
-        var result = new List<(string, string, string, string, string, string, string)>();
-        for (var i = 1; i < lines.Length; i++)
-        {
-            var cols = lines[i].Split('|');
-            // Support both formats: with Ref. Drawing (8 cols) or legacy (6 cols: no Ref. Drawing, Material Spec. at 5)
-            if (cols.Length < 6 || string.IsNullOrWhiteSpace(cols[0])) continue;
-            var name = cols[0].Trim();
-            var desc = cols.Length > 1 ? cols[1].Trim() : "";
-            var partRev = cols.Length > 2 ? cols[2].Trim() : "";
-            var drawRev = cols.Length > 3 ? cols[3].Trim() : "";
-            var pcCode = cols.Length > 4 ? cols[4].Trim() : "";
-            string refDrawing;
-            string msSpec;
-            if (cols.Length >= 7)
-            {
-                refDrawing = cols.Length > 5 ? cols[5].Trim() : "";
-                msSpec = cols.Length > 6 ? cols[6].Trim() : "";
-            }
-            else
-            {
-                refDrawing = "";
-                msSpec = cols.Length > 5 ? cols[5].Trim() : "";
-            }
-            result.Add((name, desc, partRev, drawRev, pcCode, refDrawing, msSpec));
-        }
-        return result.ToArray();
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "PART NUMBERS MASTER.xlsx");
+        return LoadPartNumberFromExcel(path).ToArray();
     }
 
     private static ToolListHeader CreateToolListWithDetails(string partNumber, string operation, string revision,
