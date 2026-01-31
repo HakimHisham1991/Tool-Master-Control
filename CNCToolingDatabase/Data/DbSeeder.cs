@@ -263,11 +263,9 @@ public static class DbSeeder
         {
             if (context.MachineWorkcenters != null && !context.MachineWorkcenters.Any())
             {
-                var workcenters = "2X-01|2X-02|2X-03|2X-04|2X-06|2X-07|2X-08|2X-09|2X-10|2X-11|3X-01|3X-02|3X-03|3X-07|3X-08|3X-09|3X-09i|3X-10|3X-11|3X-14|3X-18|3X-19|3X-20|3X-21|3X-22|3X-23|3X-26|3X-27|3X-28|3X-29|3X-30|3X-31|3X-32|4X-01|4X-02|4X-03|4X-07|4X-08|4X-10|4X-11|4X-13|4X-14|4X-15|4X-16|5X-01|5X-02|5X-03|5X-04|5X-05|5X-06|5X-07|5X-08|5X-09|5X-10|5X-11|5X-12|5X-13|5X-14|5X-15|NA".Split('|');
-                foreach (var wc in workcenters)
+                foreach (var (workcenter, description, isActive) in GetMachineWorkcenterSeedData())
                 {
-                    var axis = wc == "NA" ? "N/A" : wc.StartsWith("2X") ? "2-Axis" : wc.StartsWith("3X") ? "3-Axis" : wc.StartsWith("4X") ? "4-Axis" : wc.StartsWith("5X") ? "5-Axis" : "3-Axis";
-                    context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = wc, Description = axis, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = workcenter, Description = description, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
                 }
                 context.SaveChanges();
             }
@@ -610,6 +608,57 @@ public static class DbSeeder
         return LoadProjectCodeFromExcel(path).ToArray();
     }
 
+    /// <summary>Load Machine Workcenter rows from MACHINE WORKCENTER MASTER.xlsx. Columns: Workcenter, Description, Status (ACTIVE/INACTIVE).</summary>
+    private static List<(string Workcenter, string Description, bool IsActive)> LoadMachineWorkcenterFromExcel(string path)
+    {
+        var result = new List<(string, string, bool)>();
+        if (!File.Exists(path)) return result;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage(new FileInfo(path));
+        var ws = package.Workbook.Worksheets.FirstOrDefault();
+        if (ws?.Dimension == null) return result;
+        int cols = ws.Dimension.End.Column;
+        int rows = ws.Dimension.End.Row;
+        if (rows < 2) return result;
+        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+        {
+            for (int c = 1; c <= totalCols; c++)
+            {
+                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                if (string.IsNullOrEmpty(v)) continue;
+                foreach (var h in headerNames)
+                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+            }
+            return -1;
+        }
+        int colWorkcenter = GetCol(ws, cols, "Workcenter", "Machine Workcenter");
+        int colDescription = GetCol(ws, cols, "Description");
+        int colStatus = GetCol(ws, cols, "Status", "IsActive");
+        if (colWorkcenter < 1) return result;
+        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+        for (int r = 2; r <= rows; r++)
+        {
+            var workcenter = GetStr(ws, r, colWorkcenter);
+            if (string.IsNullOrWhiteSpace(workcenter)) continue;
+            var description = GetStr(ws, r, colDescription);
+            var statusVal = GetStr(ws, r, colStatus);
+            var isActive = string.IsNullOrWhiteSpace(statusVal) ||
+                string.Equals(statusVal, "ACTIVE", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(statusVal, "1", StringComparison.Ordinal) ||
+                string.Equals(statusVal, "Yes", StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(statusVal, "INACTIVE", StringComparison.OrdinalIgnoreCase) || string.Equals(statusVal, "0", StringComparison.Ordinal) || string.Equals(statusVal, "No", StringComparison.OrdinalIgnoreCase))
+                isActive = false;
+            result.Add((workcenter, description ?? "", isActive));
+        }
+        return result;
+    }
+
+    private static (string Workcenter, string Description, bool IsActive)[] GetMachineWorkcenterSeedData()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MACHINE WORKCENTER MASTER.xlsx");
+        return LoadMachineWorkcenterFromExcel(path).ToArray();
+    }
+
     /// <summary>Hard-coded tool list seed. Each (partNumber, operation) has fixed consumable codes from Master. Same every reset.</summary>
     private static (string PartNumber, string Operation, string[] ConsumableCodes)[] GetToolListDetailsSeedData()
     {
@@ -812,11 +861,9 @@ public static class DbSeeder
         if (context.MachineWorkcenters == null) return;
         context.MachineWorkcenters.RemoveRange(context.MachineWorkcenters.ToList());
         context.SaveChanges();
-        var workcenters = "2X-01|2X-02|2X-03|2X-04|2X-06|2X-07|2X-08|2X-09|2X-10|2X-11|3X-01|3X-02|3X-03|3X-07|3X-08|3X-09|3X-09i|3X-10|3X-11|3X-14|3X-18|3X-19|3X-20|3X-21|3X-22|3X-23|3X-26|3X-27|3X-28|3X-29|3X-30|3X-31|3X-32|4X-01|4X-02|4X-03|4X-07|4X-08|4X-10|4X-11|4X-13|4X-14|4X-15|4X-16|5X-01|5X-02|5X-03|5X-04|5X-05|5X-06|5X-07|5X-08|5X-09|5X-10|5X-11|5X-12|5X-13|5X-14|5X-15|NA".Split('|');
-        foreach (var wc in workcenters)
+        foreach (var (workcenter, description, isActive) in GetMachineWorkcenterSeedData())
         {
-            var axis = wc == "NA" ? "N/A" : wc.StartsWith("2X") ? "2-Axis" : wc.StartsWith("3X") ? "3-Axis" : wc.StartsWith("4X") ? "4-Axis" : wc.StartsWith("5X") ? "5-Axis" : "3-Axis";
-            context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = wc, Description = axis, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+            context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = workcenter, Description = description, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
         }
         context.SaveChanges();
     }
