@@ -349,13 +349,19 @@ html, body {
     background-color: #E5E7EB;
 }
 
-/* Filter row above column headers - aligned to columns */
+/* Filter row above column headers - aligned to columns (override global .filter-row flex) */
+.data-table thead tr.filter-row {
+    display: table-row;
+}
+
 .data-table thead tr.filter-row th {
+    display: table-cell;
     font-weight: normal;
     padding: 6px 8px;
     vertical-align: middle;
     background-color: #EFF6FF;
     cursor: default;
+    white-space: nowrap;
 }
 
 .data-table thead tr.filter-row th:hover {
@@ -364,13 +370,14 @@ html, body {
 
 .data-table thead tr.filter-row th .filter-cell-select {
     width: 100%;
-    min-width: 100px;
-    max-width: 200px;
+    min-width: 80px;
+    max-width: 100%;
     padding: 4px 8px;
     font-size: 13px;
     border: 1px solid var(--border);
     border-radius: 4px;
     background-color: var(--bg-surface);
+    box-sizing: border-box;
 }
 
 .data-table td {
