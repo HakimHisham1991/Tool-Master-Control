@@ -47,7 +47,8 @@
                         <option value="">All</option>
                         @foreach (var s in Model.AvailableSystemToolNames)
                         {
-                            <option value="@s" @(Model.SystemToolNameFilter == s ? "selected" : null)>@s</option>
+                            if (Model.SystemToolNameFilter == s) { <option value="@s" selected>@s</option> }
+                            else { <option value="@s">@s</option> }
                         }
                     </select>
                 </th>
@@ -65,7 +66,8 @@
                         <option value="">All</option>
                         @foreach (var s in Model.AvailableSuppliers)
                         {
-                            <option value="@s" @(Model.SupplierFilter == s ? "selected" : null)>@s</option>
+                            if (Model.SupplierFilter == s) { <option value="@s" selected>@s</option> }
+                            else { <option value="@s">@s</option> }
                         }
                     </select>
                 </th>
@@ -83,7 +85,8 @@
                         <option value="">All</option>
                         @foreach (var f in Model.AvailableFluteLengths)
                         {
-                            <option value="@f" @(Model.FluteLengthFilter == f ? "selected" : null)>@f</option>
+                            if (Model.FluteLengthFilter == f) { <option value="@f" selected>@f</option> }
+                            else { <option value="@f">@f</option> }
                         }
                     </select>
                 </th>
@@ -101,7 +104,8 @@
                         <option value="">All</option>
                         @foreach (var d in Model.AvailableCreatedDates)
                         {
-                            <option value="@d" @(Model.CreatedDateFilter == d ? "selected" : null)>@d</option>
+                            if (Model.CreatedDateFilter == d) { <option value="@d" selected>@d</option> }
+                            else { <option value="@d">@d</option> }
                         }
                     </select>
                 </th>

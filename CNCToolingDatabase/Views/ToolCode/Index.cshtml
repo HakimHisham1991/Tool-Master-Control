@@ -59,49 +59,49 @@
                 <th>
                     <select id="filterToolNumber" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableToolNumbers) { <option value="@v" @(Model.ToolNumberFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableToolNumbers) { if (Model.ToolNumberFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterToolDescription" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableToolDescriptions) { <option value="@v" @(Model.ToolDescriptionFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableToolDescriptions) { if (Model.ToolDescriptionFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterConsumableCode" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableConsumableCodes) { <option value="@v" @(Model.ConsumableCodeFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableConsumableCodes) { if (Model.ConsumableCodeFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterSupplier" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableSuppliers) { <option value="@v" @(Model.SupplierFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableSuppliers) { if (Model.SupplierFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterHolderExtension" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableHolderExtensions) { <option value="@v" @(Model.HolderExtensionFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableHolderExtensions) { if (Model.HolderExtensionFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterDiameter" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableDiameters) { <option value="@v" @(Model.DiameterFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableDiameters) { if (Model.DiameterFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterFluteLength" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableFluteLengths) { <option value="@v" @(Model.FluteLengthFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableFluteLengths) { if (Model.FluteLengthFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterProtrusionLength" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableProtrusionLengths) { <option value="@v" @(Model.ProtrusionLengthFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableProtrusionLengths) { if (Model.ProtrusionLengthFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
@@ -113,37 +113,37 @@
                 <th>
                     <select id="filterArborCode" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableArborCodes) { <option value="@v" @(Model.ArborCodeFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableArborCodes) { if (Model.ArborCodeFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterPartNumber" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailablePartNumbers) { <option value="@v" @(Model.PartNumberFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailablePartNumbers) { if (Model.PartNumberFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterOperation" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableOperations) { <option value="@v" @(Model.OperationFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableOperations) { if (Model.OperationFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterRevision" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableRevisions) { <option value="@v" @(Model.RevisionFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableRevisions) { if (Model.RevisionFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterToolListName" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableToolListNames) { <option value="@v" @(Model.ToolListNameFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableToolListNames) { if (Model.ToolListNameFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterProjectCode" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableProjectCodes) { <option value="@v" @(Model.ProjectCodeFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableProjectCodes) { if (Model.ProjectCodeFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
@@ -155,13 +155,13 @@
                 <th>
                     <select id="filterMachineWorkcenter" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableMachineWorkcenters) { <option value="@v" @(Model.MachineWorkcenterFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableMachineWorkcenters) { if (Model.MachineWorkcenterFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th>
                     <select id="filterCreatedBy" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
-                        @foreach (var v in Model.AvailableCreatedBys) { <option value="@v" @(Model.CreatedByFilter == v ? "selected" : null)>@v</option> }
+                        @foreach (var v in Model.AvailableCreatedBys) { if (Model.CreatedByFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
                 <th></th>

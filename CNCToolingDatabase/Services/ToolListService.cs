@@ -53,8 +53,8 @@ public class ToolListService : IToolListService
         if (!string.IsNullOrWhiteSpace(numberOfToolingFilter) && int.TryParse(numberOfToolingFilter, out var nt))
         {
             var headerIds = headers.Select(h => h.Id).ToList();
-            var toolCounts = await _toolListRepository.GetToolCountsByHeaderIdsAsync(headerIds);
-            headers = headers.Where(h => toolCounts.GetValueOrDefault(h.Id, 0) == nt).ToList();
+            var countsForFilter = await _toolListRepository.GetToolCountsByHeaderIdsAsync(headerIds);
+            headers = headers.Where(h => countsForFilter.GetValueOrDefault(h.Id, 0) == nt).ToList();
         }
 
         headers = await ApplySortAsync(headers, sortColumn, sortDirection);
