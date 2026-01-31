@@ -1153,6 +1153,11 @@ public class SettingsController : Controller
             DbSeeder.ResetPartNumbers(_context);
             return Json(new { success = true, message = "Part numbers reset to seed data successfully." });
         }
+        catch (DbUpdateException ex)
+        {
+            var inner = ex.InnerException?.Message ?? ex.Message;
+            return Json(new { success = false, message = "Reset failed: " + inner });
+        }
         catch (Exception ex)
         {
             return Json(new { success = false, message = ex.Message });

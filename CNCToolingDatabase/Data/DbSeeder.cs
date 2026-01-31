@@ -896,8 +896,11 @@ public static class DbSeeder
         var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
         var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
         var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
+        var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var (name, desc, partRev, drawRev, pcCode, msSpec) in GetPartNumberSeedData())
         {
+            if (string.IsNullOrWhiteSpace(name)) continue;
+            if (!seenNames.Add(name)) continue; // skip duplicate part number names (keep first)
             var pcId = !string.IsNullOrEmpty(pcCode) && projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
             var msId = !string.IsNullOrEmpty(msSpec) && matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
             context.PartNumbers.Add(new PartNumber { Name = name, Description = desc, ProjectCodeId = pcId, PartRev = partRev, DrawingRev = drawRev, MaterialSpecId = msId, RefDrawing = "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
