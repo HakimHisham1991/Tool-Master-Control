@@ -349,13 +349,15 @@ html, body {
     background-color: #E5E7EB;
 }
 
-/* Filter row above column headers - aligned to columns (override global .filter-row flex) */
-.data-table thead tr.filter-row {
+/* Filter row above column headers - aligned to columns (use table-filter-row to avoid .filter-row flex) */
+.data-table thead tr.table-filter-row {
     display: table-row;
 }
 
-.data-table thead tr.filter-row th {
+.data-table thead tr.table-filter-row th {
     display: table-cell;
+
+.data-table thead tr.table-filter-row th {
     font-weight: normal;
     padding: 6px 8px;
     vertical-align: middle;
@@ -364,13 +366,13 @@ html, body {
     white-space: nowrap;
 }
 
-.data-table thead tr.filter-row th:hover {
+.data-table thead tr.table-filter-row th:hover {
     background-color: #EFF6FF;
 }
 
-.data-table thead tr.filter-row th .filter-cell-select {
+.data-table thead tr.table-filter-row th .filter-cell-select {
     width: 100%;
-    min-width: 80px;
+    min-width: 0;
     max-width: 100%;
     padding: 4px 8px;
     font-size: 13px;
