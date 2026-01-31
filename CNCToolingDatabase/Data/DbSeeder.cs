@@ -214,84 +214,17 @@ public static class DbSeeder
         {
             if (context.MachineModels != null && !context.MachineModels.Any())
             {
-                var machineModelSeed = new[] {
-                    ("AERO-426", "Hartford", "Heidenhain", "Mill"),
-                    ("CMX1100V", "DMG", "Fanuc", "Mill"),
-                    ("DMC1150V", "DMG", "Heidenhain", "Mill"),
-                    ("DMC60H", "DMG", "Heidenhain", "Mill"),
-                    ("DMC80 U duoBLOCK", "DMG", "Heidenhain", "Mill"),
-                    ("DMU50", "DMG", "Heidenhain", "Mill"),
-                    ("DMU60 Evo", "DMG", "Heidenhain", "Mill"),
-                    ("DMU65 monoBLOCK", "DMG", "Heidenhain", "Mill"),
-                    ("DMU95 monoBLOCK", "DMG", "Heidenhain", "Mill"),
-                    ("DNM500HS", "Doosan", "Fanuc", "Mill"),
-                    ("DNM750L-II", "Doosan", "Fanuc", "Mill"),
-                    ("E17040-V2", "Ares Seiki", "Siemens", "Mill"),
-                    ("FANUC Robodrill a-T21iFb", "Fanuc", "Fanuc", "Mill"),
-                    ("DVD5200 Dual Spindle", "FFG DMC", "Fanuc", "Mill"),
-                    ("HCN4000 II", "Mazak", "Mazatrol", "Mill"),
-                    ("HCN4000 III", "Mazak", "Mazatrol", "Mill"),
-                    ("HCN6000 C", "Mazak", "Mazatrol", "Mill"),
-                    ("HCN6000 II", "Mazak", "Mazatrol", "Mill"),
-                    ("HiREX-4000", "Hwacheon", "Fanuc", "Mill"),
-                    ("HTC 4000-II", "Mazak", "Mazatrol", "Mill"),
-                    ("Integrex i-200", "Mazak", "Mazatrol", "MillTurn"),
-                    ("Integrex i-630V", "Mazak", "Mazatrol", "MillTurn"),
-                    ("Integrex j-200", "Mazak", "Mazatrol", "MillTurn"),
-                    ("Integrex j-200s", "Mazak", "Mazatrol", "MillTurn"),
-                    ("MYNX 9500", "Doosan", "Heidenhain", "Mill"),
-                    ("NLX1500", "DMG", "Celos", "MillTurn"),
-                    ("NVX5060", "DMG", "Celos", "Mill"),
-                    ("NVX5060 HT", "DMG", "Celos", "Mill"),
-                    ("NVX5100 (3X + Indexer)", "DMG", "Celos", "Mill"),
-                    ("NVX7000 (3X + Indexer)", "DMG", "Celos", "Mill"),
-                    ("PFH4800", "Mazak", "Mazatrol", "Mill"),
-                    ("QT200", "Mazak", "Mazatrol", "Lathe"),
-                    ("QTC200MSY L", "Mazak", "Mazatrol", "Lathe"),
-                    ("QTE200", "Mazak", "Mazatrol", "Lathe"),
-                    ("QTN100", "Mazak", "Mazatrol", "Lathe"),
-                    ("QTN100-II MSY", "Mazak", "Mazatrol", "Lathe"),
-                    ("QTN150", "Mazak", "Mazatrol", "Lathe"),
-                    ("QTN200", "Mazak", "Mazatrol", "Lathe"),
-                    ("SIRIUS-650", "Hwacheon", "Fanuc", "Mill"),
-                    ("TMV1600A", "TongTai", "Fanuc", "Mill"),
-                    ("TMV1600A (Indexer)", "TongTai", "Fanuc", "Mill"),
-                    ("TMV510A-II (Indexer)", "TongTai", "Fanuc", "Mill"),
-                    ("TMV1500A (3X + Indexer)", "TongTai", "Fanuc", "Mill"),
-                    ("Tornos Delta 38-5A", "Tornos", "Fanuc", "Lathe"),
-                    ("UM Dual Spindle Machine", "UGINT", "Mitsubishi", "Mill"),
-                    ("UM500DH", "UGINT", "Mitsubishi", "Mill"),
-                    ("UM500DH (3X + Indexer)", "UGINT", "Mitsubishi", "Mill"),
-                    ("UM-V500", "UGINT", "Mitsubishi", "Mill"),
-                    ("VCN410A", "Mazak", "Mazatrol", "Mill"),
-                    ("VCN410A Indexer", "Mazak", "Mazatrol", "Mill"),
-                    ("VCN410A-II", "Mazak", "Mazatrol", "Mill"),
-                    ("VCN430A-II HS", "Mazak", "Mazatrol", "Mill"),
-                    ("VCN510C", "Mazak", "Mazatrol", "Mill"),
-                    ("VCN510C-II", "Mazak", "Mazatrol", "Mill"),
-                    ("VCN515C", "Mazak", "Mazatrol", "Mill"),
-                    ("VCN530C-HS (3X + Indexer)", "Mazak", "Mazatrol", "Mill"),
-                    ("VCN535", "Mazak", "Mazatrol", "Mill"),
-                    ("VCN700D (3X + Indexer)", "Mazak", "Mazatrol", "Mill"),
-                    ("VCS430A", "Mazak", "Mazatrol", "Mill"),
-                    ("Victor Turning", "Victor", "Fanuc", "Lathe"),
-                    ("Vortex i-630V/6", "Mazak", "Mazatrol", "Mill"),
-                    ("VRX500", "Mazak", "Mazatrol", "Mill"),
-                    ("VRX730-5X II", "Mazak", "Mazatrol", "Mill"),
-                    ("VRXi-500", "Mazak", "Mazatrol", "Mill"),
-                    ("VTC200C", "Mazak", "Mazatrol", "Mill"),
-                };
-                foreach (var (model, builder, controller, type) in machineModelSeed)
+                foreach (var (model, description, type, controller, isActive) in GetMachineModelSeedData())
                 {
                     context.MachineModels.Add(new MachineModel
                     {
                         Model = model,
-                        Description = builder,
+                        Description = description,
                         Type = type,
                         Controller = controller,
                         CreatedDate = DateTime.UtcNow,
                         CreatedBy = "system",
-                        IsActive = true
+                        IsActive = isActive
                     });
                 }
                 context.SaveChanges();
@@ -569,6 +502,61 @@ public static class DbSeeder
         return LoadMachineNameFromExcel(path).ToArray();
     }
 
+    /// <summary>Load Machine Model rows from MACHINE MODEL MASTER.xlsx. Columns: Model, Description (or Machine Builder), Type, Controller, Status (ACTIVE/INACTIVE).</summary>
+    private static List<(string Model, string Description, string Type, string Controller, bool IsActive)> LoadMachineModelFromExcel(string path)
+    {
+        var result = new List<(string, string, string, string, bool)>();
+        if (!File.Exists(path)) return result;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage(new FileInfo(path));
+        var ws = package.Workbook.Worksheets.FirstOrDefault();
+        if (ws?.Dimension == null) return result;
+        int cols = ws.Dimension.End.Column;
+        int rows = ws.Dimension.End.Row;
+        if (rows < 2) return result;
+        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+        {
+            for (int c = 1; c <= totalCols; c++)
+            {
+                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                if (string.IsNullOrEmpty(v)) continue;
+                foreach (var h in headerNames)
+                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+            }
+            return -1;
+        }
+        int colModel = GetCol(ws, cols, "Model", "Machine Model");
+        int colDescription = GetCol(ws, cols, "Description", "Machine Builder");
+        int colType = GetCol(ws, cols, "Type");
+        int colController = GetCol(ws, cols, "Controller");
+        int colStatus = GetCol(ws, cols, "Status", "IsActive");
+        if (colModel < 1) return result;
+        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+        for (int r = 2; r <= rows; r++)
+        {
+            var model = GetStr(ws, r, colModel);
+            if (string.IsNullOrWhiteSpace(model)) continue;
+            var description = GetStr(ws, r, colDescription);
+            var type = GetStr(ws, r, colType);
+            var controller = GetStr(ws, r, colController);
+            var statusVal = GetStr(ws, r, colStatus);
+            var isActive = string.IsNullOrWhiteSpace(statusVal) ||
+                string.Equals(statusVal, "ACTIVE", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(statusVal, "1", StringComparison.Ordinal) ||
+                string.Equals(statusVal, "Yes", StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(statusVal, "INACTIVE", StringComparison.OrdinalIgnoreCase) || string.Equals(statusVal, "0", StringComparison.Ordinal) || string.Equals(statusVal, "No", StringComparison.OrdinalIgnoreCase))
+                isActive = false;
+            result.Add((model, description ?? "", type ?? "", controller ?? "", isActive));
+        }
+        return result;
+    }
+
+    private static (string Model, string Description, string Type, string Controller, bool IsActive)[] GetMachineModelSeedData()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MACHINE MODEL MASTER.xlsx");
+        return LoadMachineModelFromExcel(path).ToArray();
+    }
+
     /// <summary>Load Project Code rows from PROJECT CODE MASTER.xlsx. Columns: Code, Description (or Customer), Project, Status (ACTIVE/INACTIVE).</summary>
     private static List<(string Code, string Description, string Project, bool IsActive)> LoadProjectCodeFromExcel(string path)
     {
@@ -838,27 +826,19 @@ public static class DbSeeder
         if (context.MachineModels == null) return;
         context.MachineModels.RemoveRange(context.MachineModels.ToList());
         context.SaveChanges();
-        var seed = new[] {
-            ("AERO-426", "Hartford", "Heidenhain", "Mill"), ("CMX1100V", "DMG", "Fanuc", "Mill"), ("DMC1150V", "DMG", "Heidenhain", "Mill"), ("DMC60H", "DMG", "Heidenhain", "Mill"),
-            ("DMC80 U duoBLOCK", "DMG", "Heidenhain", "Mill"), ("DMU50", "DMG", "Heidenhain", "Mill"), ("DMU60 Evo", "DMG", "Heidenhain", "Mill"), ("DMU65 monoBLOCK", "DMG", "Heidenhain", "Mill"),
-            ("DMU95 monoBLOCK", "DMG", "Heidenhain", "Mill"), ("DNM500HS", "Doosan", "Fanuc", "Mill"), ("DNM750L-II", "Doosan", "Fanuc", "Mill"), ("E17040-V2", "Ares Seiki", "Siemens", "Mill"),
-            ("FANUC Robodrill a-T21iFb", "Fanuc", "Fanuc", "Mill"), ("DVD5200 Dual Spindle", "FFG DMC", "Fanuc", "Mill"), ("HCN4000 II", "Mazak", "Mazatrol", "Mill"), ("HCN4000 III", "Mazak", "Mazatrol", "Mill"),
-            ("HCN6000 C", "Mazak", "Mazatrol", "Mill"), ("HCN6000 II", "Mazak", "Mazatrol", "Mill"), ("HiREX-4000", "Hwacheon", "Fanuc", "Mill"), ("HTC 4000-II", "Mazak", "Mazatrol", "Mill"),
-            ("Integrex i-200", "Mazak", "Mazatrol", "MillTurn"), ("Integrex i-630V", "Mazak", "Mazatrol", "MillTurn"), ("Integrex j-200", "Mazak", "Mazatrol", "MillTurn"), ("Integrex j-200s", "Mazak", "Mazatrol", "MillTurn"),
-            ("MYNX 9500", "Doosan", "Heidenhain", "Mill"), ("NLX1500", "DMG", "Celos", "MillTurn"), ("NVX5060", "DMG", "Celos", "Mill"), ("NVX5060 HT", "DMG", "Celos", "Mill"),
-            ("NVX5100 (3X + Indexer)", "DMG", "Celos", "Mill"), ("NVX7000 (3X + Indexer)", "DMG", "Celos", "Mill"), ("PFH4800", "Mazak", "Mazatrol", "Mill"),
-            ("QT200", "Mazak", "Mazatrol", "Lathe"), ("QTC200MSY L", "Mazak", "Mazatrol", "Lathe"), ("QTE200", "Mazak", "Mazatrol", "Lathe"), ("QTN100", "Mazak", "Mazatrol", "Lathe"),
-            ("QTN100-II MSY", "Mazak", "Mazatrol", "Lathe"), ("QTN150", "Mazak", "Mazatrol", "Lathe"), ("QTN200", "Mazak", "Mazatrol", "Lathe"), ("SIRIUS-650", "Hwacheon", "Fanuc", "Mill"),
-            ("TMV1600A", "TongTai", "Fanuc", "Mill"), ("TMV1600A (Indexer)", "TongTai", "Fanuc", "Mill"), ("TMV510A-II (Indexer)", "TongTai", "Fanuc", "Mill"), ("TMV1500A (3X + Indexer)", "TongTai", "Fanuc", "Mill"),
-            ("Tornos Delta 38-5A", "Tornos", "Fanuc", "Lathe"), ("UM Dual Spindle Machine", "UGINT", "Mitsubishi", "Mill"), ("UM500DH", "UGINT", "Mitsubishi", "Mill"), ("UM500DH (3X + Indexer)", "UGINT", "Mitsubishi", "Mill"),
-            ("UM-V500", "UGINT", "Mitsubishi", "Mill"), ("VCN410A", "Mazak", "Mazatrol", "Mill"), ("VCN410A Indexer", "Mazak", "Mazatrol", "Mill"), ("VCN410A-II", "Mazak", "Mazatrol", "Mill"),
-            ("VCN430A-II HS", "Mazak", "Mazatrol", "Mill"), ("VCN510C", "Mazak", "Mazatrol", "Mill"), ("VCN510C-II", "Mazak", "Mazatrol", "Mill"), ("VCN515C", "Mazak", "Mazatrol", "Mill"),
-            ("VCN530C-HS (3X + Indexer)", "Mazak", "Mazatrol", "Mill"), ("VCN535", "Mazak", "Mazatrol", "Mill"), ("VCN700D (3X + Indexer)", "Mazak", "Mazatrol", "Mill"), ("VCS430A", "Mazak", "Mazatrol", "Mill"),
-            ("Victor Turning", "Victor", "Fanuc", "Lathe"), ("Vortex i-630V/6", "Mazak", "Mazatrol", "Mill"), ("VRX500", "Mazak", "Mazatrol", "Mill"), ("VRX730-5X II", "Mazak", "Mazatrol", "Mill"),
-            ("VRXi-500", "Mazak", "Mazatrol", "Mill"), ("VTC200C", "Mazak", "Mazatrol", "Mill"),
-        };
-        foreach (var (model, builder, controller, type) in seed)
-            context.MachineModels.Add(new MachineModel { Model = model, Description = builder, Type = type, Controller = controller, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        foreach (var (model, description, type, controller, isActive) in GetMachineModelSeedData())
+        {
+            context.MachineModels.Add(new MachineModel
+            {
+                Model = model,
+                Description = description,
+                Type = type,
+                Controller = controller,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = "system",
+                IsActive = isActive
+            });
+        }
         context.SaveChanges();
     }
 
