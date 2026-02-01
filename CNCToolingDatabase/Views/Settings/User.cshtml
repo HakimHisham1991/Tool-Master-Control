@@ -172,6 +172,7 @@
         document.getElementById('username').disabled = false;
         document.getElementById('changePasswordGroup').style.display = 'none';
         document.getElementById('passwordGroup').style.display = 'block';
+        document.getElementById('password').required = true;
         document.getElementById('isActiveGroup').style.display = 'none';
         document.getElementById('userModal').classList.add('active');
     }
@@ -186,6 +187,7 @@
         document.getElementById('isActive').checked = isActive;
         document.getElementById('changePasswordGroup').style.display = 'block';
         document.getElementById('passwordGroup').style.display = 'none';
+        document.getElementById('password').required = false;
         document.getElementById('isActiveGroup').style.display = 'block';
         document.getElementById('userModal').classList.add('active');
     }
