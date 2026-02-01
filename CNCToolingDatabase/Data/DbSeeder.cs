@@ -336,7 +336,7 @@ public static class DbSeeder
         {
             if (context.MaterialSpecs != null && !context.MaterialSpecs.Any())
             {
-                var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MATERIAL SPEC MASTER.xlsx");
+                var excelPath = ResolveMaterialSpecMasterPath();
                 var rows = LoadMaterialSpecFromExcel(excelPath);
                 if (rows.Count > 0)
                 {
@@ -734,11 +734,30 @@ public static class DbSeeder
         return result;
     }
 
+    /// <summary>Resolve path to MATERIAL SPEC MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    private static string? ResolveMaterialSpecMasterPath()
+    {
+        const string fileName = "MATERIAL SPEC MASTER.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return null;
+    }
+
     /// <summary>Load Material Spec rows from MATERIAL SPEC MASTER.xlsx. Columns: Material Specification (On Drawing), Material Specification (Purchased), General Name, Material Supply Condition (Purchased), Material Type.</summary>
-    private static List<(string Spec, string MaterialSpecPurchased, string Material, string MaterialSupplyConditionPurchased, string MaterialType)> LoadMaterialSpecFromExcel(string path)
+    private static List<(string Spec, string MaterialSpecPurchased, string Material, string MaterialSupplyConditionPurchased, string MaterialType)> LoadMaterialSpecFromExcel(string? path)
     {
         var result = new List<(string, string, string, string, string)>();
-        if (!File.Exists(path)) return result;
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return result;
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         using var package = new ExcelPackage(new FileInfo(path));
         var ws = package.Workbook.Worksheets.FirstOrDefault();
@@ -996,7 +1015,7 @@ public static class DbSeeder
         }
         context.MaterialSpecs.RemoveRange(context.MaterialSpecs.ToList());
         context.SaveChanges();
-        var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MATERIAL SPEC MASTER.xlsx");
+        var excelPath = ResolveMaterialSpecMasterPath();
         var rows = LoadMaterialSpecFromExcel(excelPath);
         if (rows.Count > 0)
         {
