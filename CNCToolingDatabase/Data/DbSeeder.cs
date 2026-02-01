@@ -337,40 +337,40 @@ public static class DbSeeder
             if (context.MaterialSpecs != null && !context.MaterialSpecs.Any())
             {
                 var excelPath = ResolveMaterialSpecMasterPath();
+                if (string.IsNullOrEmpty(excelPath))
+                    throw new InvalidOperationException("Missing file: MATERIAL SPEC MASTER.xlsx not found. Place the file in the Data folder.");
                 var rows = LoadMaterialSpecFromExcel(excelPath);
-                if (rows.Count > 0)
+                if (rows.Count == 0)
+                    throw new InvalidOperationException("No data loaded: MATERIAL SPEC MASTER.xlsx is empty or column headers do not match. Expected headers: Material Specification (On Drawing), General Name; optional: Material Specification (Purchased), Material Supply Condition (Purchased), Material Type, Status.");
+                var seen = new HashSet<(string, string)>();
+                foreach (var (spec, specPurchased, material, supplyCondition, materialType, isActive) in rows)
                 {
-                    var seen = new HashSet<(string, string)>();
-                    foreach (var (spec, specPurchased, material, supplyCondition, materialType) in rows)
+                    var key = ((spec ?? "").ToLowerInvariant(), (material ?? "").ToLowerInvariant());
+                    if (seen.Contains(key)) continue;
+                    seen.Add(key);
+                    context.MaterialSpecs.Add(new MaterialSpec
                     {
-                        var key = ((spec ?? "").ToLowerInvariant(), (material ?? "").ToLowerInvariant());
-                        if (seen.Contains(key)) continue;
-                        seen.Add(key);
-                        context.MaterialSpecs.Add(new MaterialSpec
-                        {
-                            Spec = spec ?? "",
-                            MaterialSpecPurchased = specPurchased ?? "",
-                            Material = material ?? "",
-                            MaterialSupplyConditionPurchased = supplyCondition ?? "",
-                            MaterialType = materialType ?? "",
-                            CreatedDate = DateTime.UtcNow,
-                            CreatedBy = "system",
-                            IsActive = true
-                        });
-                    }
-                }
-                else
-                {
-                    var fallback = new[] { ("ABP3-2101", "", "Aluminum Alloy 7075", "", ""), ("BMS7-304", "", "Aluminum Alloy 7075", "", "") };
-                    foreach (var (spec, specPurchased, material, supplyCondition, materialType) in fallback)
-                    {
-                        context.MaterialSpecs.Add(new MaterialSpec { Spec = spec, MaterialSpecPurchased = specPurchased, Material = material, MaterialSupplyConditionPurchased = supplyCondition, MaterialType = materialType, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
-                    }
+                        Spec = spec ?? "",
+                        MaterialSpecPurchased = specPurchased ?? "",
+                        Material = material ?? "",
+                        MaterialSupplyConditionPurchased = supplyCondition ?? "",
+                        MaterialType = materialType ?? "",
+                        CreatedDate = DateTime.UtcNow,
+                        CreatedBy = "system",
+                        IsActive = isActive
+                    });
                 }
                 context.SaveChanges();
             }
         }
-        catch { }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
         
         try
         {
@@ -757,47 +757,72 @@ public static class DbSeeder
         return null;
     }
 
-    /// <summary>Load Material Spec rows from MATERIAL SPEC MASTER.xlsx. Columns: Material Specification (On Drawing), Material Specification (Purchased), General Name, Material Supply Condition (Purchased), Material Type.</summary>
-    private static List<(string Spec, string MaterialSpecPurchased, string Material, string MaterialSupplyConditionPurchased, string MaterialType)> LoadMaterialSpecFromExcel(string? path)
+    /// <summary>Load Material Spec rows from MATERIAL SPEC MASTER.xlsx. Throws on missing path, file not found, or cannot open/corrupted. Returns empty list only when file has no data or headers don't match.</summary>
+    private static List<(string Spec, string MaterialSpecPurchased, string Material, string MaterialSupplyConditionPurchased, string MaterialType, bool IsActive)> LoadMaterialSpecFromExcel(string? path)
     {
-        var result = new List<(string, string, string, string, string)>();
-        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return result;
+        var result = new List<(string, string, string, string, string, bool)>();
+        if (string.IsNullOrEmpty(path))
+            return result;
+        if (!File.Exists(path))
+            throw new InvalidOperationException("Missing file: MATERIAL SPEC MASTER.xlsx not found at " + path + ". Place the file in the Data folder.");
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using var package = new ExcelPackage(new FileInfo(path));
-        var ws = package.Workbook.Worksheets.FirstOrDefault();
-        if (ws?.Dimension == null) return result;
-        int cols = ws.Dimension.End.Column;
-        int rows = ws.Dimension.End.Row;
-        if (rows < 2) return result;
-        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+        try
         {
-            for (int c = 1; c <= totalCols; c++)
+            using var package = new ExcelPackage(new FileInfo(path));
+            var ws = package.Workbook.Worksheets.FirstOrDefault();
+            if (ws?.Dimension == null) return result;
+            int cols = ws.Dimension.End.Column;
+            int rows = ws.Dimension.End.Row;
+            if (rows < 2) return result;
+            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
             {
-                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                if (string.IsNullOrEmpty(v)) continue;
-                foreach (var h in headerNames)
-                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+                for (int c = 1; c <= totalCols; c++)
+                {
+                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                    if (string.IsNullOrEmpty(v)) continue;
+                    foreach (var h in headerNames)
+                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+                }
+                return -1;
             }
-            return -1;
+            int colSpec = GetCol(ws, cols, "Material Specification (On Drawing)", "Material Spec. (On Drawing)", "Material Spec.");
+            int colSpecPurchased = GetCol(ws, cols, "Material Specification (Purchased)", "Material Spec. (Purchased)");
+            int colMaterial = GetCol(ws, cols, "General Name", "Material");
+            int colSupplyCondition = GetCol(ws, cols, "Material Supply Condition (Purchased)", "Material Supply Condition");
+            int colMaterialType = GetCol(ws, cols, "Material Type");
+            int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
+            if (colSpec < 1 && colMaterial < 1) return result;
+            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+            static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
+            {
+                var val = GetStr(sheet, row, col);
+                if (string.IsNullOrWhiteSpace(val)) return true;
+                if (string.Equals(val, "INACTIVE", StringComparison.OrdinalIgnoreCase)) return false;
+                if (string.Equals(val, "NO", StringComparison.OrdinalIgnoreCase)) return false;
+                if (string.Equals(val, "0", StringComparison.OrdinalIgnoreCase)) return false;
+                return true;
+            }
+            for (int r = 2; r <= rows; r++)
+            {
+                var spec = GetStr(ws, r, colSpec);
+                var specPurchased = GetStr(ws, r, colSpecPurchased);
+                var material = GetStr(ws, r, colMaterial);
+                var supplyCondition = GetStr(ws, r, colSupplyCondition);
+                var materialType = GetStr(ws, r, colMaterialType);
+                var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
+                if (string.IsNullOrWhiteSpace(spec) && string.IsNullOrWhiteSpace(material)) continue;
+                result.Add((spec ?? "", specPurchased ?? "", material ?? "", supplyCondition ?? "", materialType ?? "", isActive));
+            }
+            return result;
         }
-        int colSpec = GetCol(ws, cols, "Material Specification (On Drawing)", "Material Spec. (On Drawing)", "Material Spec.");
-        int colSpecPurchased = GetCol(ws, cols, "Material Specification (Purchased)", "Material Spec. (Purchased)");
-        int colMaterial = GetCol(ws, cols, "General Name", "Material");
-        int colSupplyCondition = GetCol(ws, cols, "Material Supply Condition (Purchased)", "Material Supply Condition");
-        int colMaterialType = GetCol(ws, cols, "Material Type");
-        if (colSpec < 1 && colMaterial < 1) return result;
-        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
-        for (int r = 2; r <= rows; r++)
+        catch (InvalidOperationException)
         {
-            var spec = GetStr(ws, r, colSpec);
-            var specPurchased = GetStr(ws, r, colSpecPurchased);
-            var material = GetStr(ws, r, colMaterial);
-            var supplyCondition = GetStr(ws, r, colSupplyCondition);
-            var materialType = GetStr(ws, r, colMaterialType);
-            if (string.IsNullOrWhiteSpace(spec) && string.IsNullOrWhiteSpace(material)) continue;
-            result.Add((spec ?? "", specPurchased ?? "", material ?? "", supplyCondition ?? "", materialType ?? ""));
+            throw;
         }
-        return result;
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Cannot open file or file corrupted: " + ex.Message, ex);
+        }
     }
 
     private static (string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec, int Sequence)[] GetPartNumberSeedData()
@@ -1020,36 +1045,28 @@ public static class DbSeeder
         context.MaterialSpecs.RemoveRange(context.MaterialSpecs.ToList());
         context.SaveChanges();
         var excelPath = ResolveMaterialSpecMasterPath();
+        if (string.IsNullOrEmpty(excelPath))
+            throw new InvalidOperationException("Missing file: MATERIAL SPEC MASTER.xlsx not found. Place the file in the Data folder.");
         var rows = LoadMaterialSpecFromExcel(excelPath);
-        if (rows.Count > 0)
+        if (rows.Count == 0)
+            throw new InvalidOperationException("No data loaded: MATERIAL SPEC MASTER.xlsx is empty or column headers do not match. Expected headers: Material Specification (On Drawing), General Name; optional: Material Specification (Purchased), Material Supply Condition (Purchased), Material Type, Status.");
+        var seen = new HashSet<(string, string)>();
+        foreach (var (spec, specPurchased, material, supplyCondition, materialType, isActive) in rows)
         {
-            // Deduplicate by (Spec, Material) - table has unique index on these; keep first row per pair
-            var seen = new HashSet<(string, string)>();
-            foreach (var (spec, specPurchased, material, supplyCondition, materialType) in rows)
+            var key = ((spec ?? "").ToLowerInvariant(), (material ?? "").ToLowerInvariant());
+            if (seen.Contains(key)) continue;
+            seen.Add(key);
+            context.MaterialSpecs.Add(new MaterialSpec
             {
-                var key = ((spec ?? "").ToLowerInvariant(), (material ?? "").ToLowerInvariant());
-                if (seen.Contains(key)) continue;
-                seen.Add(key);
-                context.MaterialSpecs.Add(new MaterialSpec
-                {
-                    Spec = spec ?? "",
-                    MaterialSpecPurchased = specPurchased ?? "",
-                    Material = material ?? "",
-                    MaterialSupplyConditionPurchased = supplyCondition ?? "",
-                    MaterialType = materialType ?? "",
-                    CreatedDate = DateTime.UtcNow,
-                    CreatedBy = "system",
-                    IsActive = true
-                });
-            }
-        }
-        else
-        {
-            var fallback = new[] { ("ABP3-2101", "", "Aluminum Alloy 7075", "", ""), ("BMS7-304", "", "Aluminum Alloy 7075", "", "") };
-            foreach (var (spec, specPurchased, material, supplyCondition, materialType) in fallback)
-            {
-                context.MaterialSpecs.Add(new MaterialSpec { Spec = spec, MaterialSpecPurchased = specPurchased, Material = material, MaterialSupplyConditionPurchased = supplyCondition, MaterialType = materialType, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
-            }
+                Spec = spec ?? "",
+                MaterialSpecPurchased = specPurchased ?? "",
+                Material = material ?? "",
+                MaterialSupplyConditionPurchased = supplyCondition ?? "",
+                MaterialType = materialType ?? "",
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = "system",
+                IsActive = isActive
+            });
         }
         context.SaveChanges();
     }
