@@ -3,7 +3,7 @@ namespace CNCToolingDatabase.Middleware;
 public class AuthenticationMiddleware
 {
     private readonly RequestDelegate _next;
-    private static readonly string[] PublicPaths = { "/login", "/account/login", "/css", "/js", "/lib" };
+    private static readonly string[] PublicPaths = { "/login", "/account/login", "/account/reloadusers", "/account/logindebug", "/css", "/js", "/lib" };
     
     public AuthenticationMiddleware(RequestDelegate next)
     {
