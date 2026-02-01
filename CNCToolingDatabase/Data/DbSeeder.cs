@@ -176,6 +176,7 @@ public static class DbSeeder
                     command.ExecuteNonQuery();
                 }
                 try { command.CommandText = "ALTER TABLE MachineModels ADD COLUMN Controller TEXT;"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE ToolListHeaders ADD COLUMN MaterialSpecId INTEGER REFERENCES MaterialSpecs(Id);"; command.ExecuteNonQuery(); } catch { }
             }
             finally
             {
@@ -394,7 +395,10 @@ public static class DbSeeder
         {
             var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
             var toolCodeList = LoadToolCodeUniqueFromExcel(excelPath);
-            var masterLookup = toolCodeList.ToDictionary(t => t.Item2, t => (t.Item1, t.Item3, t.Item4, t.Item5, t.Item6));
+            // Group by ConsumableCode (Item2) and take first row per key so duplicate codes in Excel do not throw
+            var masterLookup = toolCodeList
+                .GroupBy(t => t.ConsumableCode, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => { var f = g.First(); return (f.SystemToolName, f.Supplier, f.Diameter, f.FluteLength, f.CornerRadius); }, StringComparer.OrdinalIgnoreCase);
             var toolLists = new List<ToolListHeader>
             {
                 CreateToolListWithDetails("V5754221420001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
@@ -1085,7 +1089,10 @@ public static class DbSeeder
         context.SaveChanges();
         var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
         var toolCodeList = LoadToolCodeUniqueFromExcel(excelPath);
-        var masterLookup = toolCodeList.ToDictionary(t => t.Item2, t => (t.Item1, t.Item3, t.Item4, t.Item5, t.Item6));
+        // Group by ConsumableCode and take first row per key so duplicate codes in Excel do not throw
+        var masterLookup = toolCodeList
+            .GroupBy(t => t.ConsumableCode, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => { var f = g.First(); return (f.SystemToolName, f.Supplier, f.Diameter, f.FluteLength, f.CornerRadius); }, StringComparer.OrdinalIgnoreCase);
         var toolLists = new List<ToolListHeader>
         {
             CreateToolListWithDetails("V5754221420001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
