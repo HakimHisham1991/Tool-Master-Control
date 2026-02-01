@@ -127,11 +127,12 @@ public class SettingsController : Controller
         try
         {
             DbSeeder.ResetUsers(_context);
-            return Json(new { success = true, message = "Users reset to seed data successfully." });
+            return Json(new { success = true, message = "Users reloaded from USER MASTER.xlsx successfully." });
         }
         catch (Exception ex)
         {
-            return Json(new { success = false, message = ex.Message });
+            var msg = ex.InnerException?.Message ?? ex.Message;
+            return Json(new { success = false, message = msg });
         }
     }
     

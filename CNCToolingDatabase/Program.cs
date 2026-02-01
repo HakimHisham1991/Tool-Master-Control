@@ -70,6 +70,7 @@ using (var scope = app.Services.CreateScope())
         EnsureColumn(conn, "MaterialSpecs", "MaterialSpecPurchased", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(conn, "MaterialSpecs", "MaterialSupplyConditionPurchased", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(conn, "MaterialSpecs", "MaterialType", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(conn, "Users", "IsActive", "INTEGER NOT NULL DEFAULT 1");
     }
     finally
     {

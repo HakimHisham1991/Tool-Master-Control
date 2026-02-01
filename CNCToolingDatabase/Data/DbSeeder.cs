@@ -191,12 +191,18 @@ public static class DbSeeder
             // Tables might already exist or be created by EF, ignore
         }
         
-        // Seed settings tables only when empty; never wipe existing data
+        // Seed users from USER MASTER.xlsx only when empty; no hard-coded fallback
         if (!context.Users.Any())
         {
-            foreach (var (displayName, username, password) in new[] { ("Adib Jamil", "adib.jamil", "123"), ("Bakhari Hussin", "bakhari.hussin", "123"), ("Faiq Faizul", "faiq.faizul", "123"), ("Hakim Hisham", "hakim.hisham", "123"), ("Hakim Ramaly", "hakim.ramaly", "123"), ("Ismail Jahrin", "ismail.jahrin", "123"), ("Low Boon Bao", "boon.bao", "123"), ("Nik Faiszal Abdullah", "nik.faiszal", "123"), ("Tan Chee Wei", "chee.wei", "123") })
+            var userMasterPath = ResolveUserMasterPath();
+            if (string.IsNullOrEmpty(userMasterPath))
+                throw new InvalidOperationException("Missing file: USER MASTER.xlsx not found. Place the file in the Data folder.");
+            var userRows = LoadUsersFromExcel(userMasterPath);
+            if (userRows.Count == 0)
+                throw new InvalidOperationException("No data loaded: USER MASTER.xlsx is empty or column headers do not match. Expected: Username, Password, Display Name; optional: Status.");
+            foreach (var (username, password, displayName, isActive) in userRows)
             {
-                context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName });
+                context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName, IsActive = isActive, CreatedDate = DateTime.UtcNow });
             }
             context.SaveChanges();
         }
@@ -738,6 +744,89 @@ public static class DbSeeder
         return result;
     }
 
+    /// <summary>Resolve path to USER MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    private static string? ResolveUserMasterPath()
+    {
+        const string fileName = "USER MASTER.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return null;
+    }
+
+    /// <summary>Load User rows from USER MASTER.xlsx. Throws on file not found or cannot open/corrupted. Columns: Username, Password, Display Name; optional: Status (ACTIVE/INACTIVE).</summary>
+    private static List<(string Username, string Password, string DisplayName, bool IsActive)> LoadUsersFromExcel(string path)
+    {
+        var result = new List<(string, string, string, bool)>();
+        if (string.IsNullOrEmpty(path))
+            return result;
+        if (!File.Exists(path))
+            throw new InvalidOperationException("Missing file: USER MASTER.xlsx not found at " + path + ". Place the file in the Data folder.");
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        try
+        {
+            using var package = new ExcelPackage(new FileInfo(path));
+            var ws = package.Workbook.Worksheets.FirstOrDefault();
+            if (ws?.Dimension == null) return result;
+            int cols = ws.Dimension.End.Column;
+            int rows = ws.Dimension.End.Row;
+            if (rows < 2) return result;
+            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+            {
+                for (int c = 1; c <= totalCols; c++)
+                {
+                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                    if (string.IsNullOrEmpty(v)) continue;
+                    foreach (var h in headerNames)
+                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+                }
+                return -1;
+            }
+            int colUsername = GetCol(ws, cols, "Username", "User Name");
+            int colPassword = GetCol(ws, cols, "Password");
+            int colDisplayName = GetCol(ws, cols, "Display Name", "DisplayName");
+            int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
+            if (colUsername < 1) return result;
+            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+            static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
+            {
+                var val = GetStr(sheet, row, col);
+                if (string.IsNullOrWhiteSpace(val)) return true;
+                if (string.Equals(val, "INACTIVE", StringComparison.OrdinalIgnoreCase)) return false;
+                if (string.Equals(val, "NO", StringComparison.OrdinalIgnoreCase)) return false;
+                if (string.Equals(val, "0", StringComparison.OrdinalIgnoreCase)) return false;
+                return true;
+            }
+            for (int r = 2; r <= rows; r++)
+            {
+                var username = GetStr(ws, r, colUsername);
+                if (string.IsNullOrWhiteSpace(username)) continue;
+                var password = GetStr(ws, r, colPassword);
+                var displayName = GetStr(ws, r, colDisplayName);
+                var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
+                result.Add((username, password ?? "", displayName ?? username, isActive));
+            }
+            return result;
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Cannot open file or file corrupted: " + ex.Message, ex);
+        }
+    }
+
     /// <summary>Resolve path to MATERIAL SPEC MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
     private static string? ResolveMaterialSpecMasterPath()
     {
@@ -921,8 +1010,16 @@ public static class DbSeeder
     {
         context.Users.RemoveRange(context.Users.ToList());
         context.SaveChanges();
-        foreach (var (displayName, username, password) in new[] { ("Adib Jamil", "adib.jamil", "123"), ("Bakhari Hussin", "bakhari.hussin", "123"), ("Faiq Faizul", "faiq.faizul", "123"), ("Hakim Hisham", "hakim.hisham", "123"), ("Hakim Ramaly", "hakim.ramaly", "123"), ("Ismail Jahrin", "ismail.jahrin", "123"), ("Low Boon Bao", "boon.bao", "123"), ("Nik Faiszal Abdullah", "nik.faiszal", "123"), ("Tan Chee Wei", "chee.wei", "123") })
-            context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName });
+        var userMasterPath = ResolveUserMasterPath();
+        if (string.IsNullOrEmpty(userMasterPath))
+            throw new InvalidOperationException("Missing file: USER MASTER.xlsx not found. Place the file in the Data folder.");
+        var userRows = LoadUsersFromExcel(userMasterPath);
+        if (userRows.Count == 0)
+            throw new InvalidOperationException("No data loaded: USER MASTER.xlsx is empty or column headers do not match. Expected: Username, Password, Display Name; optional: Status.");
+        foreach (var (username, password, displayName, isActive) in userRows)
+        {
+            context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName, IsActive = isActive, CreatedDate = DateTime.UtcNow });
+        }
         context.SaveChanges();
     }
 
