@@ -797,6 +797,16 @@ public static class DbSeeder
             int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
             if (colUsername < 1 || colPassword < 1) return result;
             static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+            static string GetPasswordStr(ExcelWorksheet sheet, int row, int col)
+            {
+                if (col < 1) return "";
+                var v = sheet.Cells[row, col].Value;
+                if (v == null) return "";
+                if (v is double d) return d == Math.Floor(d) ? ((long)d).ToString() : d.ToString(CultureInfo.InvariantCulture);
+                if (v is float f) return f == Math.Floor(f) ? ((long)f).ToString() : f.ToString(CultureInfo.InvariantCulture);
+                if (v is long or int) return v.ToString() ?? "";
+                return v.ToString()?.Trim() ?? "";
+            }
             static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
             {
                 var val = GetStr(sheet, row, col);
@@ -810,7 +820,7 @@ public static class DbSeeder
             {
                 var username = GetStr(ws, r, colUsername);
                 if (string.IsNullOrWhiteSpace(username)) continue;
-                var password = GetStr(ws, r, colPassword);
+                var password = GetPasswordStr(ws, r, colPassword);
                 var displayName = GetStr(ws, r, colDisplayName);
                 var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
                 result.Add((username, password ?? "", displayName ?? username, isActive));

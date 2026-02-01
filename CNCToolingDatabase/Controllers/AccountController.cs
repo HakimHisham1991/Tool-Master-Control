@@ -31,7 +31,9 @@ public class AccountController : Controller
             return View(model);
         }
         
-        var user = await _authService.AuthenticateAsync(model.Username, model.Password);
+        var username = (model.Username ?? "").Trim();
+        var password = (model.Password ?? "").Trim();
+        var user = await _authService.AuthenticateAsync(username, password);
         if (user == null)
         {
             model.ErrorMessage = "Invalid username or password";

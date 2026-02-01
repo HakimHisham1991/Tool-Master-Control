@@ -28,6 +28,9 @@ public class UserRepository : IUserRepository
     public async Task<bool> ValidateCredentialsAsync(string username, string password)
     {
         var user = await GetByUsernameAsync(username);
-        return user != null && user.Password == password;
+        if (user == null) return false;
+        var stored = user.Password ?? "";
+        var entered = password ?? "";
+        return stored == entered;
     }
 }
