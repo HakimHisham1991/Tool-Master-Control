@@ -286,15 +286,21 @@ public static class DbSeeder
         {
             if (context.CamLeaders != null && !context.CamLeaders.Any())
             {
-                var camLeaderSeed = new[] { ("Venkatesan", "Director"), ("Desmond", "HOD"), ("Adib Jamil", "CAM Manager") };
-                foreach (var (name, position) in camLeaderSeed)
+                var camLeaderPath = ResolveCamLeaderPath();
+                if (string.IsNullOrEmpty(camLeaderPath))
+                    throw new InvalidOperationException("Missing file: CAM LEADER - MASTER.xlsx not found. Place the file in the Data folder.");
+                var camLeaderRows = LoadCamLeaderFromExcel(camLeaderPath);
+                if (camLeaderRows.Count == 0)
+                    throw new InvalidOperationException("No data loaded: CAM LEADER - MASTER.xlsx is empty or column headers do not match. Expected: Name, Position; optional: Status (ACTIVE/INACTIVE).");
+                foreach (var (name, position, isActive) in camLeaderRows)
                 {
-                    context.CamLeaders.Add(new CamLeader { Name = name, Description = position, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    context.CamLeaders.Add(new CamLeader { Name = name, Description = position ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
                 }
                 context.SaveChanges();
             }
         }
-        catch { }
+        catch (InvalidOperationException) { throw; }
+        catch (Exception) { }
         
         try
         {
@@ -302,10 +308,10 @@ public static class DbSeeder
             {
                 var camProgrammerPath = ResolveCamProgrammerPath();
                 if (string.IsNullOrEmpty(camProgrammerPath))
-                    throw new InvalidOperationException("Missing file: CAM PROGRAMMER.xlsx not found. Place the file in the Data folder.");
+                    throw new InvalidOperationException("Missing file: CAM PROGRAMMER - MASTER.xlsx not found. Place the file in the Data folder.");
                 var camProgrammerRows = LoadCamProgrammerFromExcel(camProgrammerPath);
                 if (camProgrammerRows.Count == 0)
-                    throw new InvalidOperationException("No data loaded: CAM PROGRAMMER.xlsx is empty or column headers do not match. Expected: Name, Location; optional: Status (ACTIVE/INACTIVE).");
+                    throw new InvalidOperationException("No data loaded: CAM PROGRAMMER - MASTER.xlsx is empty or column headers do not match. Expected: Name, Location; optional: Status (ACTIVE/INACTIVE).");
                 foreach (var (name, location, isActive) in camProgrammerRows)
                 {
                     context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
@@ -843,10 +849,10 @@ public static class DbSeeder
         }
     }
 
-    /// <summary>Resolve path to CAM PROGRAMMER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    /// <summary>Resolve path to CAM PROGRAMMER - MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
     private static string? ResolveCamProgrammerPath()
     {
-        const string fileName = "CAM PROGRAMMER.xlsx";
+        const string fileName = "CAM PROGRAMMER - MASTER.xlsx";
         var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
         if (File.Exists(baseData)) return baseData;
         var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
@@ -862,14 +868,14 @@ public static class DbSeeder
         return null;
     }
 
-    /// <summary>Load CAM Programmer rows from CAM PROGRAMMER.xlsx. Throws on file not found or cannot open/corrupted. Columns: No., Name, Location; optional: Status (ACTIVE/INACTIVE).</summary>
+    /// <summary>Load CAM Programmer rows from CAM PROGRAMMER - MASTER.xlsx. Throws on file not found or cannot open/corrupted. Columns: No., Name, Location; optional: Status (ACTIVE/INACTIVE).</summary>
     private static List<(string Name, string? Location, bool IsActive)> LoadCamProgrammerFromExcel(string path)
     {
         var result = new List<(string, string?, bool)>();
         if (string.IsNullOrEmpty(path))
             return result;
         if (!File.Exists(path))
-            throw new InvalidOperationException("Missing file: CAM PROGRAMMER.xlsx not found at " + path + ". Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: CAM PROGRAMMER - MASTER.xlsx not found at " + path + ". Place the file in the Data folder.");
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
@@ -911,6 +917,87 @@ public static class DbSeeder
                 var location = colLocation >= 1 ? GetStr(ws, r, colLocation) : null;
                 var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
                 result.Add((name, string.IsNullOrWhiteSpace(location) ? null : location, isActive));
+            }
+            return result;
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Cannot open file or file corrupted: " + ex.Message, ex);
+        }
+    }
+
+    /// <summary>Resolve path to CAM LEADER - MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    private static string? ResolveCamLeaderPath()
+    {
+        const string fileName = "CAM LEADER - MASTER.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return null;
+    }
+
+    /// <summary>Load CAM Leader rows from CAM LEADER - MASTER.xlsx. Throws on file not found or cannot open/corrupted. Columns: No., Name, Position; optional: Status (ACTIVE/INACTIVE).</summary>
+    private static List<(string Name, string? Position, bool IsActive)> LoadCamLeaderFromExcel(string path)
+    {
+        var result = new List<(string, string?, bool)>();
+        if (string.IsNullOrEmpty(path))
+            return result;
+        if (!File.Exists(path))
+            throw new InvalidOperationException("Missing file: CAM LEADER - MASTER.xlsx not found at " + path + ". Place the file in the Data folder.");
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        try
+        {
+            using var package = new ExcelPackage(new FileInfo(path));
+            var ws = package.Workbook.Worksheets.FirstOrDefault();
+            if (ws?.Dimension == null) return result;
+            int cols = ws.Dimension.End.Column;
+            int rows = ws.Dimension.End.Row;
+            if (rows < 2) return result;
+            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+            {
+                for (int c = 1; c <= totalCols; c++)
+                {
+                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                    if (string.IsNullOrEmpty(v)) continue;
+                    foreach (var h in headerNames)
+                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+                }
+                return -1;
+            }
+            int colName = GetCol(ws, cols, "Name");
+            int colPosition = GetCol(ws, cols, "Position");
+            int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
+            if (colName < 1) return result;
+            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+            static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
+            {
+                var val = GetStr(sheet, row, col);
+                if (string.IsNullOrWhiteSpace(val)) return true;
+                if (string.Equals(val, "INACTIVE", StringComparison.OrdinalIgnoreCase)) return false;
+                if (string.Equals(val, "NO", StringComparison.OrdinalIgnoreCase)) return false;
+                if (string.Equals(val, "0", StringComparison.OrdinalIgnoreCase)) return false;
+                return true;
+            }
+            for (int r = 2; r <= rows; r++)
+            {
+                var name = GetStr(ws, r, colName);
+                if (string.IsNullOrWhiteSpace(name)) continue;
+                var position = colPosition >= 1 ? GetStr(ws, r, colPosition) : null;
+                var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
+                result.Add((name, string.IsNullOrWhiteSpace(position) ? null : position, isActive));
             }
             return result;
         }
@@ -1192,8 +1279,16 @@ public static class DbSeeder
         if (context.CamLeaders == null) return;
         context.CamLeaders.RemoveRange(context.CamLeaders.ToList());
         context.SaveChanges();
-        foreach (var (name, position) in new[] { ("Venkatesan", "Director"), ("Desmond", "HOD"), ("Adib Jamil", "CAM Manager") })
-            context.CamLeaders.Add(new CamLeader { Name = name, Description = position, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        var path = ResolveCamLeaderPath();
+        if (string.IsNullOrEmpty(path))
+            throw new InvalidOperationException("Missing file: CAM LEADER - MASTER.xlsx not found. Place the file in the Data folder.");
+        var rows = LoadCamLeaderFromExcel(path);
+        if (rows.Count == 0)
+            throw new InvalidOperationException("No data loaded: CAM LEADER - MASTER.xlsx is empty or column headers do not match. Expected: Name, Position; optional: Status (ACTIVE/INACTIVE).");
+        foreach (var (name, position, isActive) in rows)
+        {
+            context.CamLeaders.Add(new CamLeader { Name = name, Description = position ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
+        }
         context.SaveChanges();
     }
 
@@ -1204,10 +1299,10 @@ public static class DbSeeder
         context.SaveChanges();
         var path = ResolveCamProgrammerPath();
         if (string.IsNullOrEmpty(path))
-            throw new InvalidOperationException("Missing file: CAM PROGRAMMER.xlsx not found. Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: CAM PROGRAMMER - MASTER.xlsx not found. Place the file in the Data folder.");
         var rows = LoadCamProgrammerFromExcel(path);
         if (rows.Count == 0)
-            throw new InvalidOperationException("No data loaded: CAM PROGRAMMER.xlsx is empty or column headers do not match. Expected: Name, Location; optional: Status (ACTIVE/INACTIVE).");
+            throw new InvalidOperationException("No data loaded: CAM PROGRAMMER - MASTER.xlsx is empty or column headers do not match. Expected: Name, Location; optional: Status (ACTIVE/INACTIVE).");
         foreach (var (name, location, isActive) in rows)
         {
             context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
