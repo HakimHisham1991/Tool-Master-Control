@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CNCToolingDatabase.Data;
@@ -18,12 +17,11 @@ public class AccountController : Controller
         _dbContext = dbContext;
     }
 
-    /// <summary>Development only: returns user count and usernames (no passwords) to verify login data.</summary>
-    [HttpGet("/login/debug")]
+    /// <summary>Returns user count and usernames (no passwords) to verify login data. Use /Account/LoginDebug.</summary>
+    [HttpGet]
+    [Route("Account/LoginDebug")]
     public async Task<IActionResult> LoginDebug()
     {
-        if (!HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
-            return NotFound();
         var users = await _dbContext.Users
             .Select(u => new { u.Username, u.IsActive, PasswordLength = (u.Password ?? "").Length })
             .ToListAsync();
