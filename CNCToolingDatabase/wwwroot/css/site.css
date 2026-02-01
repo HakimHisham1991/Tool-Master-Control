@@ -363,6 +363,14 @@ html, body {
     background-color: #E5E7EB;
 }
 
+/* Material Specification (On Drawing) Management: 2-line wrap headers */
+.material-spec-table th {
+    white-space: normal;
+    max-width: 140px;
+    line-height: 1.35;
+    vertical-align: bottom;
+}
+
 /* Filter row above column headers - aligned to columns (use table-filter-row to avoid .filter-row flex) */
 .data-table thead tr.table-filter-row {
     display: table-row;
