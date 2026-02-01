@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Models.ViewModels;
 using CNCToolingDatabase.Services;
 
@@ -7,12 +10,26 @@ namespace CNCToolingDatabase.Controllers;
 public class AccountController : Controller
 {
     private readonly IAuthService _authService;
-    
-    public AccountController(IAuthService authService)
+    private readonly ApplicationDbContext _dbContext;
+
+    public AccountController(IAuthService authService, ApplicationDbContext dbContext)
     {
         _authService = authService;
+        _dbContext = dbContext;
     }
-    
+
+    /// <summary>Development only: returns user count and usernames (no passwords) to verify login data.</summary>
+    [HttpGet("/login/debug")]
+    public async Task<IActionResult> LoginDebug()
+    {
+        if (!HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+            return NotFound();
+        var users = await _dbContext.Users
+            .Select(u => new { u.Username, u.IsActive, PasswordLength = (u.Password ?? "").Length })
+            .ToListAsync();
+        return Json(new { userCount = users.Count, users });
+    }
+
     [HttpGet("/login")]
     public IActionResult Login()
     {
