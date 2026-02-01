@@ -32,7 +32,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search by Material Specification (On Drawing) or General Name..." class="search-input" id="searchInput" />
+            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search by any column..." class="search-input" id="searchInput" />
         </div>
         <button type="submit" class="btn btn-primary btn-sm">Search</button>
     </form>
@@ -44,7 +44,10 @@
             <tr>
                 <th onclick="sortBy('id')">No. @Html.Raw(GetSortIcon("id", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('materialspec')">Material Specification (On Drawing) @Html.Raw(GetSortIcon("materialspec", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('specpurchased')">Material Specification (Purchased) @Html.Raw(GetSortIcon("specpurchased", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('material')">General Name @Html.Raw(GetSortIcon("material", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('supplycondition')">Material Supply Condition (Purchased) @Html.Raw(GetSortIcon("supplycondition", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('materialtype')">Material Type @Html.Raw(GetSortIcon("materialtype", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('createdby')">Created By @Html.Raw(GetSortIcon("createdby", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('createddate')">Created Date @Html.Raw(GetSortIcon("createddate", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('isactive')">Status @Html.Raw(GetSortIcon("isactive", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
@@ -55,7 +58,7 @@
             @if (Model.Count == 0)
             {
                 <tr>
-                    <td colspan="7" class="empty-state">
+                    <td colspan="10" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
@@ -70,12 +73,18 @@
                 {
                     var item = Model[i];
                     var no = ((int)(ViewBag.CurrentPage ?? 1) - 1) * (int)(ViewBag.PageSize ?? 250) + i + 1;
-                    var specJs = (item.Spec ?? "").Replace("\\", "\\\\").Replace("'", "\\'");
-                    var materialJs = (item.Material ?? "").Replace("\\", "\\\\").Replace("'", "\\'");
+                    var specJs = (item.Spec ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
+                    var specPurchasedJs = (item.MaterialSpecPurchased ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
+                    var materialJs = (item.Material ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
+                    var supplyConditionJs = (item.MaterialSupplyConditionPurchased ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
+                    var materialTypeJs = (item.MaterialType ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
                     <tr>
                         <td>@no</td>
                         <td>@item.Spec</td>
+                        <td>@item.MaterialSpecPurchased</td>
                         <td>@item.Material</td>
+                        <td>@item.MaterialSupplyConditionPurchased</td>
+                        <td>@item.MaterialType</td>
                         <td>@item.CreatedBy</td>
                         <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
@@ -89,7 +98,7 @@
                             }
                         </td>
                         <td>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@specJs', '@materialJs', @item.IsActive.ToString().ToLower())">Edit</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="editItem(@item.Id, '@specJs', '@specPurchasedJs', '@materialJs', '@supplyConditionJs', '@materialTypeJs', @item.IsActive.ToString().ToLower())">Edit</button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(@item.Id, '@specJs', '@materialJs')">Delete</button>
                         </td>
                     </tr>
@@ -132,8 +141,20 @@
                     <input type="text" id="spec" class="form-control" placeholder="e.g. ABP3-2101" required />
                 </div>
                 <div class="form-group">
+                    <label for="specPurchased">Material Specification (Purchased)</label>
+                    <input type="text" id="specPurchased" class="form-control" placeholder="e.g. AMS 4928" />
+                </div>
+                <div class="form-group">
                     <label for="material">General Name *</label>
                     <input type="text" id="material" class="form-control" placeholder="e.g. Aluminum Alloy 7075" required />
+                </div>
+                <div class="form-group">
+                    <label for="supplyCondition">Material Supply Condition (Purchased)</label>
+                    <input type="text" id="supplyCondition" class="form-control" placeholder="e.g. Annealed" />
+                </div>
+                <div class="form-group">
+                    <label for="materialType">Material Type</label>
+                    <input type="text" id="materialType" class="form-control" placeholder="e.g. Bar, Plate" />
                 </div>
                 <div class="form-group" id="isActiveGroup" style="display: none;">
                     <label>
@@ -166,18 +187,27 @@
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('spec').disabled = false;
+        document.getElementById('specPurchased').disabled = false;
         document.getElementById('material').disabled = false;
+        document.getElementById('supplyCondition').disabled = false;
+        document.getElementById('materialType').disabled = false;
         document.getElementById('isActiveGroup').style.display = 'none';
         document.getElementById('itemModal').classList.add('active');
     }
     
-    function editItem(id, spec, material, isActive) {
+    function editItem(id, spec, specPurchased, material, supplyCondition, materialType, isActive) {
         document.getElementById('modalTitle').textContent = 'Edit Material Specification (On Drawing)';
         document.getElementById('itemId').value = id;
-        document.getElementById('spec').value = spec;
+        document.getElementById('spec').value = spec || '';
         document.getElementById('spec').disabled = true;
-        document.getElementById('material').value = material;
+        document.getElementById('specPurchased').value = specPurchased || '';
+        document.getElementById('specPurchased').disabled = false;
+        document.getElementById('material').value = material || '';
         document.getElementById('material').disabled = false;
+        document.getElementById('supplyCondition').value = supplyCondition || '';
+        document.getElementById('supplyCondition').disabled = false;
+        document.getElementById('materialType').value = materialType || '';
+        document.getElementById('materialType').disabled = false;
         document.getElementById('isActive').checked = isActive;
         document.getElementById('isActiveGroup').style.display = 'block';
         document.getElementById('itemModal').classList.add('active');
@@ -217,7 +247,10 @@
     function closeModal() {
         document.getElementById('itemModal').classList.remove('active');
         document.getElementById('spec').disabled = false;
+        document.getElementById('specPurchased').disabled = false;
         document.getElementById('material').disabled = false;
+        document.getElementById('supplyCondition').disabled = false;
+        document.getElementById('materialType').disabled = false;
     }
     
     document.getElementById('itemForm').addEventListener('submit', async function(e) {
@@ -225,15 +258,18 @@
         
         const itemId = document.getElementById('itemId').value;
         const spec = document.getElementById('spec').value.trim();
+        const specPurchased = document.getElementById('specPurchased').value.trim();
         const material = document.getElementById('material').value.trim();
+        const supplyCondition = document.getElementById('supplyCondition').value.trim();
+        const materialType = document.getElementById('materialType').value.trim();
         const isActive = document.getElementById('isActive').checked;
         
         let url = '/Settings/CreateMaterialSpec';
-        let body = `spec=${encodeURIComponent(spec)}&material=${encodeURIComponent(material)}`;
+        let body = `spec=${encodeURIComponent(spec)}&materialSpecPurchased=${encodeURIComponent(specPurchased)}&material=${encodeURIComponent(material)}&materialSupplyConditionPurchased=${encodeURIComponent(supplyCondition)}&materialType=${encodeURIComponent(materialType)}`;
         
         if (itemId) {
             url = '/Settings/UpdateMaterialSpec';
-            body = `id=${itemId}&material=${encodeURIComponent(material)}&isActive=${isActive}`;
+            body = `id=${itemId}&materialSpecPurchased=${encodeURIComponent(specPurchased)}&material=${encodeURIComponent(material)}&materialSupplyConditionPurchased=${encodeURIComponent(supplyCondition)}&materialType=${encodeURIComponent(materialType)}&isActive=${isActive}`;
         }
         
         if (!spec && !itemId) {

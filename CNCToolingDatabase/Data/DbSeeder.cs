@@ -177,6 +177,9 @@ public static class DbSeeder
                 }
                 try { command.CommandText = "ALTER TABLE MachineModels ADD COLUMN Controller TEXT;"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE ToolListHeaders ADD COLUMN MaterialSpecId INTEGER REFERENCES MaterialSpecs(Id);"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE MaterialSpecs ADD COLUMN MaterialSpecPurchased TEXT;"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE MaterialSpecs ADD COLUMN MaterialSupplyConditionPurchased TEXT;"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE MaterialSpecs ADD COLUMN MaterialType TEXT;"; command.ExecuteNonQuery(); } catch { }
             }
             finally
             {
@@ -333,26 +336,32 @@ public static class DbSeeder
         {
             if (context.MaterialSpecs != null && !context.MaterialSpecs.Any())
             {
-                var materialSpecPairs = new[] {
-                    ("ABP3-2101", "Aluminum Alloy 7075"),
-                    ("ABP3-2304", "Aluminum Alloy 2024"),
-                    ("ABP3-4001", "Titanium Alloy Ti-6Al-4V"),
-                    ("ABP3-4201", "Titanium Alloy Plate"),
-                    ("ABP3-7101", "15-5PH Stainless Steel"),
-                    ("BMS7-304", "Aluminum Alloy 7075"),
-                    ("BMS7-26", "Aluminum Alloy 2024"),
-                    ("AMS4928", "Titanium Alloy Ti-6Al-4V"),
-                    ("AMS5643", "Stainless Steel 321"),
-                    ("AMS5662", "Inconel 718 Nickel Alloy"),
-                    ("BMS7-304", "Aluminum Alloy 7075-T6/T73"),
-                    ("BMS7-26", "Aluminum Alloy 2024-T3/T351"),
-                    ("BMS7-331", "Titanium Alloy 6AL-4V"),
-                    ("BMS7-380", "Stainless Steel 15-5PH"),
-                    ("BMS7-430", "Inconel 718 Nickel Alloy"),
-                };
-                foreach (var (spec, material) in materialSpecPairs)
+                var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MATERIAL SPEC MASTER.xlsx");
+                var rows = LoadMaterialSpecFromExcel(excelPath);
+                if (rows.Count > 0)
                 {
-                    context.MaterialSpecs.Add(new MaterialSpec { Spec = spec, Material = material, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    foreach (var (spec, specPurchased, material, supplyCondition, materialType) in rows)
+                    {
+                        context.MaterialSpecs.Add(new MaterialSpec
+                        {
+                            Spec = spec,
+                            MaterialSpecPurchased = specPurchased,
+                            Material = material,
+                            MaterialSupplyConditionPurchased = supplyCondition,
+                            MaterialType = materialType,
+                            CreatedDate = DateTime.UtcNow,
+                            CreatedBy = "system",
+                            IsActive = true
+                        });
+                    }
+                }
+                else
+                {
+                    var fallback = new[] { ("ABP3-2101", "", "Aluminum Alloy 7075", "", ""), ("BMS7-304", "", "Aluminum Alloy 7075", "", "") };
+                    foreach (var (spec, specPurchased, material, supplyCondition, materialType) in fallback)
+                    {
+                        context.MaterialSpecs.Add(new MaterialSpec { Spec = spec, MaterialSpecPurchased = specPurchased, Material = material, MaterialSupplyConditionPurchased = supplyCondition, MaterialType = materialType, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    }
                 }
                 context.SaveChanges();
             }
@@ -725,6 +734,49 @@ public static class DbSeeder
         return result;
     }
 
+    /// <summary>Load Material Spec rows from MATERIAL SPEC MASTER.xlsx. Columns: Material Specification (On Drawing), Material Specification (Purchased), General Name, Material Supply Condition (Purchased), Material Type.</summary>
+    private static List<(string Spec, string MaterialSpecPurchased, string Material, string MaterialSupplyConditionPurchased, string MaterialType)> LoadMaterialSpecFromExcel(string path)
+    {
+        var result = new List<(string, string, string, string, string)>();
+        if (!File.Exists(path)) return result;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage(new FileInfo(path));
+        var ws = package.Workbook.Worksheets.FirstOrDefault();
+        if (ws?.Dimension == null) return result;
+        int cols = ws.Dimension.End.Column;
+        int rows = ws.Dimension.End.Row;
+        if (rows < 2) return result;
+        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+        {
+            for (int c = 1; c <= totalCols; c++)
+            {
+                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                if (string.IsNullOrEmpty(v)) continue;
+                foreach (var h in headerNames)
+                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+            }
+            return -1;
+        }
+        int colSpec = GetCol(ws, cols, "Material Specification (On Drawing)", "Material Spec. (On Drawing)", "Material Spec.");
+        int colSpecPurchased = GetCol(ws, cols, "Material Specification (Purchased)", "Material Spec. (Purchased)");
+        int colMaterial = GetCol(ws, cols, "General Name", "Material");
+        int colSupplyCondition = GetCol(ws, cols, "Material Supply Condition (Purchased)", "Material Supply Condition");
+        int colMaterialType = GetCol(ws, cols, "Material Type");
+        if (colSpec < 1 && colMaterial < 1) return result;
+        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+        for (int r = 2; r <= rows; r++)
+        {
+            var spec = GetStr(ws, r, colSpec);
+            var specPurchased = GetStr(ws, r, colSpecPurchased);
+            var material = GetStr(ws, r, colMaterial);
+            var supplyCondition = GetStr(ws, r, colSupplyCondition);
+            var materialType = GetStr(ws, r, colMaterialType);
+            if (string.IsNullOrWhiteSpace(spec) && string.IsNullOrWhiteSpace(material)) continue;
+            result.Add((spec ?? "", specPurchased ?? "", material ?? "", supplyCondition ?? "", materialType ?? ""));
+        }
+        return result;
+    }
+
     private static (string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec, int Sequence)[] GetPartNumberSeedData()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Data", "PART NUMBERS MASTER.xlsx");
@@ -936,7 +988,6 @@ public static class DbSeeder
     public static void ResetMaterialSpecs(ApplicationDbContext context)
     {
         if (context.MaterialSpecs == null) return;
-        // Null FK references first to avoid constraint issues when deleting material specs
         if (context.PartNumbers != null)
         {
             foreach (var pn in context.PartNumbers.Where(p => p.MaterialSpecId != null))
@@ -945,14 +996,33 @@ public static class DbSeeder
         }
         context.MaterialSpecs.RemoveRange(context.MaterialSpecs.ToList());
         context.SaveChanges();
-        var pairs = new[] {
-            ("ABP3-2101", "Aluminum Alloy 7075"), ("ABP3-2304", "Aluminum Alloy 2024"), ("ABP3-4001", "Titanium Alloy Ti-6Al-4V"), ("ABP3-4201", "Titanium Alloy Plate"),
-            ("ABP3-7101", "15-5PH Stainless Steel"), ("BMS7-304", "Aluminum Alloy 7075"), ("BMS7-26", "Aluminum Alloy 2024"), ("AMS4928", "Titanium Alloy Ti-6Al-4V"),
-            ("AMS5643", "Stainless Steel 321"), ("AMS5662", "Inconel 718 Nickel Alloy"), ("BMS7-304", "Aluminum Alloy 7075-T6/T73"), ("BMS7-26", "Aluminum Alloy 2024-T3/T351"),
-            ("BMS7-331", "Titanium Alloy 6AL-4V"), ("BMS7-380", "Stainless Steel 15-5PH"), ("BMS7-430", "Inconel 718 Nickel Alloy"),
-        };
-        foreach (var (spec, material) in pairs)
-            context.MaterialSpecs.Add(new MaterialSpec { Spec = spec, Material = material, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MATERIAL SPEC MASTER.xlsx");
+        var rows = LoadMaterialSpecFromExcel(excelPath);
+        if (rows.Count > 0)
+        {
+            foreach (var (spec, specPurchased, material, supplyCondition, materialType) in rows)
+            {
+                context.MaterialSpecs.Add(new MaterialSpec
+                {
+                    Spec = spec,
+                    MaterialSpecPurchased = specPurchased,
+                    Material = material,
+                    MaterialSupplyConditionPurchased = supplyCondition,
+                    MaterialType = materialType,
+                    CreatedDate = DateTime.UtcNow,
+                    CreatedBy = "system",
+                    IsActive = true
+                });
+            }
+        }
+        else
+        {
+            var fallback = new[] { ("ABP3-2101", "", "Aluminum Alloy 7075", "", ""), ("BMS7-304", "", "Aluminum Alloy 7075", "", "") };
+            foreach (var (spec, specPurchased, material, supplyCondition, materialType) in fallback)
+            {
+                context.MaterialSpecs.Add(new MaterialSpec { Spec = spec, MaterialSpecPurchased = specPurchased, Material = material, MaterialSupplyConditionPurchased = supplyCondition, MaterialType = materialType, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+            }
+        }
         context.SaveChanges();
     }
 

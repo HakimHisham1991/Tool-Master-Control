@@ -1176,9 +1176,12 @@ public class SettingsController : Controller
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.ToLower();
-            query = query.Where(m => 
-                m.Spec.ToLower().Contains(term) ||
-                m.Material.ToLower().Contains(term));
+            query = query.Where(m =>
+                (m.Spec != null && m.Spec.ToLower().Contains(term)) ||
+                (m.MaterialSpecPurchased != null && m.MaterialSpecPurchased.ToLower().Contains(term)) ||
+                (m.Material != null && m.Material.ToLower().Contains(term)) ||
+                (m.MaterialSupplyConditionPurchased != null && m.MaterialSupplyConditionPurchased.ToLower().Contains(term)) ||
+                (m.MaterialType != null && m.MaterialType.ToLower().Contains(term)));
         }
         
         var isDesc = sortDirection?.ToLower() == "desc";
@@ -1186,7 +1189,10 @@ public class SettingsController : Controller
         {
             "id" => isDesc ? query.OrderByDescending(m => m.Id) : query.OrderBy(m => m.Id),
             "spec" or "materialspec" => isDesc ? query.OrderByDescending(m => m.Spec).ThenByDescending(m => m.Material) : query.OrderBy(m => m.Spec).ThenBy(m => m.Material),
+            "specpurchased" => isDesc ? query.OrderByDescending(m => m.MaterialSpecPurchased).ThenBy(m => m.Spec) : query.OrderBy(m => m.MaterialSpecPurchased).ThenBy(m => m.Spec),
             "material" => isDesc ? query.OrderByDescending(m => m.Material).ThenByDescending(m => m.Spec) : query.OrderBy(m => m.Material).ThenBy(m => m.Spec),
+            "supplycondition" => isDesc ? query.OrderByDescending(m => m.MaterialSupplyConditionPurchased).ThenBy(m => m.Spec) : query.OrderBy(m => m.MaterialSupplyConditionPurchased).ThenBy(m => m.Spec),
+            "materialtype" => isDesc ? query.OrderByDescending(m => m.MaterialType).ThenBy(m => m.Spec) : query.OrderBy(m => m.MaterialType).ThenBy(m => m.Spec),
             "createdby" => isDesc ? query.OrderByDescending(m => m.CreatedBy) : query.OrderBy(m => m.CreatedBy),
             "createddate" => isDesc ? query.OrderByDescending(m => m.CreatedDate) : query.OrderBy(m => m.CreatedDate),
             "isactive" => isDesc ? query.OrderByDescending(m => m.IsActive) : query.OrderBy(m => m.IsActive),
@@ -1211,7 +1217,7 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> CreateMaterialSpec(string spec, string material)
+    public async Task<IActionResult> CreateMaterialSpec(string spec, string? materialSpecPurchased, string material, string? materialSupplyConditionPurchased, string? materialType)
     {
         if (string.IsNullOrWhiteSpace(spec))
         {
@@ -1230,7 +1236,10 @@ public class SettingsController : Controller
         var item = new MaterialSpec
         {
             Spec = spec,
+            MaterialSpecPurchased = materialSpecPurchased ?? "",
             Material = material,
+            MaterialSupplyConditionPurchased = materialSupplyConditionPurchased ?? "",
+            MaterialType = materialType ?? "",
             CreatedDate = DateTime.UtcNow,
             CreatedBy = HttpContext.Session.GetString("Username") ?? "",
             IsActive = true
@@ -1243,7 +1252,7 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> UpdateMaterialSpec(int id, string? material, bool? isActive)
+    public async Task<IActionResult> UpdateMaterialSpec(int id, string? materialSpecPurchased, string? material, string? materialSupplyConditionPurchased, string? materialType, bool? isActive)
     {
         var item = await _context.MaterialSpecs.FindAsync(id);
         if (item == null)
@@ -1251,7 +1260,10 @@ public class SettingsController : Controller
             return Json(new { success = false, message = "Material Specification (On Drawing) not found" });
         }
         
+        if (materialSpecPurchased != null) item.MaterialSpecPurchased = materialSpecPurchased;
         if (material != null) item.Material = material;
+        if (materialSupplyConditionPurchased != null) item.MaterialSupplyConditionPurchased = materialSupplyConditionPurchased;
+        if (materialType != null) item.MaterialType = materialType;
         if (isActive.HasValue) item.IsActive = isActive.Value;
         
         await _context.SaveChangesAsync();
