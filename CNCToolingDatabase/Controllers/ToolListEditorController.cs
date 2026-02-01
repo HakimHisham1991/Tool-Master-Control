@@ -233,7 +233,7 @@ public class ToolListEditorController : Controller
         return Json(revisions);
     }
     
-    /// <summary>Material Spec. Management table. Used for Material Spec. dropdown in Create/Edit Tool List; Material is auto-populated from selection.</summary>
+    /// <summary>Material Specification (On Drawing) Management table. Used for dropdown in Create/Edit Tool List; General Name is auto-populated from selection.</summary>
     [HttpGet]
     public async Task<IActionResult> GetMaterialSpecs()
     {
@@ -321,7 +321,7 @@ public class ToolListEditorController : Controller
             worksheet.Cells[row, 1].Value = "CAM Programmer:";
             worksheet.Cells[row, 2].Value = viewModel.CamProgrammer;
             row++;
-            worksheet.Cells[row, 1].Value = "Material:";
+            worksheet.Cells[row, 1].Value = "General Name:";
             worksheet.Cells[row, 2].Value = viewModel.Material;
             row += 2;
             
@@ -398,7 +398,7 @@ public class ToolListEditorController : Controller
         content.AppendLine($"Machine: {viewModel.MachineName}");
         content.AppendLine($"Workcenter: {viewModel.MachineWorkcenter}");
         content.AppendLine($"Machine Model: {viewModel.MachineModel}");
-        content.AppendLine($"Material: {viewModel.Material}");
+        content.AppendLine($"General Name: {viewModel.Material}");
         content.AppendLine();
         
         content.AppendLine(string.Join(separator, new[]

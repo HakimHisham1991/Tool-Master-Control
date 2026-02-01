@@ -1,17 +1,17 @@
 @model List<CNCToolingDatabase.Models.MaterialSpec>
 @{
-    ViewData["Title"] = "Settings - Material Spec.";
+    ViewData["Title"] = "Settings - Material Specification (On Drawing)";
 }
 
 <div class="module-header">
-    <h2>Material Spec. Management</h2>
+    <h2>Material Specification (On Drawing) Management</h2>
     <div style="display: flex; gap: 0.5rem;">
         <button type="button" class="btn btn-primary" onclick="openCreateModal()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            Add Material Spec.
+            Add Material Specification (On Drawing)
         </button>
         <button type="button" class="btn btn-secondary" onclick="resetFromSeed()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -32,7 +32,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search by Material Spec. or Material..." class="search-input" id="searchInput" />
+            <input type="text" name="search" value="@ViewBag.Search" placeholder="Search by Material Specification (On Drawing) or General Name..." class="search-input" id="searchInput" />
         </div>
         <button type="submit" class="btn btn-primary btn-sm">Search</button>
     </form>
@@ -43,8 +43,8 @@
         <thead>
             <tr>
                 <th onclick="sortBy('id')">No. @Html.Raw(GetSortIcon("id", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
-                <th onclick="sortBy('materialspec')">Material Spec. @Html.Raw(GetSortIcon("materialspec", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
-                <th onclick="sortBy('material')">Material @Html.Raw(GetSortIcon("material", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('materialspec')">Material Specification (On Drawing) @Html.Raw(GetSortIcon("materialspec", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('material')">General Name @Html.Raw(GetSortIcon("material", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('createdby')">Created By @Html.Raw(GetSortIcon("createdby", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('createddate')">Created Date @Html.Raw(GetSortIcon("createddate", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('isactive')">Status @Html.Raw(GetSortIcon("isactive", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
@@ -60,7 +60,7 @@
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                         </svg>
-                        <p>No material specs found</p>
+                        <p>No material specifications found</p>
                     </td>
                 </tr>
             }
@@ -116,7 +116,7 @@
     <div class="modal-backdrop" onclick="closeModal()"></div>
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalTitle">Add Material Spec.</h3>
+            <h3 id="modalTitle">Add Material Specification (On Drawing)</h3>
             <button type="button" class="btn-icon" onclick="closeModal()">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -128,11 +128,11 @@
             <form id="itemForm">
                 <input type="hidden" id="itemId" />
                 <div class="form-group">
-                    <label for="spec">Material Spec. *</label>
+                    <label for="spec">Material Specification (On Drawing) *</label>
                     <input type="text" id="spec" class="form-control" placeholder="e.g. ABP3-2101" required />
                 </div>
                 <div class="form-group">
-                    <label for="material">Material *</label>
+                    <label for="material">General Name *</label>
                     <input type="text" id="material" class="form-control" placeholder="e.g. Aluminum Alloy 7075" required />
                 </div>
                 <div class="form-group" id="isActiveGroup" style="display: none;">
@@ -162,7 +162,7 @@
     }
     
     function openCreateModal() {
-        document.getElementById('modalTitle').textContent = 'Add Material Spec.';
+        document.getElementById('modalTitle').textContent = 'Add Material Specification (On Drawing)';
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('spec').disabled = false;
@@ -172,7 +172,7 @@
     }
     
     function editItem(id, spec, material, isActive) {
-        document.getElementById('modalTitle').textContent = 'Edit Material Spec.';
+        document.getElementById('modalTitle').textContent = 'Edit Material Specification (On Drawing)';
         document.getElementById('itemId').value = id;
         document.getElementById('spec').value = spec;
         document.getElementById('spec').disabled = true;
@@ -184,7 +184,7 @@
     }
     
     function deleteItem(id, spec, material) {
-        if (!confirm(`Are you sure you want to delete Material Spec. "${spec}" / "${material}"?`)) {
+        if (!confirm(`Are you sure you want to delete Material Specification (On Drawing) "${spec}" / General Name "${material}"?`)) {
             return;
         }
         
@@ -207,7 +207,7 @@
     }
     
     function resetFromSeed() {
-        if (!confirm('This will delete all current material spec. data and restore seed data only. This action cannot be undone.\n\nDo you want to continue?')) return;
+        if (!confirm('This will delete all current material specification data and restore seed data only. This action cannot be undone.\n\nDo you want to continue?')) return;
         fetch('/Settings/ResetMaterialSpec', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
             .then(r => r.json())
             .then(data => { if (data.success) location.reload(); else alert('Error: ' + data.message); })
@@ -237,11 +237,11 @@
         }
         
         if (!spec && !itemId) {
-            alert('Material Spec. is required.');
+            alert('Material Specification (On Drawing) is required.');
             return;
         }
         if (!material) {
-            alert('Material is required.');
+            alert('General Name is required.');
             return;
         }
         

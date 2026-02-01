@@ -1215,16 +1215,16 @@ public class SettingsController : Controller
     {
         if (string.IsNullOrWhiteSpace(spec))
         {
-            return Json(new { success = false, message = "Material Spec. is required" });
+            return Json(new { success = false, message = "Material Specification (On Drawing) is required" });
         }
         if (string.IsNullOrWhiteSpace(material))
         {
-            return Json(new { success = false, message = "Material is required" });
+            return Json(new { success = false, message = "General Name is required" });
         }
         
         if (await _context.MaterialSpecs.AnyAsync(m => m.Spec == spec && m.Material == material))
         {
-            return Json(new { success = false, message = "This Spec / Material pair already exists" });
+            return Json(new { success = false, message = "This Material Specification (On Drawing) / General Name pair already exists" });
         }
         
         var item = new MaterialSpec
@@ -1239,7 +1239,7 @@ public class SettingsController : Controller
         _context.MaterialSpecs.Add(item);
         await _context.SaveChangesAsync();
         
-        return Json(new { success = true, message = "Material Spec. created successfully" });
+        return Json(new { success = true, message = "Material Specification (On Drawing) created successfully" });
     }
     
     [HttpPost]
@@ -1248,7 +1248,7 @@ public class SettingsController : Controller
         var item = await _context.MaterialSpecs.FindAsync(id);
         if (item == null)
         {
-            return Json(new { success = false, message = "Material Spec. not found" });
+            return Json(new { success = false, message = "Material Specification (On Drawing) not found" });
         }
         
         if (material != null) item.Material = material;
@@ -1256,7 +1256,7 @@ public class SettingsController : Controller
         
         await _context.SaveChangesAsync();
         
-        return Json(new { success = true, message = "Material Spec. updated successfully" });
+        return Json(new { success = true, message = "Material Specification (On Drawing) updated successfully" });
     }
     
     [HttpPost]
@@ -1265,13 +1265,13 @@ public class SettingsController : Controller
         var item = await _context.MaterialSpecs.FindAsync(id);
         if (item == null)
         {
-            return Json(new { success = false, message = "Material Spec. not found" });
+            return Json(new { success = false, message = "Material Specification (On Drawing) not found" });
         }
         
         _context.MaterialSpecs.Remove(item);
         await _context.SaveChangesAsync();
         
-        return Json(new { success = true, message = "Material Spec. deleted successfully" });
+        return Json(new { success = true, message = "Material Specification (On Drawing) deleted successfully" });
     }
     
     [HttpPost]
@@ -1280,7 +1280,7 @@ public class SettingsController : Controller
         try
         {
             DbSeeder.ResetMaterialSpecs(_context);
-            return Json(new { success = true, message = "Material specs reset to seed data successfully." });
+            return Json(new { success = true, message = "Material specifications reset to seed data successfully." });
         }
         catch (Exception ex)
         {

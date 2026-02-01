@@ -125,14 +125,14 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="materialSpec">Material Spec.</label>
+            <label for="materialSpec">Material Specification (On Drawing)</label>
             <select id="materialSpec" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
-                <option value="">-- Select Material Spec. --</option>
+                <option value="">-- Select Material Specification (On Drawing) --</option>
             </select>
         </div>
         <div class="form-group">
-            <label for="materialDisplay">Material</label>
-            <input type="text" id="materialDisplay" class="form-control" readonly placeholder="Auto from Material Spec." />
+            <label for="materialDisplay">General Name</label>
+            <input type="text" id="materialDisplay" class="form-control" readonly placeholder="Auto from Material Specification (On Drawing)" />
         </div>
     </div>
 </div>
@@ -431,7 +431,7 @@
             console.error('Error loading CAM programmers:', error);
         }
         
-        // Populate Material Spec. (from Material Spec. Management); Material is auto-populated on change
+        // Populate Material Specification (On Drawing) from same table in Material Specification (On Drawing) Management; General Name is auto-populated on change
         try {
             const materialSpecsResponse = await fetch('/ToolListEditor/GetMaterialSpecs');
             const materialSpecs = await materialSpecsResponse.json();
@@ -448,7 +448,7 @@
             });
             document.getElementById('materialDisplay').value = currentMaterial;
         } catch (error) {
-            console.error('Error loading material specs:', error);
+            console.error('Error loading material specifications:', error);
         }
         
         // Consumable Tool Description (Master Tool Code Database only)
