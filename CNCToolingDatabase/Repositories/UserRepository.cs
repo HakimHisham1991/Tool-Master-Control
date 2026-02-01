@@ -15,7 +15,9 @@ public class UserRepository : IUserRepository
     
     public async Task<User?> GetByUsernameAsync(string username)
     {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
+        if (string.IsNullOrWhiteSpace(username)) return null;
+        var active = await _context.Users.Where(u => u.IsActive).ToListAsync();
+        return active.FirstOrDefault(u => string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
     }
     
     public async Task<User?> GetByIdAsync(int id)

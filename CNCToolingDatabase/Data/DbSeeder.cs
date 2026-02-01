@@ -795,7 +795,7 @@ public static class DbSeeder
             int colPassword = GetCol(ws, cols, "Password");
             int colDisplayName = GetCol(ws, cols, "Display Name", "DisplayName");
             int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
-            if (colUsername < 1) return result;
+            if (colUsername < 1 || colPassword < 1) return result;
             static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
             static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
             {
