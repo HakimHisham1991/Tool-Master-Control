@@ -81,10 +81,10 @@
                     <tr>
                         <td>@no</td>
                         <td>@item.Spec</td>
-                        <td>@item.MaterialSpecPurchased</td>
+                        <td>@(item.MaterialSpecPurchased ?? "")</td>
                         <td>@item.Material</td>
-                        <td>@item.MaterialSupplyConditionPurchased</td>
-                        <td>@item.MaterialType</td>
+                        <td>@(item.MaterialSupplyConditionPurchased ?? "")</td>
+                        <td>@(item.MaterialType ?? "")</td>
                         <td>@item.CreatedBy</td>
                         <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
