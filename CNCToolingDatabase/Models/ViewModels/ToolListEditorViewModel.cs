@@ -30,6 +30,8 @@ public class ToolListEditorViewModel
     public string MachineModel { get; set; } = string.Empty;
     public string ApprovedBy { get; set; } = string.Empty;
     public string CamProgrammer { get; set; } = string.Empty;
+    public int? MaterialSpecId { get; set; }
+    public string Material { get; set; } = string.Empty;
     public List<ToolListDetailRow> Details { get; set; } = new();
     public bool IsReadOnly { get; set; }
     public string? LockedBy { get; set; }
@@ -55,5 +57,6 @@ public class SaveToolListRequest
     public string MachineModel { get; set; } = string.Empty;
     public string ApprovedBy { get; set; } = string.Empty;
     public string CamProgrammer { get; set; } = string.Empty;
+    public int? MaterialSpecId { get; set; }
     public List<ToolListDetailRow> Details { get; set; } = new();
 }

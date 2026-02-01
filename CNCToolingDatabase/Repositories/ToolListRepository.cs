@@ -41,6 +41,7 @@ public class ToolListRepository : IToolListRepository
     public async Task<ToolListHeader?> GetHeaderWithDetailsAsync(int id)
     {
         return await _context.ToolListHeaders
+            .Include(h => h.MaterialSpec)
             .Include(h => h.Details)
             .FirstOrDefaultAsync(h => h.Id == id);
     }

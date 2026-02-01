@@ -233,6 +233,19 @@ public class ToolListEditorController : Controller
         return Json(revisions);
     }
     
+    /// <summary>Material Spec. Management table. Used for Material Spec. dropdown in Create/Edit Tool List; Material is auto-populated from selection.</summary>
+    [HttpGet]
+    public async Task<IActionResult> GetMaterialSpecs()
+    {
+        var list = await _context.MaterialSpecs
+            .Where(m => m.IsActive)
+            .OrderBy(m => m.Spec)
+            .ThenBy(m => m.Material)
+            .Select(m => new { id = m.Id, spec = m.Spec, material = m.Material })
+            .ToListAsync();
+        return Json(list);
+    }
+    
     /// <summary>Consumable Tool Descriptions from Master Tool Code Database only. Used for dropdown in Create/Edit Tool List.</summary>
     [HttpGet]
     public async Task<IActionResult> GetConsumableToolDescriptions()
@@ -307,6 +320,9 @@ public class ToolListEditorController : Controller
             row++;
             worksheet.Cells[row, 1].Value = "CAM Programmer:";
             worksheet.Cells[row, 2].Value = viewModel.CamProgrammer;
+            row++;
+            worksheet.Cells[row, 1].Value = "Material:";
+            worksheet.Cells[row, 2].Value = viewModel.Material;
             row += 2;
             
             // Add column headers with color
@@ -382,6 +398,7 @@ public class ToolListEditorController : Controller
         content.AppendLine($"Machine: {viewModel.MachineName}");
         content.AppendLine($"Workcenter: {viewModel.MachineWorkcenter}");
         content.AppendLine($"Machine Model: {viewModel.MachineModel}");
+        content.AppendLine($"Material: {viewModel.Material}");
         content.AppendLine();
         
         content.AppendLine(string.Join(separator, new[]

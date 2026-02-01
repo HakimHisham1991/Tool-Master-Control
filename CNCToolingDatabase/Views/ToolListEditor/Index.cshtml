@@ -124,6 +124,16 @@
                 <option value="">-- Select CAM Programmer --</option>
             </select>
         </div>
+        <div class="form-group">
+            <label for="materialSpec">Material Spec.</label>
+            <select id="materialSpec" class="form-control" @(Model.IsReadOnly ? "disabled" : "")>
+                <option value="">-- Select Material Spec. --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="materialDisplay">Material</label>
+            <input type="text" id="materialDisplay" class="form-control" readonly placeholder="Auto from Material Spec." />
+        </div>
     </div>
 </div>
 
@@ -248,6 +258,8 @@
     const currentMachineModel = '@((Model.MachineModel ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentApprovedBy = '@((Model.ApprovedBy ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentCamProgrammer = '@((Model.CamProgrammer ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    const currentMaterialSpecId = '@(Model.MaterialSpecId?.ToString() ?? "")';
+    const currentMaterial = '@((Model.Material ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentOperation = '@((Model.Operation ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentRevision = '@((Model.Revision ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     let hasUnsavedChanges = false;
@@ -417,6 +429,26 @@
             });
         } catch (error) {
             console.error('Error loading CAM programmers:', error);
+        }
+        
+        // Populate Material Spec. (from Material Spec. Management); Material is auto-populated on change
+        try {
+            const materialSpecsResponse = await fetch('/ToolListEditor/GetMaterialSpecs');
+            const materialSpecs = await materialSpecsResponse.json();
+            const materialSpecSelect = document.getElementById('materialSpec');
+            materialSpecs.forEach(m => {
+                const option = document.createElement('option');
+                option.value = m.id;
+                option.textContent = m.spec;
+                option.dataset.material = m.material || '';
+                if (String(m.id) === currentMaterialSpecId) {
+                    option.selected = true;
+                }
+                materialSpecSelect.appendChild(option);
+            });
+            document.getElementById('materialDisplay').value = currentMaterial;
+        } catch (error) {
+            console.error('Error loading material specs:', error);
         }
         
         // Consumable Tool Description (Master Tool Code Database only)
@@ -590,6 +622,12 @@
     document.getElementById('camProgrammer').addEventListener('change', function() {
         hasUnsavedChanges = true;
     });
+    document.getElementById('materialSpec').addEventListener('change', function() {
+        hasUnsavedChanges = true;
+        const sel = document.getElementById('materialSpec');
+        const opt = sel.selectedOptions[0];
+        document.getElementById('materialDisplay').value = opt ? (opt.dataset.material || '') : '';
+    });
     document.getElementById('operation').addEventListener('change', function() {
         hasUnsavedChanges = true;
         updateToolListName();
@@ -690,6 +728,8 @@
     }
     
     async function saveToolList() {
+        const materialSpecEl = document.getElementById('materialSpec');
+        const materialSpecId = materialSpecEl && materialSpecEl.value ? parseInt(materialSpecEl.value, 10) : null;
         const data = {
             id: toolListId ? parseInt(toolListId) : null,
             partNumber: document.getElementById('partNumber').value,
@@ -701,6 +741,7 @@
             machineModel: document.getElementById('machineModel').value,
             approvedBy: document.getElementById('approvedBy').value,
             camProgrammer: document.getElementById('camProgrammer').value,
+            materialSpecId: materialSpecId && materialSpecId > 0 ? materialSpecId : null,
             details: getDetailsData()
         };
         

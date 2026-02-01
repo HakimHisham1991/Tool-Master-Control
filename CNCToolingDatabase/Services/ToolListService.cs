@@ -160,6 +160,8 @@ public class ToolListService : IToolListService
             MachineModel = header.MachineModel,
             ApprovedBy = header.ApprovedBy ?? "",
             CamProgrammer = header.CamProgrammer ?? "",
+            MaterialSpecId = header.MaterialSpecId,
+            Material = header.MaterialSpec?.Material ?? "",
             Details = details,
             IsReadOnly = isReadOnly,
             LockedBy = isReadOnly ? header.LockedBy : null
@@ -206,6 +208,7 @@ public class ToolListService : IToolListService
                 header.MachineModel = request.MachineModel;
                 header.ApprovedBy = request.ApprovedBy ?? "";
                 header.CamProgrammer = request.CamProgrammer ?? "";
+                header.MaterialSpecId = request.MaterialSpecId > 0 ? request.MaterialSpecId : null;
                 
                 await _toolListRepository.UpdateHeaderAsync(header);
             }
@@ -222,6 +225,7 @@ public class ToolListService : IToolListService
                     MachineModel = request.MachineModel,
                     ApprovedBy = request.ApprovedBy ?? "",
                     CamProgrammer = request.CamProgrammer ?? "",
+                    MaterialSpecId = request.MaterialSpecId > 0 ? request.MaterialSpecId : null,
                     CreatedBy = username,
                     CreatedDate = DateTime.UtcNow
                 };

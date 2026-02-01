@@ -39,6 +39,10 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => new { e.PartNumber, e.Operation });
+            entity.HasOne(e => e.MaterialSpec)
+                .WithMany()
+                .HasForeignKey(e => e.MaterialSpecId)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.HasMany(e => e.Details)
                   .WithOne(d => d.Header)
                   .HasForeignKey(d => d.ToolListHeaderId)

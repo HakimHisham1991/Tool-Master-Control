@@ -13,6 +13,8 @@ public class ToolListHeader
     public string MachineModel { get; set; } = string.Empty;
     public string ApprovedBy { get; set; } = string.Empty;
     public string CamProgrammer { get; set; } = string.Empty;
+    public int? MaterialSpecId { get; set; }
+    public MaterialSpec? MaterialSpec { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public DateTime LastModifiedDate { get; set; } = DateTime.UtcNow;
