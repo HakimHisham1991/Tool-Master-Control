@@ -198,7 +198,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                window.location.reload();
             } else {
                 alert('Error: ' + data.message);
             }
@@ -212,7 +212,7 @@
         if (!confirm('This will delete all current CAM programmer data and restore seed data only. This action cannot be undone.\n\nDo you want to continue?')) return;
         fetch('/Settings/ResetCamProgrammer', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
             .then(r => r.json())
-            .then(data => { if (data.success) location.reload(); else alert('Error: ' + data.message); })
+            .then(data => { if (data.success) window.location.reload(); else alert('Error: ' + data.message); })
             .catch(e => alert('Error: ' + e.message));
     }
     
@@ -226,15 +226,15 @@
         
         const itemId = document.getElementById('itemId').value;
         const nameVal = document.getElementById('nameValue').value;
-        const location = document.getElementById('location').value;
+        const locationVal = document.getElementById('location').value;
         const isActive = document.getElementById('isActive').checked;
         
         let url = '/Settings/CreateCamProgrammer';
-        let body = 'name=' + encodeURIComponent(nameVal) + '&description=' + encodeURIComponent(location);
+        let body = 'name=' + encodeURIComponent(nameVal) + '&description=' + encodeURIComponent(locationVal);
         
         if (itemId) {
             url = '/Settings/UpdateCamProgrammer';
-            body = 'id=' + itemId + '&description=' + encodeURIComponent(location) + '&isActive=' + isActive;
+            body = 'id=' + itemId + '&description=' + encodeURIComponent(locationVal) + '&isActive=' + isActive;
         }
         
         try {
@@ -247,7 +247,7 @@
             
             if (result.success) {
                 closeModal();
-                location.reload();
+                window.location.reload();
             } else {
                 alert('Error: ' + result.message);
             }
