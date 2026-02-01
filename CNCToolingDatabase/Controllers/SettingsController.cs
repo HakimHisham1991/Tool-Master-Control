@@ -90,7 +90,7 @@ public class SettingsController : Controller
     }
     
     [HttpPost]
-    public async Task<IActionResult> UpdateUser(int id, string? displayName, bool? isActive)
+    public async Task<IActionResult> UpdateUser(int id, string? displayName, bool? isActive, string? newPassword)
     {
         var user = await _context.Users.FindAsync(id);
         if (user == null)
@@ -100,6 +100,7 @@ public class SettingsController : Controller
         
         if (displayName != null) user.DisplayName = displayName;
         if (isActive.HasValue) user.IsActive = isActive.Value;
+        if (!string.IsNullOrWhiteSpace(newPassword)) user.Password = newPassword.Trim();
         
         await _context.SaveChangesAsync();
         
