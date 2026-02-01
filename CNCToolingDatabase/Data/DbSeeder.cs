@@ -340,19 +340,19 @@ public static class DbSeeder
                 var rows = LoadMaterialSpecFromExcel(excelPath);
                 if (rows.Count > 0)
                 {
-                    var seen = new HashSet<(string, string)>(StringComparer.OrdinalIgnoreCase);
+                    var seen = new HashSet<(string, string)>();
                     foreach (var (spec, specPurchased, material, supplyCondition, materialType) in rows)
                     {
-                        var key = (spec ?? "", material ?? "");
+                        var key = ((spec ?? "").ToLowerInvariant(), (material ?? "").ToLowerInvariant());
                         if (seen.Contains(key)) continue;
                         seen.Add(key);
                         context.MaterialSpecs.Add(new MaterialSpec
                         {
-                            Spec = spec,
-                            MaterialSpecPurchased = specPurchased,
-                            Material = material,
-                            MaterialSupplyConditionPurchased = supplyCondition,
-                            MaterialType = materialType,
+                            Spec = spec ?? "",
+                            MaterialSpecPurchased = specPurchased ?? "",
+                            Material = material ?? "",
+                            MaterialSupplyConditionPurchased = supplyCondition ?? "",
+                            MaterialType = materialType ?? "",
                             CreatedDate = DateTime.UtcNow,
                             CreatedBy = "system",
                             IsActive = true
@@ -1024,19 +1024,19 @@ public static class DbSeeder
         if (rows.Count > 0)
         {
             // Deduplicate by (Spec, Material) - table has unique index on these; keep first row per pair
-            var seen = new HashSet<(string, string)>(StringComparer.OrdinalIgnoreCase);
+            var seen = new HashSet<(string, string)>();
             foreach (var (spec, specPurchased, material, supplyCondition, materialType) in rows)
             {
-                var key = (spec ?? "", material ?? "");
+                var key = ((spec ?? "").ToLowerInvariant(), (material ?? "").ToLowerInvariant());
                 if (seen.Contains(key)) continue;
                 seen.Add(key);
                 context.MaterialSpecs.Add(new MaterialSpec
                 {
-                    Spec = spec,
-                    MaterialSpecPurchased = specPurchased,
-                    Material = material,
-                    MaterialSupplyConditionPurchased = supplyCondition,
-                    MaterialType = materialType,
+                    Spec = spec ?? "",
+                    MaterialSpecPurchased = specPurchased ?? "",
+                    Material = material ?? "",
+                    MaterialSupplyConditionPurchased = supplyCondition ?? "",
+                    MaterialType = materialType ?? "",
                     CreatedDate = DateTime.UtcNow,
                     CreatedBy = "system",
                     IsActive = true
