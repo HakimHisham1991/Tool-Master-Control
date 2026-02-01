@@ -833,11 +833,12 @@ public class SettingsController : Controller
         try
         {
             DbSeeder.ResetCamProgrammers(_context);
-            return Json(new { success = true, message = "CAM programmers reset to seed data successfully." });
+            return Json(new { success = true, message = "CAM programmers reloaded from CAM PROGRAMMER.xlsx successfully." });
         }
         catch (Exception ex)
         {
-            return Json(new { success = false, message = ex.Message });
+            var msg = ex.InnerException?.Message ?? ex.Message;
+            return Json(new { success = false, message = msg });
         }
     }
     

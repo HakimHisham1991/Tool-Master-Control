@@ -300,15 +300,21 @@ public static class DbSeeder
         {
             if (context.CamProgrammers != null && !context.CamProgrammers.Any())
             {
-                var camProgrammerSeed = new[] { ("Adib Jamil", "Subang Plant"), ("Bakhari Hussin", "Shah Alam Plant"), ("Faiq Faizul", "Subang Plant"), ("Hakim Hisham", "Subang Plant"), ("Hakim Ramaly", "Shah Alam Plant"), ("Ismail Jahrin", "Subang Plant"), ("Low Boon Bao", "Shah Alam Plant"), ("Nik Faiszal Abdullah", "Subang Plant"), ("Tan Chee Wei", "Shah Alam Plant") };
-                foreach (var (name, location) in camProgrammerSeed)
+                var camProgrammerPath = ResolveCamProgrammerPath();
+                if (string.IsNullOrEmpty(camProgrammerPath))
+                    throw new InvalidOperationException("Missing file: CAM PROGRAMMER.xlsx not found. Place the file in the Data folder.");
+                var camProgrammerRows = LoadCamProgrammerFromExcel(camProgrammerPath);
+                if (camProgrammerRows.Count == 0)
+                    throw new InvalidOperationException("No data loaded: CAM PROGRAMMER.xlsx is empty or column headers do not match. Expected: Name, Location; optional: Status (ACTIVE/INACTIVE).");
+                foreach (var (name, location, isActive) in camProgrammerRows)
                 {
-                    context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
                 }
                 context.SaveChanges();
             }
         }
-        catch { }
+        catch (InvalidOperationException) { throw; }
+        catch (Exception) { }
         
         try
         {
@@ -837,6 +843,87 @@ public static class DbSeeder
         }
     }
 
+    /// <summary>Resolve path to CAM PROGRAMMER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    private static string? ResolveCamProgrammerPath()
+    {
+        const string fileName = "CAM PROGRAMMER.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return null;
+    }
+
+    /// <summary>Load CAM Programmer rows from CAM PROGRAMMER.xlsx. Throws on file not found or cannot open/corrupted. Columns: No., Name, Location; optional: Status (ACTIVE/INACTIVE).</summary>
+    private static List<(string Name, string? Location, bool IsActive)> LoadCamProgrammerFromExcel(string path)
+    {
+        var result = new List<(string, string?, bool)>();
+        if (string.IsNullOrEmpty(path))
+            return result;
+        if (!File.Exists(path))
+            throw new InvalidOperationException("Missing file: CAM PROGRAMMER.xlsx not found at " + path + ". Place the file in the Data folder.");
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        try
+        {
+            using var package = new ExcelPackage(new FileInfo(path));
+            var ws = package.Workbook.Worksheets.FirstOrDefault();
+            if (ws?.Dimension == null) return result;
+            int cols = ws.Dimension.End.Column;
+            int rows = ws.Dimension.End.Row;
+            if (rows < 2) return result;
+            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+            {
+                for (int c = 1; c <= totalCols; c++)
+                {
+                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                    if (string.IsNullOrEmpty(v)) continue;
+                    foreach (var h in headerNames)
+                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+                }
+                return -1;
+            }
+            int colName = GetCol(ws, cols, "Name");
+            int colLocation = GetCol(ws, cols, "Location");
+            int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
+            if (colName < 1) return result;
+            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+            static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
+            {
+                var val = GetStr(sheet, row, col);
+                if (string.IsNullOrWhiteSpace(val)) return true;
+                if (string.Equals(val, "INACTIVE", StringComparison.OrdinalIgnoreCase)) return false;
+                if (string.Equals(val, "NO", StringComparison.OrdinalIgnoreCase)) return false;
+                if (string.Equals(val, "0", StringComparison.OrdinalIgnoreCase)) return false;
+                return true;
+            }
+            for (int r = 2; r <= rows; r++)
+            {
+                var name = GetStr(ws, r, colName);
+                if (string.IsNullOrWhiteSpace(name)) continue;
+                var location = colLocation >= 1 ? GetStr(ws, r, colLocation) : null;
+                var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
+                result.Add((name, string.IsNullOrWhiteSpace(location) ? null : location, isActive));
+            }
+            return result;
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Cannot open file or file corrupted: " + ex.Message, ex);
+        }
+    }
+
     /// <summary>Resolve path to MATERIAL SPEC MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
     private static string? ResolveMaterialSpecMasterPath()
     {
@@ -1115,8 +1202,16 @@ public static class DbSeeder
         if (context.CamProgrammers == null) return;
         context.CamProgrammers.RemoveRange(context.CamProgrammers.ToList());
         context.SaveChanges();
-        foreach (var (name, location) in new[] { ("Adib Jamil", "Subang Plant"), ("Bakhari Hussin", "Shah Alam Plant"), ("Faiq Faizul", "Subang Plant"), ("Hakim Hisham", "Subang Plant"), ("Hakim Ramaly", "Shah Alam Plant"), ("Ismail Jahrin", "Subang Plant"), ("Low Boon Bao", "Shah Alam Plant"), ("Nik Faiszal Abdullah", "Subang Plant"), ("Tan Chee Wei", "Shah Alam Plant") })
-            context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        var path = ResolveCamProgrammerPath();
+        if (string.IsNullOrEmpty(path))
+            throw new InvalidOperationException("Missing file: CAM PROGRAMMER.xlsx not found. Place the file in the Data folder.");
+        var rows = LoadCamProgrammerFromExcel(path);
+        if (rows.Count == 0)
+            throw new InvalidOperationException("No data loaded: CAM PROGRAMMER.xlsx is empty or column headers do not match. Expected: Name, Location; optional: Status (ACTIVE/INACTIVE).");
+        foreach (var (name, location, isActive) in rows)
+        {
+            context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
+        }
         context.SaveChanges();
     }
 
