@@ -38,8 +38,20 @@
     </form>
 </div>
 
-<div class="table-container">
+<div class="table-container table-container-material-spec">
     <table class="data-table material-spec-table">
+        <colgroup>
+            <col style="width: 4%" />
+            <col style="width: 13%" />
+            <col style="width: 13%" />
+            <col style="width: 13%" />
+            <col style="width: 13%" />
+            <col style="width: 9%" />
+            <col style="width: 9%" />
+            <col style="width: 10%" />
+            <col style="width: 6%" />
+            <col style="width: 10%" />
+        </colgroup>
         <thead>
             <tr>
                 <th onclick="sortBy('id')">No. @Html.Raw(GetSortIcon("id", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>

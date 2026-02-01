@@ -363,12 +363,29 @@ html, body {
     background-color: #E5E7EB;
 }
 
-/* Material Specification (On Drawing) Management: 2-line wrap headers */
-.material-spec-table th {
+/* Material Specification (On Drawing) Management: fixed column widths, 2-line wrap, no overflow */
+.table-container-material-spec {
+    overflow-x: auto;
+    max-width: 100%;
+}
+.material-spec-table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 0;
+}
+.material-spec-table th,
+.material-spec-table td {
     white-space: normal;
-    max-width: 140px;
     line-height: 1.35;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+.material-spec-table th {
     vertical-align: bottom;
+    padding: 10px 8px;
+}
+.material-spec-table td {
+    padding: 8px;
 }
 
 /* Filter row above column headers - aligned to columns (use table-filter-row to avoid .filter-row flex) */
