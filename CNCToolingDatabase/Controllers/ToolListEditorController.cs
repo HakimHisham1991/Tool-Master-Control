@@ -521,7 +521,9 @@ public class ToolListEditorController : Controller
                     page.DefaultTextStyle(x => x.FontSize(9));
                     page.Header().Column(column =>
                     {
-                        column.Item().Text(viewModel.ToolListName).Bold().FontSize(14);
+                        column.Item().AlignCenter().Text("Master Tooling List").Bold().FontSize(22).FontColor(Colors.Black);
+                        column.Item().Height(8);
+                        column.Item().Text(viewModel.ToolListName).Bold().FontSize(12);
                         column.Item().Row(row =>
                         {
                             row.RelativeItem().Text($"Part Number: {viewModel.PartNumber}");
@@ -542,7 +544,6 @@ public class ToolListEditorController : Controller
                         {
                             table.ColumnsDefinition(columns =>
                             {
-                                columns.ConstantColumn(25);  // #
                                 columns.ConstantColumn(45);  // Tool No.
                                 columns.RelativeColumn(2);   // Tool Name
                                 columns.RelativeColumn(2);   // Consumable Tool Description
@@ -556,34 +557,34 @@ public class ToolListEditorController : Controller
                                 columns.ConstantColumn(55);  // Tool Path Time in Minutes
                                 columns.RelativeColumn();    // Remarks
                             });
+                            var headerColor = "#CCFFFF";
+                            var borderThin = 0.5f;
+                            var borderColor = Colors.Grey.Lighten2;
                             var headers = new[]
                             {
-                                "#", "Tool No.", "Tool Name", "Consumable Tool Description", "Tool Supplier", "Tool Holder",
+                                "Tool No.", "Tool Name", "Consumable Tool Description", "Tool Supplier", "Tool Holder",
                                 "Tool Diameter (D1)", "Flute Length (L1)", "Tool Ext. Length (L2)", "Tool Corner Radius",
                                 "Arbor Description (or equivalent specs)", "Tool Path Time in Minutes", "Remarks"
                             };
                             table.Header(header =>
                             {
                                 foreach (var h in headers)
-                                    header.Cell().Background(Colors.Cyan.Lighten3).Padding(4).Text(h).Bold().FontSize(7);
+                                    header.Cell().Border(borderThin).BorderColor(borderColor).Background(headerColor).Padding(4).Text(h).Bold().FontSize(6);
                             });
-                            var rowNum = 1;
                             foreach (var d in details)
                             {
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(rowNum.ToString());
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.ToolNumber ?? "");
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.ToolDescription ?? "");
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.ConsumableCode ?? "");
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.Supplier ?? "");
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.HolderExtensionCode ?? "");
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text((d.Diameter ?? 0).ToString("0.##"));
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text((d.FluteLength ?? 0).ToString("0.##"));
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text((d.ProtrusionLength ?? 0).ToString("0.##"));
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text((d.CornerRadius ?? 0).ToString("0.##"));
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.ArborCode ?? "");
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text((d.ToolPathTimeMinutes ?? 0).ToString("0.##"));
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.Remarks ?? "");
-                                rowNum++;
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text(d.ToolNumber ?? "").FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text(d.ToolDescription ?? "").FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text(d.ConsumableCode ?? "").FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text(d.Supplier ?? "").FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text(d.HolderExtensionCode ?? "").FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text((d.Diameter ?? 0).ToString("0.##")).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text((d.FluteLength ?? 0).ToString("0.##")).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text((d.ProtrusionLength ?? 0).ToString("0.##")).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text((d.CornerRadius ?? 0).ToString("0.##")).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text(d.ArborCode ?? "").FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text((d.ToolPathTimeMinutes ?? 0).ToString("0.##")).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).Text(d.Remarks ?? "").FontSize(6);
                             }
                         });
                         // Stamp section (as per original Create/Edit Tool List page)
