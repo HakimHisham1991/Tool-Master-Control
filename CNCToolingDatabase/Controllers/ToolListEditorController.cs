@@ -94,6 +94,18 @@ public class ToolListEditorController : Controller
         return Json(new { success = true, redirectUrl = Url.Action("Index", "ToolListEditor", new { id }) });
     }
     
+    [HttpPost]
+    public async Task<IActionResult> Reject(int id)
+    {
+        var header = await _context.ToolListHeaders.FindAsync(id);
+        if (header == null)
+            return Json(new { success = false, message = "Tool list not found." });
+        header.ApprovedByUserId = null;
+        header.ApprovedBy = "";
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, redirectUrl = Url.Action("Index", "ToolListEditor", new { id }) });
+    }
+    
     [HttpGet]
     public async Task<IActionResult> GetAvailableToolLists(string? search)
     {
