@@ -29,6 +29,7 @@ public class ToolListEditorViewModel
     public string MachineWorkcenter { get; set; } = string.Empty;
     public string MachineModel { get; set; } = string.Empty;
     public string ApprovedBy { get; set; } = string.Empty;
+    public int? ApprovedByUserId { get; set; }
     public string CamProgrammer { get; set; } = string.Empty;
     public int? MaterialSpecId { get; set; }
     public string Material { get; set; } = string.Empty;

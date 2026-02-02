@@ -218,6 +218,25 @@
     </div>
 }
 
+<div class="verified-by-section">
+    <label class="verified-by-label">Verified by:</label>
+    <div class="verified-by-box">
+        @if (Model.ApprovedByUserId.HasValue)
+        {
+            <img id="verifiedByStamp" src="/Settings/UserStamp?id=@Model.ApprovedByUserId.Value&t=@DateTime.UtcNow.Ticks" alt="Verifier stamp" class="verified-by-stamp" />
+        }
+        else
+        {
+            <div id="verifiedByPlaceholder" class="verified-by-placeholder"></div>
+            <img id="verifiedByStamp" src="" alt="" class="verified-by-stamp" style="display: none;" />
+        }
+    </div>
+    @if (Model.Id.HasValue && !Model.IsReadOnly)
+    {
+        <button type="button" class="btn btn-primary" id="approveBtn">Approve</button>
+    }
+</div>
+
 <div class="modal" id="openModal">
     <div class="modal-backdrop" onclick="closeModal()"></div>
     <div class="modal-content">
@@ -246,6 +265,43 @@
 
 <input type="hidden" id="toolListId" value="@Model.Id" />
 <input type="hidden" id="isReadOnly" value="@Model.IsReadOnly.ToString().ToLower()" />
+
+<style>
+.verified-by-section {
+    margin-top: 2rem;
+    padding: 1rem 0;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.verified-by-label {
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+.verified-by-box {
+    width: 160px;
+    height: 100px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.verified-by-placeholder {
+    width: 100%;
+    height: 100%;
+}
+.verified-by-stamp {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+</style>
 
 @section Scripts {
 <script>
@@ -814,6 +870,26 @@
                 <div class="item-details">${item.partNumber} - ${item.operation} - ${item.revision}</div>
             </a>
         `).join('');
+    }
+    
+    var approveBtn = document.getElementById('approveBtn');
+    if (approveBtn) {
+        approveBtn.addEventListener('click', function() {
+            var id = document.getElementById('toolListId').value;
+            if (!id) return;
+            approveBtn.disabled = true;
+            fetch('/ToolListEditor/Approve?id=' + encodeURIComponent(id), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    approveBtn.disabled = false;
+                    if (data.success && data.redirectUrl) {
+                        window.location.href = data.redirectUrl;
+                    } else {
+                        alert(data.message || 'Approve failed.');
+                    }
+                })
+                .catch(function(e) { approveBtn.disabled = false; alert('Error: ' + e.message); });
+        });
     }
     
     // Only register beforeunload if user has edit access (not read-only)

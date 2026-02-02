@@ -78,6 +78,22 @@ public class ToolListEditorController : Controller
         return Json(new { success = true });
     }
     
+    [HttpPost]
+    public async Task<IActionResult> Approve(int id)
+    {
+        var userId = HttpContext.Session.GetInt32("UserId");
+        var displayName = HttpContext.Session.GetString("DisplayName") ?? HttpContext.Session.GetString("Username") ?? "";
+        if (!userId.HasValue)
+            return Json(new { success = false, message = "You must be logged in to approve." });
+        var header = await _context.ToolListHeaders.FindAsync(id);
+        if (header == null)
+            return Json(new { success = false, message = "Tool list not found." });
+        header.ApprovedByUserId = userId.Value;
+        header.ApprovedBy = displayName;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, redirectUrl = Url.Action("Index", "ToolListEditor", new { id }) });
+    }
+    
     [HttpGet]
     public async Task<IActionResult> GetAvailableToolLists(string? search)
     {
