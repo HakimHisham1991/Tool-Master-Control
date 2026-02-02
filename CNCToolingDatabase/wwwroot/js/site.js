@@ -51,23 +51,25 @@ function copyToClipboard(text, done) {
     }
 }
 
+function getSelectedOptionText(selectEl) {
+    if (!selectEl || selectEl.tagName !== 'SELECT') return '';
+    var opt = selectEl.options[selectEl.selectedIndex];
+    return opt ? (opt.textContent || opt.text || '').trim() : '';
+}
+
 function getCopyTextFromElement(el) {
     if (!el) return '';
     if (el.tagName === 'SELECT') {
-        var opt = el.options[el.selectedIndex];
-        return opt ? (opt.textContent || opt.text || '').trim() : '';
+        return getSelectedOptionText(el);
     }
     if (el.classList && el.classList.contains('combo-option')) {
         return (el.textContent || '').trim();
     }
     if (el.querySelector) {
         var input = el.querySelector('input.form-control, input.cell-input');
-        var select = el.querySelector('select.form-control, select.filter-cell-select');
         if (input) return (input.value || '').trim();
-        if (select) {
-            var opt = select.options[select.selectedIndex];
-            return opt ? (opt.textContent || opt.text || '').trim() : '';
-        }
+        var select = el.querySelector('select');
+        if (select) return getSelectedOptionText(select);
     }
     return (el.textContent || '').trim();
 }
@@ -88,7 +90,7 @@ function initCopyTooltip() {
     document.body.appendChild(copyBtn);
     var copyShowTimer = null;
     var copySourceEl = null;
-    var COPY_DELAY_MS = 500;
+    var COPY_DELAY_MS = 250;
 
     function hideCopyBtn() {
         if (copyShowTimer) clearTimeout(copyShowTimer);

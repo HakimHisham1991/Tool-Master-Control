@@ -1054,7 +1054,7 @@ select.form-control {
     }
 }
 
-/* Copy tooltip (0.5s delay) and toast */
+/* Copy tooltip (250ms delay) and toast */
 .data-table td,
 .combo-wrapper .combo-option,
 .data-table thead tr.table-filter-row th {
