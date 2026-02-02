@@ -218,6 +218,11 @@
     </div>
 }
 
+@{
+    var stampHas1 = Model.ApprovedByUserId.HasValue;
+    var stampHas2 = Model.CamLeaderApprovedByUserId.HasValue;
+    var stampHas3 = Model.ToolRegisterByUserId.HasValue;
+}
 <div class="verified-by-section">
     <label class="verified-by-label">CAM Programmer:</label>
     <div class="verified-by-stamp-area">
@@ -230,8 +235,8 @@
     @if (Model.Id.HasValue)
     {
         <div class="verified-by-buttons">
-            <button type="button" class="btn btn-primary" id="approveBtn" @(Model.IsReadOnly ? "disabled" : (Model.ApprovedByUserId.HasValue ? "disabled" : "")) title="@(Model.IsReadOnly ? "Locked by another user" : (Model.ApprovedByUserId.HasValue ? "Already approved" : "Paste your stamp"))">Approve</button>
-            <button type="button" class="btn btn-secondary" id="rejectBtn" @(Model.IsReadOnly ? "disabled" : (!Model.ApprovedByUserId.HasValue ? "disabled" : "")) title="@(Model.IsReadOnly ? "Locked by another user" : (!Model.ApprovedByUserId.HasValue ? "No stamp to reject" : "Remove stamp"))">Reject</button>
+            <button type="button" class="btn btn-primary" id="approveBtn" @(Model.IsReadOnly || stampHas1 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (stampHas1 ? "Already approved" : "Paste your stamp"))">Approve</button>
+            <button type="button" class="btn btn-secondary" id="rejectBtn" @(Model.IsReadOnly || !stampHas1 || stampHas2 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (!stampHas1 ? "No stamp to reject" : (stampHas2 ? "Complete Stamp 2 first" : "Remove stamp")))">Reject</button>
         </div>
     }
 </div>
@@ -248,8 +253,8 @@
     @if (Model.Id.HasValue)
     {
         <div class="verified-by-buttons">
-            <button type="button" class="btn btn-primary" id="approveCamLeaderBtn" @(Model.IsReadOnly ? "disabled" : (Model.CamLeaderApprovedByUserId.HasValue ? "disabled" : "")) title="@(Model.IsReadOnly ? "Locked by another user" : (Model.CamLeaderApprovedByUserId.HasValue ? "Already approved" : "Paste your stamp"))">Approve</button>
-            <button type="button" class="btn btn-secondary" id="rejectCamLeaderBtn" @(Model.IsReadOnly ? "disabled" : (!Model.CamLeaderApprovedByUserId.HasValue ? "disabled" : "")) title="@(Model.IsReadOnly ? "Locked by another user" : (!Model.CamLeaderApprovedByUserId.HasValue ? "No stamp to reject" : "Remove stamp"))">Reject</button>
+            <button type="button" class="btn btn-primary" id="approveCamLeaderBtn" @(Model.IsReadOnly || !stampHas1 || stampHas2 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (stampHas2 ? "Already approved" : "Complete Stamp 1 first"))">Approve</button>
+            <button type="button" class="btn btn-secondary" id="rejectCamLeaderBtn" @(Model.IsReadOnly || !stampHas2 || stampHas3 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (!stampHas2 ? "No stamp to reject" : (stampHas3 ? "Reject Stamp 3 first" : "Remove stamp")))">Reject</button>
         </div>
     }
 </div>
@@ -266,8 +271,8 @@
     @if (Model.Id.HasValue)
     {
         <div class="verified-by-buttons">
-            <button type="button" class="btn btn-primary" id="approveToolRegisterBtn" @(Model.IsReadOnly ? "disabled" : (Model.ToolRegisterByUserId.HasValue ? "disabled" : "")) title="@(Model.IsReadOnly ? "Locked by another user" : (Model.ToolRegisterByUserId.HasValue ? "Already approved" : "Paste your stamp"))">Approve</button>
-            <button type="button" class="btn btn-secondary" id="rejectToolRegisterBtn" @(Model.IsReadOnly ? "disabled" : (!Model.ToolRegisterByUserId.HasValue ? "disabled" : "")) title="@(Model.IsReadOnly ? "Locked by another user" : (!Model.ToolRegisterByUserId.HasValue ? "No stamp to reject" : "Remove stamp"))">Reject</button>
+            <button type="button" class="btn btn-primary" id="approveToolRegisterBtn" @(Model.IsReadOnly || !stampHas2 || stampHas3 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (stampHas3 ? "Already approved" : "Complete Stamp 2 first"))">Approve</button>
+            <button type="button" class="btn btn-secondary" id="rejectToolRegisterBtn" @(Model.IsReadOnly || !stampHas3 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : "Remove stamp")">Reject</button>
         </div>
     }
 </div>
@@ -941,16 +946,14 @@
             verifiedByDate.textContent = dateFormatted || '';
             verifiedByDate.style.display = dateFormatted ? '' : 'none';
         }
-        if (approveBtn) approveBtn.disabled = true;
-        if (rejectBtn) rejectBtn.disabled = false;
+        updateStampButtonStates();
     }
     function setStampRejected() {
         verifiedByStamp.src = '';
         verifiedByStamp.style.display = 'none';
         if (verifiedByPlaceholder) verifiedByPlaceholder.style.display = '';
         if (verifiedByDate) { verifiedByDate.textContent = ''; verifiedByDate.style.display = 'none'; }
-        if (approveBtn) approveBtn.disabled = false;
-        if (rejectBtn) rejectBtn.disabled = true;
+        updateStampButtonStates();
     }
     if (approveBtn) {
         approveBtn.addEventListener('click', function() {
@@ -965,12 +968,11 @@
                     if (data.success && data.approvedByUserId != null) {
                         setStampApproved(data.approvedByUserId, data.approvedDateFormatted || '');
                     } else {
-                        approveBtn.disabled = false;
-                        if (rejectBtn) rejectBtn.disabled = !verifiedByStamp.src;
+                        updateStampButtonStates();
                         alert(data.message || 'Approve failed.');
                     }
                 })
-                .catch(function(e) { approveBtn.disabled = false; if (rejectBtn) rejectBtn.disabled = !verifiedByStamp.src; alert('Error: ' + e.message); });
+                .catch(function(e) { updateStampButtonStates(); alert('Error: ' + e.message); });
         });
     }
     if (rejectBtn) {
@@ -986,15 +988,14 @@
                     if (data.success) {
                         setStampRejected();
                     } else {
-                        rejectBtn.disabled = false;
-                        if (approveBtn) approveBtn.disabled = false;
+                        updateStampButtonStates();
                         alert(data.message || 'Reject failed.');
                     }
                 })
-                .catch(function(e) { rejectBtn.disabled = false; if (approveBtn) approveBtn.disabled = false; alert('Error: ' + e.message); });
+                .catch(function(e) { updateStampButtonStates(); alert('Error: ' + e.message); });
         });
     }
-    
+
     var camLeaderPlaceholder = document.getElementById('camLeaderPlaceholder');
     var camLeaderStamp = document.getElementById('camLeaderStamp');
     var camLeaderDate = document.getElementById('camLeaderDate');
@@ -1004,15 +1005,13 @@
         if (camLeaderStamp) { camLeaderStamp.src = '/Settings/UserStamp?id=' + userId + '&t=' + Date.now(); camLeaderStamp.style.display = ''; }
         if (camLeaderPlaceholder) camLeaderPlaceholder.style.display = 'none';
         if (camLeaderDate) { camLeaderDate.textContent = dateFormatted || ''; camLeaderDate.style.display = dateFormatted ? '' : 'none'; }
-        if (approveCamLeaderBtn) approveCamLeaderBtn.disabled = true;
-        if (rejectCamLeaderBtn) rejectCamLeaderBtn.disabled = false;
+        updateStampButtonStates();
     }
     function setCamLeaderRejected() {
         if (camLeaderStamp) { camLeaderStamp.src = ''; camLeaderStamp.style.display = 'none'; }
         if (camLeaderPlaceholder) camLeaderPlaceholder.style.display = '';
         if (camLeaderDate) { camLeaderDate.textContent = ''; camLeaderDate.style.display = 'none'; }
-        if (approveCamLeaderBtn) approveCamLeaderBtn.disabled = false;
-        if (rejectCamLeaderBtn) rejectCamLeaderBtn.disabled = true;
+        updateStampButtonStates();
     }
     if (approveCamLeaderBtn) {
         approveCamLeaderBtn.addEventListener('click', function() {
@@ -1023,9 +1022,9 @@
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (data.success && data.approvedByUserId != null) { setCamLeaderApproved(data.approvedByUserId, data.approvedDateFormatted || ''); }
-                    else { approveCamLeaderBtn.disabled = false; if (rejectCamLeaderBtn) rejectCamLeaderBtn.disabled = true; alert(data.message || 'Approve failed.'); }
+                    else { updateStampButtonStates(); alert(data.message || 'Approve failed.'); }
                 })
-                .catch(function(e) { approveCamLeaderBtn.disabled = false; if (rejectCamLeaderBtn) rejectCamLeaderBtn.disabled = true; alert('Error: ' + e.message); });
+                .catch(function(e) { updateStampButtonStates(); alert('Error: ' + e.message); });
         });
     }
     if (rejectCamLeaderBtn) {
@@ -1037,9 +1036,9 @@
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (data.success) setCamLeaderRejected();
-                    else { rejectCamLeaderBtn.disabled = false; if (approveCamLeaderBtn) approveCamLeaderBtn.disabled = false; alert(data.message || 'Reject failed.'); }
+                    else { updateStampButtonStates(); alert(data.message || 'Reject failed.'); }
                 })
-                .catch(function(e) { rejectCamLeaderBtn.disabled = false; if (approveCamLeaderBtn) approveCamLeaderBtn.disabled = false; alert('Error: ' + e.message); });
+                .catch(function(e) { updateStampButtonStates(); alert('Error: ' + e.message); });
         });
     }
     
@@ -1048,19 +1047,32 @@
     var toolRegisterDate = document.getElementById('toolRegisterDate');
     var approveToolRegisterBtn = document.getElementById('approveToolRegisterBtn');
     var rejectToolRegisterBtn = document.getElementById('rejectToolRegisterBtn');
+
+    function stampHasStamp(el) { return el && getComputedStyle(el).display === 'none'; }
+    function updateStampButtonStates() {
+        var ro = document.getElementById('isReadOnly') && document.getElementById('isReadOnly').value === 'true';
+        var has1 = stampHasStamp(verifiedByPlaceholder);
+        var has2 = stampHasStamp(camLeaderPlaceholder);
+        var has3 = stampHasStamp(toolRegisterPlaceholder);
+        if (approveBtn) approveBtn.disabled = ro || has1;
+        if (rejectBtn) rejectBtn.disabled = ro || !has1 || has2;
+        if (approveCamLeaderBtn) approveCamLeaderBtn.disabled = ro || !has1 || has2;
+        if (rejectCamLeaderBtn) rejectCamLeaderBtn.disabled = ro || !has2 || has3;
+        if (approveToolRegisterBtn) approveToolRegisterBtn.disabled = ro || !has2 || has3;
+        if (rejectToolRegisterBtn) rejectToolRegisterBtn.disabled = ro || !has3;
+    }
+
     function setToolRegisterApproved(userId, dateFormatted) {
         if (toolRegisterStamp) { toolRegisterStamp.src = '/Settings/UserStamp?id=' + userId + '&t=' + Date.now(); toolRegisterStamp.style.display = ''; }
         if (toolRegisterPlaceholder) toolRegisterPlaceholder.style.display = 'none';
         if (toolRegisterDate) { toolRegisterDate.textContent = dateFormatted || ''; toolRegisterDate.style.display = dateFormatted ? '' : 'none'; }
-        if (approveToolRegisterBtn) approveToolRegisterBtn.disabled = true;
-        if (rejectToolRegisterBtn) rejectToolRegisterBtn.disabled = false;
+        updateStampButtonStates();
     }
     function setToolRegisterRejected() {
         if (toolRegisterStamp) { toolRegisterStamp.src = ''; toolRegisterStamp.style.display = 'none'; }
         if (toolRegisterPlaceholder) toolRegisterPlaceholder.style.display = '';
         if (toolRegisterDate) { toolRegisterDate.textContent = ''; toolRegisterDate.style.display = 'none'; }
-        if (approveToolRegisterBtn) approveToolRegisterBtn.disabled = false;
-        if (rejectToolRegisterBtn) rejectToolRegisterBtn.disabled = true;
+        updateStampButtonStates();
     }
     if (approveToolRegisterBtn) {
         approveToolRegisterBtn.addEventListener('click', function() {
@@ -1071,9 +1083,9 @@
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (data.success && data.approvedByUserId != null) { setToolRegisterApproved(data.approvedByUserId, data.approvedDateFormatted || ''); }
-                    else { approveToolRegisterBtn.disabled = false; if (rejectToolRegisterBtn) rejectToolRegisterBtn.disabled = true; alert(data.message || 'Approve failed.'); }
+                    else { updateStampButtonStates(); alert(data.message || 'Approve failed.'); }
                 })
-                .catch(function(e) { approveToolRegisterBtn.disabled = false; if (rejectToolRegisterBtn) rejectToolRegisterBtn.disabled = true; alert('Error: ' + e.message); });
+                .catch(function(e) { updateStampButtonStates(); alert('Error: ' + e.message); });
         });
     }
     if (rejectToolRegisterBtn) {
@@ -1085,12 +1097,14 @@
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (data.success) setToolRegisterRejected();
-                    else { rejectToolRegisterBtn.disabled = false; if (approveToolRegisterBtn) approveToolRegisterBtn.disabled = false; alert(data.message || 'Reject failed.'); }
+                    else { updateStampButtonStates(); alert(data.message || 'Reject failed.'); }
                 })
-                .catch(function(e) { rejectToolRegisterBtn.disabled = false; if (approveToolRegisterBtn) approveToolRegisterBtn.disabled = false; alert('Error: ' + e.message); });
+                .catch(function(e) { updateStampButtonStates(); alert('Error: ' + e.message); });
         });
     }
-    
+
+    updateStampButtonStates();
+
     // Only register beforeunload if user has edit access (not read-only)
     if (toolListId && !isReadOnly) {
         window.addEventListener('beforeunload', function(e) {

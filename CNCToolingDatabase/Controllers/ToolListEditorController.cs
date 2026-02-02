@@ -88,6 +88,8 @@ public class ToolListEditorController : Controller
         var header = await _context.ToolListHeaders.FindAsync(id);
         if (header == null)
             return Json(new { success = false, message = "Tool list not found." });
+        if (header.ApprovedByUserId.HasValue)
+            return Json(new { success = false, message = "Stamp 1 is already approved." });
         header.ApprovedByUserId = userId.Value;
         header.ApprovedBy = displayName;
         header.ApprovedDate = DateTime.UtcNow;
@@ -102,6 +104,10 @@ public class ToolListEditorController : Controller
         var header = await _context.ToolListHeaders.FindAsync(id);
         if (header == null)
             return Json(new { success = false, message = "Tool list not found." });
+        if (!header.ApprovedByUserId.HasValue)
+            return Json(new { success = false, message = "No stamp to reject." });
+        if (header.CamLeaderApprovedByUserId.HasValue)
+            return Json(new { success = false, message = "Reject Stamp 2 first." });
         header.ApprovedByUserId = null;
         header.ApprovedBy = "";
         header.ApprovedDate = null;
@@ -118,6 +124,10 @@ public class ToolListEditorController : Controller
         var header = await _context.ToolListHeaders.FindAsync(id);
         if (header == null)
             return Json(new { success = false, message = "Tool list not found." });
+        if (!header.ApprovedByUserId.HasValue)
+            return Json(new { success = false, message = "Complete Stamp 1 first." });
+        if (header.CamLeaderApprovedByUserId.HasValue)
+            return Json(new { success = false, message = "Stamp 2 is already approved." });
         header.CamLeaderApprovedByUserId = userId.Value;
         header.CamLeaderApprovedDate = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -131,6 +141,10 @@ public class ToolListEditorController : Controller
         var header = await _context.ToolListHeaders.FindAsync(id);
         if (header == null)
             return Json(new { success = false, message = "Tool list not found." });
+        if (!header.CamLeaderApprovedByUserId.HasValue)
+            return Json(new { success = false, message = "No stamp to reject." });
+        if (header.ToolRegisterByUserId.HasValue)
+            return Json(new { success = false, message = "Reject Stamp 3 first." });
         header.CamLeaderApprovedByUserId = null;
         header.CamLeaderApprovedDate = null;
         await _context.SaveChangesAsync();
@@ -146,6 +160,10 @@ public class ToolListEditorController : Controller
         var header = await _context.ToolListHeaders.FindAsync(id);
         if (header == null)
             return Json(new { success = false, message = "Tool list not found." });
+        if (!header.CamLeaderApprovedByUserId.HasValue)
+            return Json(new { success = false, message = "Complete Stamp 2 first." });
+        if (header.ToolRegisterByUserId.HasValue)
+            return Json(new { success = false, message = "Stamp 3 is already approved." });
         header.ToolRegisterByUserId = userId.Value;
         header.ToolRegisterByDate = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -159,6 +177,8 @@ public class ToolListEditorController : Controller
         var header = await _context.ToolListHeaders.FindAsync(id);
         if (header == null)
             return Json(new { success = false, message = "Tool list not found." });
+        if (!header.ToolRegisterByUserId.HasValue)
+            return Json(new { success = false, message = "No stamp to reject." });
         header.ToolRegisterByUserId = null;
         header.ToolRegisterByDate = null;
         await _context.SaveChangesAsync();
