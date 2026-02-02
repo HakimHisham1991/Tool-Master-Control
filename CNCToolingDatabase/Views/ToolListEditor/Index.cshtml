@@ -221,15 +221,8 @@
 <div class="verified-by-section">
     <label class="verified-by-label">Verified by:</label>
     <div class="verified-by-box">
-        @if (Model.ApprovedByUserId.HasValue)
-        {
-            <img id="verifiedByStamp" src="/Settings/UserStamp?id=@Model.ApprovedByUserId.Value&t=@DateTime.UtcNow.Ticks" alt="Verifier stamp" class="verified-by-stamp" />
-        }
-        else
-        {
-            <div id="verifiedByPlaceholder" class="verified-by-placeholder"></div>
-            <img id="verifiedByStamp" src="" alt="" class="verified-by-stamp" style="display: none;" />
-        }
+        <div id="verifiedByPlaceholder" class="verified-by-placeholder" style="@(Model.ApprovedByUserId.HasValue ? "display: none;" : "")"></div>
+        <img id="verifiedByStamp" class="verified-by-stamp" alt="Verifier stamp" src="@(Model.ApprovedByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.ApprovedByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.ApprovedByUserId.HasValue ? "" : "display: none;")" />
     </div>
     @if (Model.Id.HasValue)
     {
@@ -886,6 +879,22 @@
     
     var approveBtn = document.getElementById('approveBtn');
     var rejectBtn = document.getElementById('rejectBtn');
+    var verifiedByPlaceholder = document.getElementById('verifiedByPlaceholder');
+    var verifiedByStamp = document.getElementById('verifiedByStamp');
+    function setStampApproved(userId) {
+        verifiedByStamp.src = '/Settings/UserStamp?id=' + userId + '&t=' + Date.now();
+        verifiedByStamp.style.display = '';
+        if (verifiedByPlaceholder) verifiedByPlaceholder.style.display = 'none';
+        if (approveBtn) approveBtn.disabled = true;
+        if (rejectBtn) rejectBtn.disabled = false;
+    }
+    function setStampRejected() {
+        verifiedByStamp.src = '';
+        verifiedByStamp.style.display = 'none';
+        if (verifiedByPlaceholder) verifiedByPlaceholder.style.display = '';
+        if (approveBtn) approveBtn.disabled = false;
+        if (rejectBtn) rejectBtn.disabled = true;
+    }
     if (approveBtn) {
         approveBtn.addEventListener('click', function() {
             var id = document.getElementById('toolListId').value;
@@ -896,15 +905,15 @@
             fetch('/ToolListEditor/Approve?id=' + encodeURIComponent(id), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
-                    approveBtn.disabled = false;
-                    if (rejectBtn) rejectBtn.disabled = false;
-                    if (data.success && data.redirectUrl) {
-                        window.location.href = data.redirectUrl;
+                    if (data.success && data.approvedByUserId != null) {
+                        setStampApproved(data.approvedByUserId);
                     } else {
+                        approveBtn.disabled = false;
+                        if (rejectBtn) rejectBtn.disabled = !verifiedByStamp.src;
                         alert(data.message || 'Approve failed.');
                     }
                 })
-                .catch(function(e) { approveBtn.disabled = false; if (rejectBtn) rejectBtn.disabled = false; alert('Error: ' + e.message); });
+                .catch(function(e) { approveBtn.disabled = false; if (rejectBtn) rejectBtn.disabled = !verifiedByStamp.src; alert('Error: ' + e.message); });
         });
     }
     if (rejectBtn) {
@@ -917,11 +926,11 @@
             fetch('/ToolListEditor/Reject?id=' + encodeURIComponent(id), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
-                    rejectBtn.disabled = false;
-                    if (approveBtn) approveBtn.disabled = false;
-                    if (data.success && data.redirectUrl) {
-                        window.location.href = data.redirectUrl;
+                    if (data.success) {
+                        setStampRejected();
                     } else {
+                        rejectBtn.disabled = false;
+                        if (approveBtn) approveBtn.disabled = false;
                         alert(data.message || 'Reject failed.');
                     }
                 })

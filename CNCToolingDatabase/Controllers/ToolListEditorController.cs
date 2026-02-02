@@ -91,7 +91,7 @@ public class ToolListEditorController : Controller
         header.ApprovedByUserId = userId.Value;
         header.ApprovedBy = displayName;
         await _context.SaveChangesAsync();
-        return Json(new { success = true, redirectUrl = Url.Action("Index", "ToolListEditor", new { id }) });
+        return Json(new { success = true, approvedByUserId = userId.Value });
     }
     
     [HttpPost]
@@ -103,7 +103,7 @@ public class ToolListEditorController : Controller
         header.ApprovedByUserId = null;
         header.ApprovedBy = "";
         await _context.SaveChangesAsync();
-        return Json(new { success = true, redirectUrl = Url.Action("Index", "ToolListEditor", new { id }) });
+        return Json(new { success = true });
     }
     
     [HttpGet]
