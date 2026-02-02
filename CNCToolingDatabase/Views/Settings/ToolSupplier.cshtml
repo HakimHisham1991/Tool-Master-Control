@@ -72,13 +72,16 @@
                     var item = Model[i];
                     var currentPage = Math.Max(1, (int)(ViewBag.CurrentPage ?? 1));
                     var pageSize = Math.Max(1, (int)(ViewBag.PageSize ?? 250));
-                    var no = (currentPage - 1) * pageSize + i + 1;
                     var sortById = string.Equals(ViewBag.SortColumn as string, "id", StringComparison.OrdinalIgnoreCase);
+                    var sortDesc = string.Equals(ViewBag.SortDirection as string, "desc", StringComparison.OrdinalIgnoreCase);
+                    var no = sortById && sortDesc
+                        ? (currentPage - 1) * pageSize + Model.Count - i
+                        : (currentPage - 1) * pageSize + i + 1;
                     var nameJs = (item.Name ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "&quot;");
                     var websiteJs = (item.Website ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "&quot;");
                     var statusJs = (item.Status ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "&quot;");
                     <tr>
-                        <td>@(sortById ? item.Id : no)</td>
+                        <td>@no</td>
                         <td>@item.Name</td>
                         <td>
                             @if (!string.IsNullOrWhiteSpace(item.Website))

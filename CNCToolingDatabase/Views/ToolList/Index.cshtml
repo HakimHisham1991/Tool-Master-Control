@@ -114,10 +114,13 @@
                     var item = Model.ToolLists[i];
                     var currentPage = Math.Max(1, Model.CurrentPage);
                     var pageSize = Math.Max(1, Model.PageSize);
-                    var no = (currentPage - 1) * pageSize + i + 1;
                     var sortById = string.Equals(Model.SortColumn, "id", StringComparison.OrdinalIgnoreCase);
+                    var sortDesc = string.Equals(Model.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+                    var no = sortById && sortDesc
+                        ? (currentPage - 1) * pageSize + Model.ToolLists.Count - i
+                        : (currentPage - 1) * pageSize + i + 1;
                     <tr>
-                        <td>@(sortById ? item.Id : no)</td>
+                        <td>@no</td>
                         <td>
                             <a href="/ToolListEditor?id=@item.Id" target="_blank" class="tool-list-link">@item.ToolListName</a>
                         </td>
