@@ -231,9 +231,9 @@
             <img id="verifiedByStamp" src="" alt="" class="verified-by-stamp" style="display: none;" />
         }
     </div>
-    @if (Model.Id.HasValue && !Model.IsReadOnly)
+    @if (Model.Id.HasValue)
     {
-        <button type="button" class="btn btn-primary" id="approveBtn">Approve</button>
+        <button type="button" class="btn btn-primary" id="approveBtn" @(Model.IsReadOnly ? "disabled title=Locked by another user" : "")>Approve</button>
     }
 </div>
 
