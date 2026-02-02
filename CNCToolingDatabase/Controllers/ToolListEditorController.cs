@@ -109,6 +109,62 @@ public class ToolListEditorController : Controller
         return Json(new { success = true });
     }
     
+    [HttpPost]
+    public async Task<IActionResult> ApproveCamLeader(int id)
+    {
+        var userId = HttpContext.Session.GetInt32("UserId");
+        if (!userId.HasValue)
+            return Json(new { success = false, message = "You must be logged in to approve." });
+        var header = await _context.ToolListHeaders.FindAsync(id);
+        if (header == null)
+            return Json(new { success = false, message = "Tool list not found." });
+        header.CamLeaderApprovedByUserId = userId.Value;
+        header.CamLeaderApprovedDate = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        var approvedDateFormatted = header.CamLeaderApprovedDate?.ToString("dd/MM/yyyy") ?? "";
+        return Json(new { success = true, approvedByUserId = userId.Value, approvedDateFormatted });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> RejectCamLeader(int id)
+    {
+        var header = await _context.ToolListHeaders.FindAsync(id);
+        if (header == null)
+            return Json(new { success = false, message = "Tool list not found." });
+        header.CamLeaderApprovedByUserId = null;
+        header.CamLeaderApprovedDate = null;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> ApproveToolRegister(int id)
+    {
+        var userId = HttpContext.Session.GetInt32("UserId");
+        if (!userId.HasValue)
+            return Json(new { success = false, message = "You must be logged in to approve." });
+        var header = await _context.ToolListHeaders.FindAsync(id);
+        if (header == null)
+            return Json(new { success = false, message = "Tool list not found." });
+        header.ToolRegisterByUserId = userId.Value;
+        header.ToolRegisterByDate = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        var approvedDateFormatted = header.ToolRegisterByDate?.ToString("dd/MM/yyyy") ?? "";
+        return Json(new { success = true, approvedByUserId = userId.Value, approvedDateFormatted });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> RejectToolRegister(int id)
+    {
+        var header = await _context.ToolListHeaders.FindAsync(id);
+        if (header == null)
+            return Json(new { success = false, message = "Tool list not found." });
+        header.ToolRegisterByUserId = null;
+        header.ToolRegisterByDate = null;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+    
     [HttpGet]
     public async Task<IActionResult> GetAvailableToolLists(string? search)
     {

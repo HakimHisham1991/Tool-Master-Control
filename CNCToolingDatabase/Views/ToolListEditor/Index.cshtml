@@ -236,6 +236,42 @@
     }
 </div>
 
+<div class="verified-by-section">
+    <label class="verified-by-label">Approved by:</label>
+    <div class="verified-by-stamp-area">
+        <div class="verified-by-box">
+            <div id="camLeaderPlaceholder" class="verified-by-placeholder" style="@(Model.CamLeaderApprovedByUserId.HasValue ? "display: none;" : "")"></div>
+            <img id="camLeaderStamp" class="verified-by-stamp" alt="CAM Leader stamp" src="@(Model.CamLeaderApprovedByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.CamLeaderApprovedByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.CamLeaderApprovedByUserId.HasValue ? "" : "display: none;")" />
+        </div>
+        <div id="camLeaderDate" class="verified-by-date" style="@(Model.CamLeaderApprovedByUserId.HasValue && Model.CamLeaderApprovedDate.HasValue ? "" : "display: none;")">@(Model.CamLeaderApprovedDate?.ToString("dd/MM/yyyy"))</div>
+    </div>
+    @if (Model.Id.HasValue)
+    {
+        <div class="verified-by-buttons">
+            <button type="button" class="btn btn-primary" id="approveCamLeaderBtn" @(Model.IsReadOnly ? "disabled" : (Model.CamLeaderApprovedByUserId.HasValue ? "disabled" : "")) title="@(Model.IsReadOnly ? "Locked by another user" : (Model.CamLeaderApprovedByUserId.HasValue ? "Already approved" : "Paste your stamp"))">Approve</button>
+            <button type="button" class="btn btn-secondary" id="rejectCamLeaderBtn" @(Model.IsReadOnly ? "disabled" : (!Model.CamLeaderApprovedByUserId.HasValue ? "disabled" : "")) title="@(Model.IsReadOnly ? "Locked by another user" : (!Model.CamLeaderApprovedByUserId.HasValue ? "No stamp to reject" : "Remove stamp"))">Reject</button>
+        </div>
+    }
+</div>
+
+<div class="verified-by-section">
+    <label class="verified-by-label">Tool Register By:</label>
+    <div class="verified-by-stamp-area">
+        <div class="verified-by-box">
+            <div id="toolRegisterPlaceholder" class="verified-by-placeholder" style="@(Model.ToolRegisterByUserId.HasValue ? "display: none;" : "")"></div>
+            <img id="toolRegisterStamp" class="verified-by-stamp" alt="Tool Register stamp" src="@(Model.ToolRegisterByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.ToolRegisterByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.ToolRegisterByUserId.HasValue ? "" : "display: none;")" />
+        </div>
+        <div id="toolRegisterDate" class="verified-by-date" style="@(Model.ToolRegisterByUserId.HasValue && Model.ToolRegisterByDate.HasValue ? "" : "display: none;")">@(Model.ToolRegisterByDate?.ToString("dd/MM/yyyy"))</div>
+    </div>
+    @if (Model.Id.HasValue)
+    {
+        <div class="verified-by-buttons">
+            <button type="button" class="btn btn-primary" id="approveToolRegisterBtn" @(Model.IsReadOnly ? "disabled" : (Model.ToolRegisterByUserId.HasValue ? "disabled" : "")) title="@(Model.IsReadOnly ? "Locked by another user" : (Model.ToolRegisterByUserId.HasValue ? "Already approved" : "Paste your stamp"))">Approve</button>
+            <button type="button" class="btn btn-secondary" id="rejectToolRegisterBtn" @(Model.IsReadOnly ? "disabled" : (!Model.ToolRegisterByUserId.HasValue ? "disabled" : "")) title="@(Model.IsReadOnly ? "Locked by another user" : (!Model.ToolRegisterByUserId.HasValue ? "No stamp to reject" : "Remove stamp"))">Reject</button>
+        </div>
+    }
+</div>
+
 <div class="modal" id="openModal">
     <div class="modal-backdrop" onclick="closeModal()"></div>
     <div class="modal-content">
@@ -954,6 +990,102 @@
                     }
                 })
                 .catch(function(e) { rejectBtn.disabled = false; if (approveBtn) approveBtn.disabled = false; alert('Error: ' + e.message); });
+        });
+    }
+    
+    var camLeaderPlaceholder = document.getElementById('camLeaderPlaceholder');
+    var camLeaderStamp = document.getElementById('camLeaderStamp');
+    var camLeaderDate = document.getElementById('camLeaderDate');
+    var approveCamLeaderBtn = document.getElementById('approveCamLeaderBtn');
+    var rejectCamLeaderBtn = document.getElementById('rejectCamLeaderBtn');
+    function setCamLeaderApproved(userId, dateFormatted) {
+        if (camLeaderStamp) { camLeaderStamp.src = '/Settings/UserStamp?id=' + userId + '&t=' + Date.now(); camLeaderStamp.style.display = ''; }
+        if (camLeaderPlaceholder) camLeaderPlaceholder.style.display = 'none';
+        if (camLeaderDate) { camLeaderDate.textContent = dateFormatted || ''; camLeaderDate.style.display = dateFormatted ? '' : 'none'; }
+        if (approveCamLeaderBtn) approveCamLeaderBtn.disabled = true;
+        if (rejectCamLeaderBtn) rejectCamLeaderBtn.disabled = false;
+    }
+    function setCamLeaderRejected() {
+        if (camLeaderStamp) { camLeaderStamp.src = ''; camLeaderStamp.style.display = 'none'; }
+        if (camLeaderPlaceholder) camLeaderPlaceholder.style.display = '';
+        if (camLeaderDate) { camLeaderDate.textContent = ''; camLeaderDate.style.display = 'none'; }
+        if (approveCamLeaderBtn) approveCamLeaderBtn.disabled = false;
+        if (rejectCamLeaderBtn) rejectCamLeaderBtn.disabled = true;
+    }
+    if (approveCamLeaderBtn) {
+        approveCamLeaderBtn.addEventListener('click', function() {
+            var id = document.getElementById('toolListId').value;
+            if (!id || approveCamLeaderBtn.disabled) return;
+            approveCamLeaderBtn.disabled = true; if (rejectCamLeaderBtn) rejectCamLeaderBtn.disabled = true;
+            fetch('/ToolListEditor/ApproveCamLeader?id=' + encodeURIComponent(id), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success && data.approvedByUserId != null) { setCamLeaderApproved(data.approvedByUserId, data.approvedDateFormatted || ''); }
+                    else { approveCamLeaderBtn.disabled = false; if (rejectCamLeaderBtn) rejectCamLeaderBtn.disabled = true; alert(data.message || 'Approve failed.'); }
+                })
+                .catch(function(e) { approveCamLeaderBtn.disabled = false; if (rejectCamLeaderBtn) rejectCamLeaderBtn.disabled = true; alert('Error: ' + e.message); });
+        });
+    }
+    if (rejectCamLeaderBtn) {
+        rejectCamLeaderBtn.addEventListener('click', function() {
+            var id = document.getElementById('toolListId').value;
+            if (!id || rejectCamLeaderBtn.disabled) return;
+            rejectCamLeaderBtn.disabled = true; if (approveCamLeaderBtn) approveCamLeaderBtn.disabled = true;
+            fetch('/ToolListEditor/RejectCamLeader?id=' + encodeURIComponent(id), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success) setCamLeaderRejected();
+                    else { rejectCamLeaderBtn.disabled = false; if (approveCamLeaderBtn) approveCamLeaderBtn.disabled = false; alert(data.message || 'Reject failed.'); }
+                })
+                .catch(function(e) { rejectCamLeaderBtn.disabled = false; if (approveCamLeaderBtn) approveCamLeaderBtn.disabled = false; alert('Error: ' + e.message); });
+        });
+    }
+    
+    var toolRegisterPlaceholder = document.getElementById('toolRegisterPlaceholder');
+    var toolRegisterStamp = document.getElementById('toolRegisterStamp');
+    var toolRegisterDate = document.getElementById('toolRegisterDate');
+    var approveToolRegisterBtn = document.getElementById('approveToolRegisterBtn');
+    var rejectToolRegisterBtn = document.getElementById('rejectToolRegisterBtn');
+    function setToolRegisterApproved(userId, dateFormatted) {
+        if (toolRegisterStamp) { toolRegisterStamp.src = '/Settings/UserStamp?id=' + userId + '&t=' + Date.now(); toolRegisterStamp.style.display = ''; }
+        if (toolRegisterPlaceholder) toolRegisterPlaceholder.style.display = 'none';
+        if (toolRegisterDate) { toolRegisterDate.textContent = dateFormatted || ''; toolRegisterDate.style.display = dateFormatted ? '' : 'none'; }
+        if (approveToolRegisterBtn) approveToolRegisterBtn.disabled = true;
+        if (rejectToolRegisterBtn) rejectToolRegisterBtn.disabled = false;
+    }
+    function setToolRegisterRejected() {
+        if (toolRegisterStamp) { toolRegisterStamp.src = ''; toolRegisterStamp.style.display = 'none'; }
+        if (toolRegisterPlaceholder) toolRegisterPlaceholder.style.display = '';
+        if (toolRegisterDate) { toolRegisterDate.textContent = ''; toolRegisterDate.style.display = 'none'; }
+        if (approveToolRegisterBtn) approveToolRegisterBtn.disabled = false;
+        if (rejectToolRegisterBtn) rejectToolRegisterBtn.disabled = true;
+    }
+    if (approveToolRegisterBtn) {
+        approveToolRegisterBtn.addEventListener('click', function() {
+            var id = document.getElementById('toolListId').value;
+            if (!id || approveToolRegisterBtn.disabled) return;
+            approveToolRegisterBtn.disabled = true; if (rejectToolRegisterBtn) rejectToolRegisterBtn.disabled = true;
+            fetch('/ToolListEditor/ApproveToolRegister?id=' + encodeURIComponent(id), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success && data.approvedByUserId != null) { setToolRegisterApproved(data.approvedByUserId, data.approvedDateFormatted || ''); }
+                    else { approveToolRegisterBtn.disabled = false; if (rejectToolRegisterBtn) rejectToolRegisterBtn.disabled = true; alert(data.message || 'Approve failed.'); }
+                })
+                .catch(function(e) { approveToolRegisterBtn.disabled = false; if (rejectToolRegisterBtn) rejectToolRegisterBtn.disabled = true; alert('Error: ' + e.message); });
+        });
+    }
+    if (rejectToolRegisterBtn) {
+        rejectToolRegisterBtn.addEventListener('click', function() {
+            var id = document.getElementById('toolListId').value;
+            if (!id || rejectToolRegisterBtn.disabled) return;
+            rejectToolRegisterBtn.disabled = true; if (approveToolRegisterBtn) approveToolRegisterBtn.disabled = true;
+            fetch('/ToolListEditor/RejectToolRegister?id=' + encodeURIComponent(id), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success) setToolRegisterRejected();
+                    else { rejectToolRegisterBtn.disabled = false; if (approveToolRegisterBtn) approveToolRegisterBtn.disabled = false; alert(data.message || 'Reject failed.'); }
+                })
+                .catch(function(e) { rejectToolRegisterBtn.disabled = false; if (approveToolRegisterBtn) approveToolRegisterBtn.disabled = false; alert('Error: ' + e.message); });
         });
     }
     

@@ -31,6 +31,10 @@ public class ToolListEditorViewModel
     public string ApprovedBy { get; set; } = string.Empty;
     public int? ApprovedByUserId { get; set; }
     public DateTime? ApprovedDate { get; set; }
+    public int? CamLeaderApprovedByUserId { get; set; }
+    public DateTime? CamLeaderApprovedDate { get; set; }
+    public int? ToolRegisterByUserId { get; set; }
+    public DateTime? ToolRegisterByDate { get; set; }
     public string CamProgrammer { get; set; } = string.Empty;
     public int? MaterialSpecId { get; set; }
     public string Material { get; set; } = string.Empty;
