@@ -83,6 +83,9 @@ function createCopyTooltipButton() {
 
 function initCopyTooltip() {
     var copyBtn = createCopyTooltipButton();
+    copyBtn.style.display = 'none';
+    copyBtn.style.position = 'fixed';
+    document.body.appendChild(copyBtn);
     var copyShowTimer = null;
     var copySourceEl = null;
     var COPY_DELAY_MS = 500;
@@ -91,39 +94,39 @@ function initCopyTooltip() {
         if (copyShowTimer) clearTimeout(copyShowTimer);
         copyShowTimer = null;
         copySourceEl = null;
-        if (copyBtn.parentNode) {
-            copyBtn.parentNode.removeChild(copyBtn);
-        }
+        copyBtn.style.display = 'none';
     }
 
     function showCopyBtn(el) {
         copySourceEl = el;
-        if (copyBtn.parentNode) copyBtn.parentNode.removeChild(copyBtn);
-        var container = (el && el.tagName === 'SELECT') ? el.parentNode : el;
-        if (!container) return;
-        if (container.style) container.style.position = 'relative';
-        container.appendChild(copyBtn);
+        var rect = el.getBoundingClientRect();
+        copyBtn.style.top = (rect.top + 4) + 'px';
+        copyBtn.style.left = (rect.right - 32) + 'px';
         copyBtn.style.display = 'flex';
     }
 
     function copyableElement(target) {
-        if (!target || !target.closest) return null;
-        var td = target.closest ? target.closest('td');
-        var table = target.closest ? target.closest('table');
-        if (td && table && table.classList && table.classList.contains('data-table')) return td;
+        if (!target || typeof target.closest !== 'function') return null;
+        var td = target.closest('td');
+        if (td) {
+            var table = target.closest('table');
+            if (table) return td;
+        }
+        var th = target.closest('th');
+        if (th && th.querySelector('select.filter-cell-select')) return th;
         if (target.closest('.combo-wrapper .combo-option')) return target.closest('.combo-wrapper .combo-option');
-        var th = target.closest ? target.closest('th');
-        if (th && th.querySelector && th.querySelector('select.filter-cell-select')) return th;
-        if (target.tagName === 'SELECT' && (target.classList.contains('form-control') || target.classList.contains('filter-cell-select'))) return target;
+        if (target.tagName === 'SELECT') {
+            if (target.classList.contains('form-control') || target.classList.contains('filter-cell-select')) return target;
+        }
         if (target.closest('select.form-control')) return target.closest('select.form-control');
         if (target.closest('select.filter-cell-select')) return target.closest('select.filter-cell-select');
         return null;
     }
 
-    document.body.addEventListener('mouseover', function(e) {
+    function onMouseOver(e) {
         var el = copyableElement(e.target);
         if (!el) {
-            if (e.target !== copyBtn && (!copyBtn.parentNode || !copyBtn.parentNode.contains(e.target))) hideCopyBtn();
+            if (e.target !== copyBtn && !copyBtn.contains(e.target)) hideCopyBtn();
             return;
         }
         if (copySourceEl === el) return;
@@ -132,17 +135,27 @@ function initCopyTooltip() {
             copyShowTimer = null;
             showCopyBtn(el);
         }, COPY_DELAY_MS);
-    }, true);
+    }
 
-    document.body.addEventListener('mouseout', function(e) {
+    function onMouseOut(e) {
         var related = e.relatedTarget;
-        if (related && copyBtn.parentNode && (copyBtn === related || copyBtn.contains(related))) return;
+        if (related && (copyBtn === related || copyBtn.contains(related))) return;
         if (related && copySourceEl && (copySourceEl === related || copySourceEl.contains(related))) return;
         if (copyShowTimer) { clearTimeout(copyShowTimer); copyShowTimer = null; }
-        var el = copyableElement(e.target);
-        if (el === copySourceEl) hideCopyBtn();
-    }, true);
+        if (copyableElement(e.target) === copySourceEl) hideCopyBtn();
+    }
 
+    function onDblClick(e) {
+        var el = copyableElement(e.target);
+        if (!el) return;
+        e.preventDefault();
+        var text = getCopyTextFromElement(el);
+        copyToClipboard(text, function(ok) { if (ok) showCopyToast(); });
+    }
+
+    document.addEventListener('mouseover', onMouseOver, true);
+    document.addEventListener('mouseout', onMouseOut, true);
+    document.addEventListener('dblclick', onDblClick, true);
     copyBtn.addEventListener('click', function(ev) {
         ev.preventDefault();
         ev.stopPropagation();
@@ -151,13 +164,6 @@ function initCopyTooltip() {
             if (ok) { showCopyToast(); hideCopyBtn(); }
         });
     });
-
-    document.body.addEventListener('dblclick', function(e) {
-        var el = copyableElement(e.target);
-        if (!el) return;
-        var text = getCopyTextFromElement(el);
-        copyToClipboard(text, function(ok) { if (ok) showCopyToast(); });
-    }, true);
 }
 
 function initApp() {
@@ -166,11 +172,23 @@ function initApp() {
         var isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         if (isCollapsed) sidebar.classList.add('collapsed');
     }
-    initCopyTooltip();
+    try {
+        initCopyTooltip();
+    } catch (err) {
+        console.error('Copy tooltip init error', err);
+    }
+}
+
+function runWhenReady() {
+    if (document.body && document.querySelector) {
+        initApp();
+    } else {
+        setTimeout(runWhenReady, 50);
+    }
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
+    document.addEventListener('DOMContentLoaded', runWhenReady);
 } else {
-    initApp();
+    setTimeout(runWhenReady, 0);
 }

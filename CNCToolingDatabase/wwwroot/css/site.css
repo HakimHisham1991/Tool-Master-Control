@@ -1062,9 +1062,7 @@ select.form-control {
     cursor: text;
 }
 .copy-tooltip-btn {
-    position: absolute;
-    top: 4px;
-    right: 4px;
+    position: fixed;
     width: 28px;
     height: 28px;
     padding: 0;
