@@ -86,11 +86,46 @@ public class ToolListService : IToolListService
                     : null
             }).ToList();
         
-        var allHeadersForAvailable = await _toolListRepository.GetAllHeadersAsync();
-        var allIds = allHeadersForAvailable.Select(h => h.Id).ToList();
+        // Bidirectional filter options: each dropdown shows only values that exist given ALL OTHER filters
+        var baseHeaders = await _toolListRepository.GetAllHeadersAsync();
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.ToLower();
+            baseHeaders = baseHeaders.Where(h =>
+                h.ToolListName.ToLower().Contains(term) ||
+                h.PartNumber.ToLower().Contains(term) ||
+                h.Operation.ToLower().Contains(term) ||
+                h.CreatedBy.ToLower().Contains(term)).ToList();
+        }
+        var allIds = baseHeaders.Select(h => h.Id).ToList();
         var allCounts = await _toolListRepository.GetToolCountsByHeaderIdsAsync(allIds);
-        var distinctCounts = allCounts.Values.Distinct().OrderBy(x => x).Select(x => x.ToString()).ToList();
-        
+
+        List<ToolListHeader> ApplyFiltersExcept(List<ToolListHeader> hdrs, string? skip)
+        {
+            if (skip != "toolListName" && !string.IsNullOrWhiteSpace(toolListNameFilter))
+                hdrs = hdrs.Where(h => h.ToolListName == toolListNameFilter).ToList();
+            if (skip != "partNumber" && !string.IsNullOrWhiteSpace(partNumberFilter))
+                hdrs = hdrs.Where(h => h.PartNumber == partNumberFilter).ToList();
+            if (skip != "operation" && !string.IsNullOrWhiteSpace(operationFilter))
+                hdrs = hdrs.Where(h => h.Operation == operationFilter).ToList();
+            if (skip != "revision" && !string.IsNullOrWhiteSpace(revisionFilter))
+                hdrs = hdrs.Where(h => h.Revision == revisionFilter).ToList();
+            if (skip != "numberOfTooling" && !string.IsNullOrWhiteSpace(numberOfToolingFilter) && int.TryParse(numberOfToolingFilter, out var nt))
+                hdrs = hdrs.Where(h => allCounts.GetValueOrDefault(h.Id, 0) == nt).ToList();
+            return hdrs;
+        }
+
+        var availableToolListNames = ApplyFiltersExcept(baseHeaders.ToList(), "toolListName")
+            .Select(h => h.ToolListName).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
+        var availablePartNumbers = ApplyFiltersExcept(baseHeaders.ToList(), "partNumber")
+            .Select(h => h.PartNumber).Distinct().OrderBy(x => x).ToList();
+        var availableOperations = ApplyFiltersExcept(baseHeaders.ToList(), "operation")
+            .Select(h => h.Operation).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
+        var availableRevisions = ApplyFiltersExcept(baseHeaders.ToList(), "revision")
+            .Select(h => h.Revision).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
+        var availableNumberOfToolings = ApplyFiltersExcept(baseHeaders.ToList(), "numberOfTooling")
+            .Select(h => allCounts.GetValueOrDefault(h.Id, 0)).Distinct().OrderBy(x => x).Select(x => x.ToString()).ToList();
+
         return new ToolListDatabaseViewModel
         {
             ToolLists = toolLists,
@@ -106,11 +141,11 @@ public class ToolListService : IToolListService
             TotalPages = totalPages,
             TotalItems = totalItems,
             PageSize = pageSize,
-            AvailableToolListNames = allHeadersForAvailable.Select(h => h.ToolListName).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailablePartNumbers = allHeadersForAvailable.Select(h => h.PartNumber).Distinct().OrderBy(x => x).ToList(),
-            AvailableOperations = allHeadersForAvailable.Select(h => h.Operation).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableRevisions = allHeadersForAvailable.Select(h => h.Revision).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableNumberOfToolings = distinctCounts
+            AvailableToolListNames = availableToolListNames,
+            AvailablePartNumbers = availablePartNumbers,
+            AvailableOperations = availableOperations,
+            AvailableRevisions = availableRevisions,
+            AvailableNumberOfToolings = availableNumberOfToolings
         };
     }
     

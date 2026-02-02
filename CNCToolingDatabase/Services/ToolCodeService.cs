@@ -122,9 +122,85 @@ public class ToolCodeService : IToolCodeService
             .Take(pageSize)
             .ToListAsync();
         
-        var allDetails = await _context.ToolListDetails.ToListAsync();
-        var allHeaders = await _context.ToolListHeaders.ToListAsync();
-        
+        // Bidirectional filter options: each dropdown shows only values that exist given ALL OTHER filters
+        var baseQuery = from detail in _context.ToolListDetails
+                        join header in _context.ToolListHeaders on detail.ToolListHeaderId equals header.Id
+                        select new ToolCodeViewModel
+                        {
+                            ToolNumber = detail.ToolNumber,
+                            ToolDescription = detail.ToolDescription,
+                            ConsumableCode = detail.ConsumableCode,
+                            Supplier = detail.Supplier,
+                            HolderExtensionCode = detail.HolderExtensionCode,
+                            Diameter = detail.Diameter,
+                            FluteLength = detail.FluteLength,
+                            ProtrusionLength = detail.ProtrusionLength,
+                            CornerRadius = detail.CornerRadius,
+                            ArborCode = detail.ArborCode,
+                            PartNumber = header.PartNumber,
+                            Operation = header.Operation,
+                            Revision = header.Revision,
+                            ToolListName = header.ToolListName,
+                            ProjectCode = header.ProjectCode,
+                            MachineName = header.MachineName,
+                            MachineWorkcenter = header.MachineWorkcenter,
+                            CreatedBy = header.CreatedBy,
+                            CreatedDate = header.CreatedDate,
+                            LastModifiedDate = header.LastModifiedDate
+                        };
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.ToLower();
+            baseQuery = baseQuery.Where(t =>
+                t.ToolNumber.ToLower().Contains(term) ||
+                t.ToolDescription.ToLower().Contains(term) ||
+                t.ConsumableCode.ToLower().Contains(term) ||
+                t.Supplier.ToLower().Contains(term) ||
+                t.PartNumber.ToLower().Contains(term));
+        }
+
+        IQueryable<ToolCodeViewModel> ApplyFiltersExcept(IQueryable<ToolCodeViewModel> q, string? skip)
+        {
+            if (skip != "toolNumber" && !string.IsNullOrWhiteSpace(toolNumberFilter)) q = q.Where(t => t.ToolNumber == toolNumberFilter);
+            if (skip != "toolDescription" && !string.IsNullOrWhiteSpace(toolDescriptionFilter)) q = q.Where(t => t.ToolDescription != null && t.ToolDescription.Contains(toolDescriptionFilter));
+            if (skip != "consumableCode" && !string.IsNullOrWhiteSpace(consumableCodeFilter)) q = q.Where(t => t.ConsumableCode == consumableCodeFilter);
+            if (skip != "supplier" && !string.IsNullOrWhiteSpace(supplierFilter)) q = q.Where(t => t.Supplier == supplierFilter);
+            if (skip != "holderExtension" && !string.IsNullOrWhiteSpace(holderExtensionFilter)) q = q.Where(t => t.HolderExtensionCode == holderExtensionFilter);
+            if (skip != "diameter" && !string.IsNullOrWhiteSpace(diameterFilter) && decimal.TryParse(diameterFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var dia)) q = q.Where(t => t.Diameter == dia);
+            if (skip != "fluteLength" && !string.IsNullOrWhiteSpace(fluteLengthFilter) && decimal.TryParse(fluteLengthFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var fl)) q = q.Where(t => t.FluteLength == fl);
+            if (skip != "protrusionLength" && !string.IsNullOrWhiteSpace(protrusionLengthFilter) && decimal.TryParse(protrusionLengthFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var pl)) q = q.Where(t => t.ProtrusionLength == pl);
+            if (skip != "cornerRadius" && !string.IsNullOrWhiteSpace(cornerRadiusFilter) && decimal.TryParse(cornerRadiusFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var cr)) q = q.Where(t => t.CornerRadius == cr);
+            if (skip != "arborCode" && !string.IsNullOrWhiteSpace(arborCodeFilter)) q = q.Where(t => t.ArborCode == arborCodeFilter);
+            if (skip != "partNumber" && !string.IsNullOrWhiteSpace(partNumberFilter)) q = q.Where(t => t.PartNumber == partNumberFilter);
+            if (skip != "operation" && !string.IsNullOrWhiteSpace(operationFilter)) q = q.Where(t => t.Operation == operationFilter);
+            if (skip != "revision" && !string.IsNullOrWhiteSpace(revisionFilter)) q = q.Where(t => t.Revision == revisionFilter);
+            if (skip != "toolListName" && !string.IsNullOrWhiteSpace(toolListNameFilter)) q = q.Where(t => t.ToolListName == toolListNameFilter);
+            if (skip != "projectCode" && !string.IsNullOrWhiteSpace(projectCodeFilter)) q = q.Where(t => t.ProjectCode == projectCodeFilter);
+            if (skip != "machineName" && !string.IsNullOrWhiteSpace(machineNameFilter)) q = q.Where(t => t.MachineName == machineNameFilter);
+            if (skip != "machineWorkcenter" && !string.IsNullOrWhiteSpace(machineWorkcenterFilter)) q = q.Where(t => t.MachineWorkcenter == machineWorkcenterFilter);
+            if (skip != "createdBy" && !string.IsNullOrWhiteSpace(createdByFilter)) q = q.Where(t => t.CreatedBy == createdByFilter);
+            return q;
+        }
+
+        var availableToolNumbers = await ApplyFiltersExcept(baseQuery, "toolNumber").Select(t => t.ToolNumber).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availableToolDescriptions = await ApplyFiltersExcept(baseQuery, "toolDescription").Select(t => t.ToolDescription).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availableConsumableCodes = await ApplyFiltersExcept(baseQuery, "consumableCode").Select(t => t.ConsumableCode).Distinct().OrderBy(x => x).ToListAsync();
+        var availableSuppliers = await ApplyFiltersExcept(baseQuery, "supplier").Select(t => t.Supplier).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availableHolderExtensions = await ApplyFiltersExcept(baseQuery, "holderExtension").Select(t => t.HolderExtensionCode).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availableDiameters = (await ApplyFiltersExcept(baseQuery, "diameter").Select(t => t.Diameter).Distinct().ToListAsync()).Select(d => d.ToString("0.##")).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        var availableFluteLengths = (await ApplyFiltersExcept(baseQuery, "fluteLength").Select(t => t.FluteLength).Distinct().ToListAsync()).Select(f => f.ToString("0.##")).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        var availableProtrusionLengths = (await ApplyFiltersExcept(baseQuery, "protrusionLength").Select(t => t.ProtrusionLength).Distinct().ToListAsync()).Select(p => p.ToString("0.##")).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        var availableCornerRadii = (await ApplyFiltersExcept(baseQuery, "cornerRadius").Select(t => t.CornerRadius).Distinct().ToListAsync()).Select(c => c.ToString("0.##")).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        var availableArborCodes = await ApplyFiltersExcept(baseQuery, "arborCode").Select(t => t.ArborCode).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availablePartNumbers = await ApplyFiltersExcept(baseQuery, "partNumber").Select(t => t.PartNumber).Distinct().OrderBy(x => x).ToListAsync();
+        var availableOperations = await ApplyFiltersExcept(baseQuery, "operation").Select(t => t.Operation).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availableRevisions = await ApplyFiltersExcept(baseQuery, "revision").Select(t => t.Revision).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availableToolListNames = await ApplyFiltersExcept(baseQuery, "toolListName").Select(t => t.ToolListName).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availableProjectCodes = await ApplyFiltersExcept(baseQuery, "projectCode").Select(t => t.ProjectCode).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availableMachineNames = await ApplyFiltersExcept(baseQuery, "machineName").Select(t => t.MachineName).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availableMachineWorkcenters = await ApplyFiltersExcept(baseQuery, "machineWorkcenter").Select(t => t.MachineWorkcenter).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+        var availableCreatedBys = await ApplyFiltersExcept(baseQuery, "createdBy").Select(t => t.CreatedBy).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToListAsync();
+
         return new ToolCodeListViewModel
         {
             Tools = tools,
@@ -153,24 +229,24 @@ public class ToolCodeService : IToolCodeService
             TotalPages = totalPages,
             TotalItems = totalItems,
             PageSize = pageSize,
-            AvailableToolNumbers = allDetails.Select(d => d.ToolNumber).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableToolDescriptions = allDetails.Select(d => d.ToolDescription).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableConsumableCodes = allDetails.Select(d => d.ConsumableCode).Distinct().OrderBy(x => x).ToList(),
-            AvailableSuppliers = allDetails.Select(d => d.Supplier).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableHolderExtensions = allDetails.Select(d => d.HolderExtensionCode).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableDiameters = allDetails.Select(d => d.Diameter.ToString("0.##")).Distinct().OrderBy(x => x).ToList(),
-            AvailableFluteLengths = allDetails.Select(d => d.FluteLength.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
-            AvailableProtrusionLengths = allDetails.Select(d => d.ProtrusionLength.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
-            AvailableCornerRadii = allDetails.Select(d => d.CornerRadius.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
-            AvailableArborCodes = allDetails.Select(d => d.ArborCode).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailablePartNumbers = allHeaders.Select(h => h.PartNumber).Distinct().OrderBy(x => x).ToList(),
-            AvailableOperations = allHeaders.Select(h => h.Operation).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableRevisions = allHeaders.Select(h => h.Revision).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableToolListNames = allHeaders.Select(h => h.ToolListName).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableProjectCodes = allHeaders.Select(h => h.ProjectCode).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableMachineNames = allHeaders.Select(h => h.MachineName).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableMachineWorkcenters = allHeaders.Select(h => h.MachineWorkcenter).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableCreatedBys = allHeaders.Select(h => h.CreatedBy).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList()
+            AvailableToolNumbers = availableToolNumbers,
+            AvailableToolDescriptions = availableToolDescriptions,
+            AvailableConsumableCodes = availableConsumableCodes,
+            AvailableSuppliers = availableSuppliers,
+            AvailableHolderExtensions = availableHolderExtensions,
+            AvailableDiameters = availableDiameters,
+            AvailableFluteLengths = availableFluteLengths,
+            AvailableProtrusionLengths = availableProtrusionLengths,
+            AvailableCornerRadii = availableCornerRadii,
+            AvailableArborCodes = availableArborCodes,
+            AvailablePartNumbers = availablePartNumbers,
+            AvailableOperations = availableOperations,
+            AvailableRevisions = availableRevisions,
+            AvailableToolListNames = availableToolListNames,
+            AvailableProjectCodes = availableProjectCodes,
+            AvailableMachineNames = availableMachineNames,
+            AvailableMachineWorkcenters = availableMachineWorkcenters,
+            AvailableCreatedBys = availableCreatedBys
         };
     }
     
