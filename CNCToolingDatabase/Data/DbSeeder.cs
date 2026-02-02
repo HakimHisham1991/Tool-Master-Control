@@ -43,6 +43,7 @@ public static class DbSeeder
                         alterCommand.ExecuteNonQuery();
                     }
                 }
+                try { using var ac = connection.CreateCommand(); ac.CommandText = "ALTER TABLE Users ADD COLUMN Stamp BLOB;"; ac.ExecuteNonQuery(); } catch { /* column may exist */ }
                 
                 using var command = connection.CreateCommand();
                 command.CommandText = @"

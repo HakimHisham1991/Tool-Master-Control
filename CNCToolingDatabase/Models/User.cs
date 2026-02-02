@@ -8,4 +8,6 @@ public class User
     public string DisplayName { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public bool IsActive { get; set; } = true;
+    /// <summary>Stamp/signature image (e.g. jpg, png, gif).</summary>
+    public byte[]? Stamp { get; set; }
 }

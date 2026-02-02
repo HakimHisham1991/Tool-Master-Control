@@ -137,6 +137,50 @@ public class SettingsController : Controller
         }
     }
     
+    [HttpGet]
+    public async Task<IActionResult> UserStamp(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user?.Stamp == null || user.Stamp.Length == 0)
+            return NotFound();
+        var contentType = "image/png";
+        if (user.Stamp.Length >= 2)
+        {
+            if (user.Stamp[0] == 0xFF && user.Stamp[1] == 0xD8) contentType = "image/jpeg";
+            else if (user.Stamp[0] == 0x89 && user.Stamp[1] == 0x50) contentType = "image/png";
+            else if (user.Stamp[0] == 0x47 && user.Stamp[1] == 0x49) contentType = "image/gif";
+            else if (user.Stamp[0] == 0x42 && user.Stamp[1] == 0x4D) contentType = "image/bmp";
+            else if (user.Stamp.Length >= 12 && user.Stamp[8] == 0x57 && user.Stamp[9] == 0x45 && user.Stamp[10] == 0x42) contentType = "image/webp";
+        }
+        return File(user.Stamp, contentType);
+    }
+    
+    private static readonly HashSet<string> AllowedStampContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp"
+    };
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdateUserStamp(int id, IFormFile? stamp)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null)
+            return Json(new { success = false, message = "User not found" });
+        if (stamp == null || stamp.Length == 0)
+            return Json(new { success = false, message = "Please select an image file (jpg, jpeg, png, gif, bmp, webp)." });
+        var contentType = stamp.ContentType ?? "";
+        if (!AllowedStampContentTypes.Contains(contentType))
+            return Json(new { success = false, message = "Invalid file type. Allowed: jpg, jpeg, png, gif, bmp, webp." });
+        const int maxBytes = 2 * 1024 * 1024;
+        if (stamp.Length > maxBytes)
+            return Json(new { success = false, message = "Image must be 2 MB or smaller." });
+        using var ms = new MemoryStream();
+        await stamp.CopyToAsync(ms);
+        user.Stamp = ms.ToArray();
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Stamp saved successfully." });
+    }
+    
     // Project Code Management
     public async Task<IActionResult> ProjectCode(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
     {
