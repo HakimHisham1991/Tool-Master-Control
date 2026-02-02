@@ -264,9 +264,10 @@ html, body {
 
 .search-actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 6px;
     flex-shrink: 0;
+    align-items: center;
 }
 
 .search-input-group {
