@@ -216,7 +216,11 @@
                     var tool = Model.Tools[i];
                     var page = Model.CurrentPage <= 0 ? 1 : Model.CurrentPage;
                     var pageSize = Model.PageSize <= 0 ? 250 : Model.PageSize;
-                    var no = (page - 1) * pageSize + i + 1;
+                    var sortByNo = string.Equals(Model.SortColumn, "no", StringComparison.OrdinalIgnoreCase);
+                    var sortDesc = string.Equals(Model.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+                    var no = sortByNo && sortDesc
+                        ? (page - 1) * pageSize + Model.Tools.Count - i
+                        : (page - 1) * pageSize + i + 1;
                     <tr>
                         <td>@no</td>
                         <td>@tool.ToolNumber</td>
