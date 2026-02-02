@@ -17,6 +17,13 @@ public class ToolCodeUniqueEditorController : Controller
 
     public async Task<IActionResult> Index(int? id)
     {
+        // Get active tool suppliers for dropdown
+        var suppliers = await _context.ToolSuppliers
+            .Where(s => s.Status.ToLower() == "active" || s.Status.ToLower() == "aktif")
+            .OrderBy(s => s.Name)
+            .Select(s => s.Name)
+            .ToListAsync();
+        
         if (id.HasValue && id.Value > 0)
         {
             var entity = await _context.ToolCodeUniques.AsNoTracking()
@@ -33,11 +40,12 @@ public class ToolCodeUniqueEditorController : Controller
                 FluteLength = entity.FluteLength,
                 CornerRadius = entity.CornerRadius,
                 CreatedDate = entity.CreatedDate,
-                LastModifiedDate = entity.LastModifiedDate
+                LastModifiedDate = entity.LastModifiedDate,
+                AvailableSuppliers = suppliers
             };
             return View(vm);
         }
-        return View(new ToolCodeUniqueEditorViewModel());
+        return View(new ToolCodeUniqueEditorViewModel { AvailableSuppliers = suppliers });
     }
 
     [HttpPost]
