@@ -31,10 +31,10 @@
     <Content Include="Data\USER MASTER.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Data\CAM PROGRAMMER - MASTER.xlsx">
+    <Content Include="Data\CAM PROGRAMMER MASTER.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Data\CAM LEADER - MASTER.xlsx">
+    <Content Include="Data\CAM LEADER MASTER.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Data\TOOL SUPPLIER MASTER.xlsx">

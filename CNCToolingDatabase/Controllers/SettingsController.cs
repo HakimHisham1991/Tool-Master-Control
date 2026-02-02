@@ -730,7 +730,7 @@ public class SettingsController : Controller
         try
         {
             DbSeeder.ResetCamLeaders(_context);
-            return Json(new { success = true, message = "CAM leaders reloaded from CAM LEADER - MASTER.xlsx successfully." });
+            return Json(new { success = true, message = "CAM leaders reloaded from CAM LEADER MASTER.xlsx successfully." });
         }
         catch (Exception ex)
         {
@@ -834,7 +834,7 @@ public class SettingsController : Controller
         try
         {
             DbSeeder.ResetCamProgrammers(_context);
-            return Json(new { success = true, message = "CAM programmers reloaded from CAM PROGRAMMER - MASTER.xlsx successfully." });
+            return Json(new { success = true, message = "CAM programmers reloaded from CAM PROGRAMMER MASTER.xlsx successfully." });
         }
         catch (Exception ex)
         {
