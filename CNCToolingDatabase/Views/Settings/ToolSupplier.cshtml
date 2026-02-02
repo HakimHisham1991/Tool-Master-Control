@@ -87,7 +87,15 @@
                                 <span>-</span>
                             }
                         </td>
-                        <td><span class="status-badge">@(item.Status ?? "")</span></td>
+                        <td>
+                            @{
+                                var statusLower = (item.Status ?? "").ToLower();
+                                var isActive = statusLower == "active" || statusLower == "aktif";
+                                var statusClass = isActive ? "status-available" : "status-locked";
+                                var statusDisplay = isActive ? "Active" : "Inactive";
+                            }
+                            <span class="status-badge @statusClass">@statusDisplay</span>
+                        </td>
                         <td>@item.CreatedBy</td>
                         <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
@@ -139,7 +147,10 @@
                 </div>
                 <div class="form-group">
                     <label for="statusValue">Status</label>
-                    <input type="text" id="statusValue" class="form-control" placeholder="e.g. ACTIVE, INACTIVE (exact value from Excel)" />
+                    <select id="statusValue" class="form-control">
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -240,6 +251,20 @@
     .website-link:hover {
         text-decoration: underline;
         color: #0056b3;
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    .status-available {
+        background-color: #DCFCE7;
+        color: #166534;
+    }
+    .status-locked {
+        background-color: #FEE2E2;
+        color: #991B1B;
     }
 </style>
 }
