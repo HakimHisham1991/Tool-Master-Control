@@ -1413,7 +1413,7 @@ public class SettingsController : Controller
     public IActionResult ResetAllSettings()
     {
         var errors = new List<string>();
-        var order = new[]
+        (string Name, Action Reset)[] order =
         {
             ("User", () => { DbSeeder.ResetUsers(_context); }),
             ("Part Number", () => { DbSeeder.ResetPartNumbers(_context); }),
@@ -1428,10 +1428,10 @@ public class SettingsController : Controller
             ("Material Specification", () => { DbSeeder.ResetMaterialSpecs(_context); }),
             ("Tool Supplier", () => { DbSeeder.ResetToolSuppliers(_context); }),
         };
-        foreach (var (name, reset) in order)
+        foreach (var item in order)
         {
-            try { reset(); }
-            catch (Exception ex) { errors.Add($"{name}: {ex.InnerException?.Message ?? ex.Message}"); }
+            try { item.Reset(); }
+            catch (Exception ex) { errors.Add($"{item.Name}: {ex.InnerException?.Message ?? ex.Message}"); }
         }
         if (errors.Count == 0)
             return Json(new { success = true, message = "All 12 settings reset from seed files successfully. You may need to log in again." });
