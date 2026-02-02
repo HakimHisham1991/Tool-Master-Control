@@ -22,6 +22,35 @@ function showCopyToast() {
     }, 1500);
 }
 
+function copyToClipboard(text, done) {
+    if (!text) { if (done) done(false); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() { if (done) done(true); }).catch(function() {
+            try {
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed'; ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                var ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                if (done) done(ok);
+            } catch (err) { if (done) done(false); }
+        });
+    } else {
+        try {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed'; ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            var ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            if (done) done(ok);
+        } catch (err) { if (done) done(false); }
+    }
+}
+
 function getCopyTextFromElement(el) {
     if (!el) return '';
     if (el.tagName === 'SELECT') {
@@ -52,25 +81,17 @@ function createCopyTooltipButton() {
     return btn;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    var sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-        var isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        if (isCollapsed) {
-            sidebar.classList.add('collapsed');
-        }
-    }
-
+function initCopyTooltip() {
     var copyBtn = createCopyTooltipButton();
     var copyShowTimer = null;
     var copySourceEl = null;
     var COPY_DELAY_MS = 500;
 
     function hideCopyBtn() {
+        if (copyShowTimer) clearTimeout(copyShowTimer);
         copyShowTimer = null;
         copySourceEl = null;
         if (copyBtn.parentNode) {
-            copyBtn.style.display = 'none';
             copyBtn.parentNode.removeChild(copyBtn);
         }
     }
@@ -78,28 +99,31 @@ document.addEventListener('DOMContentLoaded', function() {
     function showCopyBtn(el) {
         copySourceEl = el;
         if (copyBtn.parentNode) copyBtn.parentNode.removeChild(copyBtn);
-        var container = el.tagName === 'SELECT' ? el.parentNode : el;
-        if (container) {
-            if (container.style) container.style.position = 'relative';
-            container.appendChild(copyBtn);
-        }
+        var container = (el && el.tagName === 'SELECT') ? el.parentNode : el;
+        if (!container) return;
+        if (container.style) container.style.position = 'relative';
+        container.appendChild(copyBtn);
         copyBtn.style.display = 'flex';
     }
 
-    function copyableElement(el) {
-        if (!el || !el.closest) return null;
-        if (el.closest('.data-table td')) return el.closest('.data-table td');
-        if (el.closest('.combo-wrapper .combo-option')) return el.closest('.combo-wrapper .combo-option');
-        if (el.closest('.data-table thead tr.table-filter-row th')) return el.closest('.data-table thead tr.table-filter-row th');
-        if (el.tagName === 'SELECT' && (el.classList.contains('form-control') || el.classList.contains('filter-cell-select'))) return el;
-        if (el.closest('select.form-control') || el.closest('select.filter-cell-select')) return el.closest('select');
+    function copyableElement(target) {
+        if (!target || !target.closest) return null;
+        var td = target.closest ? target.closest('td');
+        var table = target.closest ? target.closest('table');
+        if (td && table && table.classList && table.classList.contains('data-table')) return td;
+        if (target.closest('.combo-wrapper .combo-option')) return target.closest('.combo-wrapper .combo-option');
+        var th = target.closest ? target.closest('th');
+        if (th && th.querySelector && th.querySelector('select.filter-cell-select')) return th;
+        if (target.tagName === 'SELECT' && (target.classList.contains('form-control') || target.classList.contains('filter-cell-select'))) return target;
+        if (target.closest('select.form-control')) return target.closest('select.form-control');
+        if (target.closest('select.filter-cell-select')) return target.closest('select.filter-cell-select');
         return null;
     }
 
-    document.addEventListener('mouseover', function(e) {
+    document.body.addEventListener('mouseover', function(e) {
         var el = copyableElement(e.target);
         if (!el) {
-            if (e.target !== copyBtn && !copyBtn.contains(e.target)) hideCopyBtn();
+            if (e.target !== copyBtn && (!copyBtn.parentNode || !copyBtn.parentNode.contains(e.target))) hideCopyBtn();
             return;
         }
         if (copySourceEl === el) return;
@@ -108,41 +132,45 @@ document.addEventListener('DOMContentLoaded', function() {
             copyShowTimer = null;
             showCopyBtn(el);
         }, COPY_DELAY_MS);
-    });
+    }, true);
 
-    document.addEventListener('mouseout', function(e) {
-        var el = copyableElement(e.target);
+    document.body.addEventListener('mouseout', function(e) {
         var related = e.relatedTarget;
-        if (el && related && (el === related || el.contains(related))) return;
-        if (copyBtn.contains(e.target) || e.target === copyBtn) return;
-        if (related && copyBtn.parentNode && copyBtn.parentNode.contains(related)) return;
-        if (copyShowTimer) clearTimeout(copyShowTimer);
-        copyShowTimer = null;
-        if (el !== copySourceEl) return;
-        hideCopyBtn();
-    });
+        if (related && copyBtn.parentNode && (copyBtn === related || copyBtn.contains(related))) return;
+        if (related && copySourceEl && (copySourceEl === related || copySourceEl.contains(related))) return;
+        if (copyShowTimer) { clearTimeout(copyShowTimer); copyShowTimer = null; }
+        var el = copyableElement(e.target);
+        if (el === copySourceEl) hideCopyBtn();
+    }, true);
 
     copyBtn.addEventListener('click', function(ev) {
         ev.preventDefault();
         ev.stopPropagation();
-        if (!copySourceEl || !navigator.clipboard || !navigator.clipboard.writeText) return;
-        var text = getCopyTextFromElement(copySourceEl);
-        if (text) {
-            navigator.clipboard.writeText(text).then(function() {
-                showCopyToast();
-                hideCopyBtn();
-            }).catch(function() {});
-        }
+        var text = copySourceEl ? getCopyTextFromElement(copySourceEl) : '';
+        copyToClipboard(text, function(ok) {
+            if (ok) { showCopyToast(); hideCopyBtn(); }
+        });
     });
 
-    document.addEventListener('dblclick', function(e) {
+    document.body.addEventListener('dblclick', function(e) {
         var el = copyableElement(e.target);
         if (!el) return;
         var text = getCopyTextFromElement(el);
-        if (text && navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(function() {
-                showCopyToast();
-            }).catch(function() {});
-        }
-    });
-});
+        copyToClipboard(text, function(ok) { if (ok) showCopyToast(); });
+    }, true);
+}
+
+function initApp() {
+    var sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        var isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (isCollapsed) sidebar.classList.add('collapsed');
+    }
+    initCopyTooltip();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
