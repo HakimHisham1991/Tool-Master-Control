@@ -594,7 +594,7 @@ public class ToolListEditorController : Controller
                                 stampRow.ConstantItem(140).Column(c =>
                                 {
                                     c.Item().Text("CAM Programmer:").Bold().FontSize(9);
-                                    c.Item().PaddingTop(4).Width(110).Height(70).Background(Colors.Grey.Lighten4)
+                                    c.Item().PaddingTop(4).Width(110).Height(110).Background(Colors.White)
                                         .AlignCenter().AlignMiddle().Element(e =>
                                         {
                                             if (stamp1 != null && stamp1.Length > 0)
@@ -608,7 +608,7 @@ public class ToolListEditorController : Controller
                                 stampRow.ConstantItem(140).Column(c =>
                                 {
                                     c.Item().Text("Approved by:").Bold().FontSize(9);
-                                    c.Item().PaddingTop(4).Width(110).Height(70).Background(Colors.Grey.Lighten4)
+                                    c.Item().PaddingTop(4).Width(110).Height(110).Background(Colors.White)
                                         .AlignCenter().AlignMiddle().Element(e =>
                                         {
                                             if (stamp2 != null && stamp2.Length > 0)
@@ -622,7 +622,7 @@ public class ToolListEditorController : Controller
                                 stampRow.ConstantItem(140).Column(c =>
                                 {
                                     c.Item().Text("Tool Register By:").Bold().FontSize(9);
-                                    c.Item().PaddingTop(4).Width(110).Height(70).Background(Colors.Grey.Lighten4)
+                                    c.Item().PaddingTop(4).Width(110).Height(110).Background(Colors.White)
                                         .AlignCenter().AlignMiddle().Element(e =>
                                         {
                                             if (stamp3 != null && stamp3.Length > 0)
