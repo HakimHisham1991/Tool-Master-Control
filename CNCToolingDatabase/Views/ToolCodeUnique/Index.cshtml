@@ -66,7 +66,7 @@
                     </select>
                 </th>
                 <th>
-                    <select id="filterSupplier" class="filter-cell-select" onchange="onFilterChange(3)">
+                    <select id="filterSupplier" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
                         @foreach (var s in Model.AvailableSuppliers)
                         {
@@ -106,7 +106,7 @@
                     </select>
                 </th>
                 <th>
-                    <select id="filterCreatedDate" class="filter-cell-select" onchange="onFilterChange(7)">
+                    <select id="filterCreatedDate" class="filter-cell-select" onchange="applyFilters()">
                         <option value="">All</option>
                         @foreach (var d in Model.AvailableCreatedDates)
                         {
