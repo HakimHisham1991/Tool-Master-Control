@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CNCToolingDatabase.Models.ViewModels;
@@ -521,26 +522,37 @@ public class ToolListEditorController : Controller
                 var u3 = await _context.Users.FindAsync(viewModel.ToolRegisterByUserId.Value);
                 stamp3 = u3?.Stamp;
             }
+            var arialNarrow = "Arial Narrow";
+            var logoPath = Path.Combine(AppContext.BaseDirectory, "Data", "LOGO", "ZENIX.png");
             var document = Document.Create(container =>
             {
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4.Landscape());
                     page.Margin(1.5f, Unit.Centimetre);
-                    page.DefaultTextStyle(x => x.FontSize(9));
-                    page.Header().Column(column =>
+                    page.DefaultTextStyle(x => x.FontFamily(arialNarrow).FontSize(9));
+                    page.Header().Row(headerRow =>
                     {
-                        column.Item().AlignCenter().Text("Master Tooling List").Bold().FontSize(22).FontColor(Colors.Black);
-                        column.Item().Height(8);
-                        column.Item().Text($"Tool List No.: {viewModel.ToolListName}").Bold().FontSize(12);
-                        column.Item().Text($"Part Number: {viewModel.PartNumber}");
-                        if (!string.IsNullOrWhiteSpace(viewModel.PartDescription))
-                            column.Item().Text($"Part Description: {viewModel.PartDescription}");
-                        column.Item().Row(row =>
+                        headerRow.ConstantItem(80).Element(e =>
                         {
-                            row.RelativeItem().Text($"Machine: {viewModel.MachineName}");
-                            row.RelativeItem().Text($"Workcenter: {viewModel.MachineWorkcenter}");
-                            row.RelativeItem().Text($"Project Code: {viewModel.ProjectCode}");
+                            if (System.IO.File.Exists(logoPath))
+                                e.Image(logoPath).FitWidth();
+                        });
+                        headerRow.RelativeItem().Column(column =>
+                        {
+                            column.Item().AlignCenter().Text("Master Tooling List").Bold().FontFamily(arialNarrow).FontSize(22).FontColor(Colors.Black);
+                            column.Item().Height(8);
+                            column.Item().Text($"Tool List No.: {viewModel.ToolListName}").FontFamily(arialNarrow).FontSize(9);
+                            column.Item().Text($"Unit: MM").FontFamily(arialNarrow).FontSize(9);
+                            column.Item().Text($"Part Number: {viewModel.PartNumber}").FontFamily(arialNarrow).FontSize(9);
+                            if (!string.IsNullOrWhiteSpace(viewModel.PartDescription))
+                                column.Item().Text($"Part Description: {viewModel.PartDescription}").FontFamily(arialNarrow).FontSize(9);
+                            column.Item().Row(row =>
+                            {
+                                row.RelativeItem().Text($"Machine: {viewModel.MachineName}").FontFamily(arialNarrow);
+                                row.RelativeItem().Text($"Workcenter: {viewModel.MachineWorkcenter}").FontFamily(arialNarrow);
+                                row.RelativeItem().Text($"Project Code: {viewModel.ProjectCode}").FontFamily(arialNarrow);
+                            });
                         });
                     });
                     page.Content().PaddingTop(0.5f, Unit.Centimetre).Column(content =>
@@ -575,31 +587,30 @@ public class ToolListEditorController : Controller
                             table.Header(header =>
                             {
                                 foreach (var h in headers)
-                                    header.Cell().Border(borderThin).BorderColor(borderColor).Background(headerColor).Padding(4).AlignCenter().AlignMiddle().Text(h).Bold().FontSize(6);
+                                    header.Cell().Border(borderThin).BorderColor(borderColor).Background(headerColor).Padding(4).AlignCenter().AlignMiddle().Text(h).Bold().FontFamily(arialNarrow).FontSize(6);
                             });
                             foreach (var d in details)
                             {
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.ToolNumber ?? "").FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.ToolDescription ?? "").FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.ConsumableCode ?? "").FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.Supplier ?? "").FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.HolderExtensionCode ?? "").FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text((d.Diameter ?? 0).ToString("0.##")).FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text((d.FluteLength ?? 0).ToString("0.##")).FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text((d.ProtrusionLength ?? 0).ToString("0.##")).FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text((d.CornerRadius ?? 0).ToString("0.##")).FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.ArborCode ?? "").FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text((d.ToolPathTimeMinutes ?? 0).ToString("0.##")).FontSize(6);
-                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.Remarks ?? "").FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.ToolNumber ?? "").FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.ToolDescription ?? "").FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.ConsumableCode ?? "").FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.Supplier ?? "").FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.HolderExtensionCode ?? "").FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text((d.Diameter ?? 0).ToString("0.##")).FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text((d.FluteLength ?? 0).ToString("0.##")).FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text((d.ProtrusionLength ?? 0).ToString("0.##")).FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text((d.CornerRadius ?? 0).ToString("0.##")).FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.ArborCode ?? "").FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text((d.ToolPathTimeMinutes ?? 0).ToString("0.##")).FontFamily(arialNarrow).FontSize(6);
+                                table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.Remarks ?? "").FontFamily(arialNarrow).FontSize(6);
                             }
                         });
-                        // Stamp section (50% size: 55x55)
-                        content.Item().PaddingTop(1f, Unit.Centimetre).BorderTop(1).BorderColor(Colors.Black)
-                            .PaddingTop(0.5f, Unit.Centimetre).Row(stampRow =>
+                        // Stamp section (50% size: 55x55, no borders)
+                        content.Item().PaddingTop(1f, Unit.Centimetre).PaddingTop(0.5f, Unit.Centimetre).Row(stampRow =>
                             {
                                 stampRow.ConstantItem(95).Column(c =>
                                 {
-                                    c.Item().Text("CAM Programmer:").Bold().FontSize(9);
+                                    c.Item().Text("CAM Programmer:").Bold().FontFamily(arialNarrow).FontSize(9);
                                     c.Item().PaddingTop(4).Width(55).Height(55).Background(Colors.White)
                                         .AlignCenter().AlignMiddle().Element(e =>
                                         {
@@ -607,12 +618,12 @@ public class ToolListEditorController : Controller
                                                 e.Image(stamp1).FitArea();
                                         });
                                     if (viewModel.ApprovedDate.HasValue)
-                                        c.Item().PaddingTop(2).Text(viewModel.ApprovedDate.Value.ToString("dd/MM/yyyy")).FontSize(8);
+                                        c.Item().PaddingTop(2).Text(viewModel.ApprovedDate.Value.ToString("dd/MM/yyyy")).FontFamily(arialNarrow).FontSize(8);
                                 });
                                 stampRow.ConstantItem(20);
                                 stampRow.ConstantItem(95).Column(c =>
                                 {
-                                    c.Item().Text("Approved by:").Bold().FontSize(9);
+                                    c.Item().Text("Approved by:").Bold().FontFamily(arialNarrow).FontSize(9);
                                     c.Item().PaddingTop(4).Width(55).Height(55).Background(Colors.White)
                                         .AlignCenter().AlignMiddle().Element(e =>
                                         {
@@ -620,12 +631,12 @@ public class ToolListEditorController : Controller
                                                 e.Image(stamp2).FitArea();
                                         });
                                     if (viewModel.CamLeaderApprovedDate.HasValue)
-                                        c.Item().PaddingTop(2).Text(viewModel.CamLeaderApprovedDate.Value.ToString("dd/MM/yyyy")).FontSize(8);
+                                        c.Item().PaddingTop(2).Text(viewModel.CamLeaderApprovedDate.Value.ToString("dd/MM/yyyy")).FontFamily(arialNarrow).FontSize(8);
                                 });
                                 stampRow.ConstantItem(20);
                                 stampRow.ConstantItem(95).Column(c =>
                                 {
-                                    c.Item().Text("Tool Register By:").Bold().FontSize(9);
+                                    c.Item().Text("Tool Register By:").Bold().FontFamily(arialNarrow).FontSize(9);
                                     c.Item().PaddingTop(4).Width(55).Height(55).Background(Colors.White)
                                         .AlignCenter().AlignMiddle().Element(e =>
                                         {
@@ -633,12 +644,13 @@ public class ToolListEditorController : Controller
                                                 e.Image(stamp3).FitArea();
                                         });
                                     if (viewModel.ToolRegisterByDate.HasValue)
-                                        c.Item().PaddingTop(2).Text(viewModel.ToolRegisterByDate.Value.ToString("dd/MM/yyyy")).FontSize(8);
+                                        c.Item().PaddingTop(2).Text(viewModel.ToolRegisterByDate.Value.ToString("dd/MM/yyyy")).FontFamily(arialNarrow).FontSize(8);
                                 });
                             });
                     });
                     page.Footer().AlignCenter().Text(x =>
                     {
+                        x.DefaultTextStyle(s => s.FontFamily(arialNarrow));
                         x.Span("Page ");
                         x.CurrentPageNumber();
                     });
