@@ -505,40 +505,7 @@ public static class DbSeeder
         catch { }
         
         if (!context.ToolListHeaders.Any())
-        {
-            var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - TOOL CODE.xlsx");
-            var toolCodeList = LoadToolCodeUniqueFromExcel(excelPath);
-            // Group by ConsumableCode (Item2) and take first row per key so duplicate codes in Excel do not throw
-            var masterLookup = toolCodeList
-                .GroupBy(t => t.ConsumableCode, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => { var f = g.First(); return (f.SystemToolName, f.Supplier, f.Diameter, f.FluteLength, f.CornerRadius); }, StringComparer.OrdinalIgnoreCase);
-            var toolLists = new List<ToolListHeader>
-            {
-                CreateToolListWithDetails("V5754221420001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
-                CreateToolListWithDetails("V5754221420001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
-                CreateToolListWithDetails("351-2180-7", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil", masterLookup),
-                CreateToolListWithDetails("E5757332620000", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "adib.jamil", masterLookup),
-                CreateToolListWithDetails("E5757332620000", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "nik.faiszal", masterLookup),
-            };
-            
-            context.ToolListHeaders.AddRange(toolLists);
-            context.SaveChanges();
-            
-            var processedCodes = new HashSet<string>();
-            foreach (var header in toolLists)
-            {
-                foreach (var detail in header.Details)
-                {
-                    if (!string.IsNullOrWhiteSpace(detail.ConsumableCode) && 
-                        !processedCodes.Contains(detail.ConsumableCode))
-                    {
-                        UpdateToolMaster(context, detail);
-                        processedCodes.Add(detail.ConsumableCode);
-                        context.SaveChanges();
-                    }
-                }
-            }
-        }
+            LoadAndSeedToolLists(context);
         
         if (context.ToolCodeUniques != null && !context.ToolCodeUniques.Any())
         {
@@ -776,17 +743,213 @@ public static class DbSeeder
         return LoadMachineWorkcenterFromExcel(path).ToArray();
     }
 
-    /// <summary>Hard-coded tool list seed. Each (partNumber, operation) has fixed consumable codes from Master. Same every reset.</summary>
-    private static (string PartNumber, string Operation, string[] ConsumableCodes)[] GetToolListDetailsSeedData()
+    /// <summary>Resolve path to MASTER - TOOL LIST.xlsx.</summary>
+    private static string? ResolveToolListMasterPath()
     {
-        return new[]
+        const string fileName = "MASTER - TOOL LIST.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
         {
-            ("V5754221420001", "OP10", new[] { "553120Z3.0-SIRON-A", "553160R050Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "553100Z3.0-SIRON-A", "553040Z3.0-SIRON-A" }),
-            ("V5754221420001", "OP20", new[] { "553100Z3.0-SIRON-A", "A3389DPL-9.8", "A3389DPL-12", "7792VXP06CA016Z2R140", "7792VXD09WA032Z3R", "553060Z3.0-SIRON-A" }),
-            ("351-2180-7", "OP10", new[] { "553140Z3.0-SIRON-A", "553180R100Z3.0-SIRON-A", "553200Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "553100R250Z3.0-SIRON-A", "553120R025Z3.0-SIRON-A", "7792VXD12-A052Z5R" }),
-            ("E5757332620000", "OP10", new[] { "7792VXD12-A080Z8R", "553040Z3.0-SIRON-A", "553060Z3.0-SIRON-A", "553080Z3.0-SIRON-A", "A3389DPL-6.1" }),
-            ("E5757332620000", "OP20", new[] { "553100Z3.0-SIRON-A", "553120Z3.0-SIRON-A", "7792VXP06CA016Z2R140", "7792VXD09WA032Z3R", "553140Z3.0-SIRON-A", "553160R050Z3.0-SIRON-A" }),
-        };
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return null;
+    }
+
+    /// <summary>Load and seed Tool List Database from MASTER - TOOL LIST.xlsx. Sheet 1: headers (No., Part Number, Operation, Revision, Project Code, Machine Name, Machine Workcenter, Machine Model, Created By, Status). Other sheets: details per tool list (sheet name = PartNumber_Operation_Revision). Detail columns: Tool No., Tool Name, Consumable Tool Description, Tool Supplier, Tool Holder, Tool Diameter (D1), Flute Length (L1), Tool Ext. Length (L2), Tool Corner Radius, Arbor Description, Tool Path Time in Minutes, Remarks.</summary>
+    private static void LoadAndSeedToolLists(ApplicationDbContext context)
+    {
+        var path = ResolveToolListMasterPath();
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            throw new InvalidOperationException("Missing file: MASTER - TOOL LIST.xlsx not found. Place the file in the Data folder.");
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage(new FileInfo(path));
+        var worksheets = package.Workbook.Worksheets.ToList();
+        if (worksheets.Count == 0)
+            throw new InvalidOperationException("MASTER - TOOL LIST.xlsx has no worksheets.");
+        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+        {
+            for (int c = 1; c <= totalCols; c++)
+            {
+                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                if (string.IsNullOrEmpty(v)) continue;
+                foreach (var h in headerNames)
+                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+            }
+            return -1;
+        }
+        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+        static decimal ParseDecimal(ExcelWorksheet sheet, int row, int col)
+        {
+            if (col < 1) return 0;
+            var v = sheet.Cells[row, col].Value;
+            if (v == null) return 0;
+            if (v is double d) return (decimal)d;
+            if (decimal.TryParse(v?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var dec)) return dec;
+            return 0;
+        }
+        var ws1 = worksheets[0];
+        if (ws1.Dimension == null)
+            throw new InvalidOperationException("MASTER - TOOL LIST.xlsx Sheet 1 is empty.");
+        int cols1 = ws1.Dimension.End.Column;
+        int rows1 = ws1.Dimension.End.Row;
+        // Scan at least 25 columns for headers so we don't miss columns when Dimension is trimmed by empty data
+        int headerCols = Math.Max(cols1, 25);
+        int colPartNumber = GetCol(ws1, headerCols, "Part Number");
+        int colOperation = GetCol(ws1, headerCols, "Operation");
+        int colRevision = GetCol(ws1, headerCols, "Revision");
+        int colProjectCode = GetCol(ws1, headerCols, "Project Code");
+        int colMachineName = GetCol(ws1, headerCols, "Machine Name");
+        int colMachineWorkcenter = GetCol(ws1, headerCols, "Machine Workcenter");
+        int colMachineModel = GetCol(ws1, headerCols, "Machine Model");
+        int colCreatedBy = GetCol(ws1, headerCols, "Created By");
+        if (colPartNumber < 1 || colOperation < 1)
+            throw new InvalidOperationException("MASTER - TOOL LIST.xlsx Sheet 1 must have columns: Part Number, Operation. Found headers in row 1.");
+        var partNumberToProjectCode = context.PartNumbers
+            .Include(p => p.ProjectCode)
+            .Where(p => p.ProjectCode != null)
+            .ToList()
+            .GroupBy(p => p.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().ProjectCode!.Code, StringComparer.OrdinalIgnoreCase);
+        var machineNameToWorkcenterModel = context.MachineNames
+            .Include(m => m.MachineModel)
+            .ToList()
+            .GroupBy(m => m.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => (Workcenter: g.First().Workcenter ?? "", Model: g.First().MachineModel?.Model ?? ""), StringComparer.OrdinalIgnoreCase);
+        var baseDate = DateTime.UtcNow;
+        var headersByToolListName = new Dictionary<string, ToolListHeader>(StringComparer.OrdinalIgnoreCase);
+        for (int r = 2; r <= rows1; r++)
+        {
+            var partNumber = GetStr(ws1, r, colPartNumber);
+            var operation = GetStr(ws1, r, colOperation);
+            var revision = GetStr(ws1, r, colRevision);
+            if (string.IsNullOrWhiteSpace(partNumber) || string.IsNullOrWhiteSpace(operation)) continue;
+            var projectCode = GetStr(ws1, r, colProjectCode);
+            if (string.IsNullOrWhiteSpace(projectCode) && partNumberToProjectCode.TryGetValue(partNumber, out var pc))
+                projectCode = pc;
+            var machineName = GetStr(ws1, r, colMachineName);
+            var workcenter = GetStr(ws1, r, colMachineWorkcenter);
+            var machineModel = GetStr(ws1, r, colMachineModel);
+            if (!string.IsNullOrWhiteSpace(machineName) && machineNameToWorkcenterModel.TryGetValue(machineName, out var wm))
+            {
+                if (string.IsNullOrWhiteSpace(workcenter)) workcenter = wm.Workcenter;
+                if (string.IsNullOrWhiteSpace(machineModel)) machineModel = wm.Model;
+            }
+            var createdBy = GetStr(ws1, r, colCreatedBy);
+            if (string.IsNullOrWhiteSpace(revision)) revision = "REV00";
+            var header = new ToolListHeader
+            {
+                PartNumber = partNumber,
+                Operation = operation,
+                Revision = revision,
+                ProjectCode = projectCode ?? "",
+                MachineName = machineName ?? "",
+                MachineWorkcenter = workcenter ?? "",
+                MachineModel = machineModel ?? "",
+                CreatedBy = string.IsNullOrWhiteSpace(createdBy) ? "system" : createdBy,
+                CreatedDate = baseDate,
+                LastModifiedDate = baseDate
+            };
+            header.GenerateToolListName();
+            if (headersByToolListName.ContainsKey(header.ToolListName))
+                continue;
+            context.ToolListHeaders.Add(header);
+            headersByToolListName[header.ToolListName] = header;
+        }
+        context.SaveChanges();
+        var toolCodeLookup = context.ToolCodeUniques != null
+            ? context.ToolCodeUniques
+                .ToList()
+                .GroupBy(t => t.ConsumableCode, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, ToolCodeUnique>(StringComparer.OrdinalIgnoreCase);
+        for (int sheetIndex = 1; sheetIndex < worksheets.Count; sheetIndex++)
+        {
+            var ws = worksheets[sheetIndex];
+            var sheetName = ws.Name?.Trim() ?? "";
+            if (string.IsNullOrEmpty(sheetName) || !headersByToolListName.TryGetValue(sheetName, out var header))
+                continue;
+            if (ws.Dimension == null) continue;
+            int cols = ws.Dimension.End.Column;
+            int rows = ws.Dimension.End.Row;
+            int colToolNo = GetCol(ws, cols, "Tool No.");
+            int colToolName = GetCol(ws, cols, "Tool Name");
+            int colConsumable = GetCol(ws, cols, "Consumable Tool Description");
+            int colSupplier = GetCol(ws, cols, "Tool Supplier");
+            int colHolder = GetCol(ws, cols, "Tool Holder");
+            int colDiameter = GetCol(ws, cols, "Tool Diameter (D1)", "Diameter");
+            int colFluteLength = GetCol(ws, cols, "Flute Length (L1)");
+            int colExtLength = GetCol(ws, cols, "Tool Ext. Length (L2)");
+            int colCornerRadius = GetCol(ws, cols, "Tool Corner Radius");
+            int colArbor = GetCol(ws, cols, "Arbor Description (or equivalent specs)", "Arbor Description");
+            int colToolPathTime = GetCol(ws, cols, "Tool Path Time in Minutes");
+            int colRemarks = GetCol(ws, cols, "Remarks");
+            if (colConsumable < 1 && colToolName < 1) continue;
+            int rowIndex = 0;
+            for (int r = 2; r <= rows; r++)
+            {
+                var consumableCode = GetStr(ws, r, colConsumable);
+                var toolName = GetStr(ws, r, colToolName);
+                if (string.IsNullOrWhiteSpace(consumableCode) && string.IsNullOrWhiteSpace(toolName)) continue;
+                rowIndex++;
+                var toolNumber = GetStr(ws, r, colToolNo);
+                if (string.IsNullOrWhiteSpace(toolNumber)) toolNumber = "T" + rowIndex.ToString("D2", CultureInfo.InvariantCulture);
+                var supplier = GetStr(ws, r, colSupplier);
+                var holder = GetStr(ws, r, colHolder);
+                var diameter = ParseDecimal(ws, r, colDiameter);
+                var fluteLength = ParseDecimal(ws, r, colFluteLength);
+                var protrusionLength = ParseDecimal(ws, r, colExtLength);
+                var cornerRadius = ParseDecimal(ws, r, colCornerRadius);
+                var arborCode = GetStr(ws, r, colArbor);
+                var toolPathTime = ParseDecimal(ws, r, colToolPathTime);
+                var remarks = GetStr(ws, r, colRemarks);
+                if (!string.IsNullOrWhiteSpace(consumableCode) && toolCodeLookup.TryGetValue(consumableCode, out var master))
+                {
+                    if (string.IsNullOrWhiteSpace(supplier)) supplier = master.Supplier ?? "";
+                    if (diameter == 0) diameter = master.Diameter;
+                    if (fluteLength == 0) fluteLength = master.FluteLength;
+                    if (cornerRadius == 0) cornerRadius = master.CornerRadius;
+                    if (string.IsNullOrWhiteSpace(toolName)) toolName = master.SystemToolName ?? "";
+                }
+                var detail = new ToolListDetail
+                {
+                    ToolListHeaderId = header.Id,
+                    ToolNumber = toolNumber,
+                    ToolDescription = toolName ?? "",
+                    ConsumableCode = consumableCode ?? "",
+                    Supplier = supplier ?? "",
+                    HolderExtensionCode = holder ?? "",
+                    Diameter = diameter,
+                    FluteLength = fluteLength,
+                    ProtrusionLength = protrusionLength > 0 ? protrusionLength : 45.0m,
+                    CornerRadius = cornerRadius,
+                    ArborCode = arborCode ?? "",
+                    ToolPathTimeMinutes = toolPathTime,
+                    Remarks = remarks ?? ""
+                };
+                context.ToolListDetails.Add(detail);
+            }
+        }
+        context.SaveChanges();
+        var processedCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var header in context.ToolListHeaders.Include(h => h.Details))
+        {
+            foreach (var detail in header.Details)
+            {
+                if (!string.IsNullOrWhiteSpace(detail.ConsumableCode) && !processedCodes.Contains(detail.ConsumableCode))
+                {
+                    UpdateToolMaster(context, detail);
+                    processedCodes.Add(detail.ConsumableCode);
+                    context.SaveChanges();
+                }
+            }
+        }
     }
 
     /// <summary>Load Part Number rows from MASTER - PART NUMBERS.xlsx. Columns: Part Number, Description, Part Revision, Drawing Revision, Project Code, Ref. Drawing, Material Spec., Material. Sequence is 1-based Excel row order.</summary>
@@ -1327,54 +1490,6 @@ public static class DbSeeder
         return LoadPartNumberFromExcel(path).ToArray();
     }
 
-    private static ToolListHeader CreateToolListWithDetails(string partNumber, string operation, string revision,
-        string projectCode, string machineName, string workcenter, string machineModel, string createdBy,
-        IReadOnlyDictionary<string, (string SystemToolName, string Supplier, decimal Dia, decimal Flute, decimal Radius)> masterLookup)
-    {
-        var baseDate = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc);
-        var header = new ToolListHeader
-        {
-            PartNumber = partNumber,
-            Operation = operation,
-            Revision = revision,
-            ProjectCode = projectCode,
-            MachineName = machineName,
-            MachineWorkcenter = workcenter,
-            MachineModel = machineModel,
-            CreatedBy = createdBy,
-            CreatedDate = baseDate,
-            LastModifiedDate = baseDate
-        };
-        header.GenerateToolListName();
-
-        var seedEntry = GetToolListDetailsSeedData().FirstOrDefault(x => x.PartNumber == partNumber && x.Operation == operation);
-        var consumableCodes = seedEntry.ConsumableCodes ?? Array.Empty<string>();
-        header.Details = consumableCodes
-            .Select((code, i) =>
-            {
-                if (!masterLookup.TryGetValue(code, out var m)) return null;
-                return new ToolListDetail
-                {
-                    ToolNumber = $"T{(i + 1):D2}",
-                    ConsumableCode = code,
-                    ToolDescription = m.SystemToolName,
-                    Supplier = m.Supplier,
-                    Diameter = m.Dia,
-                    FluteLength = m.Flute,
-                    ProtrusionLength = 45.0m,
-                    CornerRadius = m.Radius,
-                    HolderExtensionCode = "ER32",
-                    ArborCode = "BT40-ER32",
-                    ToolPathTimeMinutes = 0,
-                    Remarks = ""
-                };
-            })
-            .Where(d => d != null)
-            .Cast<ToolListDetail>()
-            .ToList();
-        return header;
-    }
-    
     private static void UpdateToolMaster(ApplicationDbContext context, ToolListDetail detail)
     {
         if (string.IsNullOrWhiteSpace(detail.ConsumableCode))
@@ -1763,34 +1878,6 @@ public static class DbSeeder
     {
         context.ToolListHeaders.RemoveRange(context.ToolListHeaders.ToList());
         context.SaveChanges();
-        var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - TOOL CODE.xlsx");
-        var toolCodeList = LoadToolCodeUniqueFromExcel(excelPath);
-        // Group by ConsumableCode and take first row per key so duplicate codes in Excel do not throw
-        var masterLookup = toolCodeList
-            .GroupBy(t => t.ConsumableCode, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => { var f = g.First(); return (f.SystemToolName, f.Supplier, f.Diameter, f.FluteLength, f.CornerRadius); }, StringComparer.OrdinalIgnoreCase);
-        var toolLists = new List<ToolListHeader>
-        {
-            CreateToolListWithDetails("V5754221420001", "OP10", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
-            CreateToolListWithDetails("V5754221420001", "OP20", "REV00", "AG01", "S001", "2X-01", "DMU50", "hakim.hisham", masterLookup),
-            CreateToolListWithDetails("351-2180-7", "OP10", "REV00", "AG02", "SP11", "5X-01", "VCN510C", "adib.jamil", masterLookup),
-            CreateToolListWithDetails("E5757332620000", "OP10", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
-            CreateToolListWithDetails("E5757332620000", "OP20", "REV00", "AL01", "K5-42", "3X-07", "Integrex i-200", "faiq.faizul", masterLookup),
-        };
-        context.ToolListHeaders.AddRange(toolLists);
-        context.SaveChanges();
-        var processedCodes = new HashSet<string>();
-        foreach (var header in toolLists)
-        {
-            foreach (var detail in header.Details)
-            {
-                if (!string.IsNullOrWhiteSpace(detail.ConsumableCode) && !processedCodes.Contains(detail.ConsumableCode))
-                {
-                    UpdateToolMaster(context, detail);
-                    processedCodes.Add(detail.ConsumableCode);
-                    context.SaveChanges();
-                }
-            }
-        }
+        LoadAndSeedToolLists(context);
     }
 }
