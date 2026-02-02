@@ -550,7 +550,7 @@ public class ToolListEditorController : Controller
                                 cols.RelativeColumn(); cols.RelativeColumn(2); cols.RelativeColumn(); cols.RelativeColumn(2);
                                 cols.RelativeColumn(); cols.RelativeColumn();
                             });
-                            void Hc(string t) => headerTable.Cell().Padding(2).AlignCenter().AlignMiddle().Text(t).FontFamily(arialNarrow).FontSize(6);
+                            void Hc(string t) => headerTable.Cell().Padding(2).AlignLeft().AlignMiddle().Text(t).FontFamily(arialNarrow).FontSize(6);
                             // Row 1: Tool List No.|<data>|Part Description:|<data>|Project Code|<data>
                             Hc("Tool List No."); Hc(viewModel.ToolListName ?? ""); Hc("Part Description:"); Hc(viewModel.PartDescription ?? ""); Hc("Project Code"); Hc(viewModel.ProjectCode ?? "");
                             // Row 2: Unit:|MM|Work Centre:|<data>|Machine Model:|<data>
