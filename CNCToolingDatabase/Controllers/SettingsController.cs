@@ -1409,6 +1409,35 @@ public class SettingsController : Controller
         }
     }
     
+    [HttpPost]
+    public IActionResult ResetAllSettings()
+    {
+        var errors = new List<string>();
+        var order = new[]
+        {
+            ("User", () => { DbSeeder.ResetUsers(_context); }),
+            ("Part Number", () => { DbSeeder.ResetPartNumbers(_context); }),
+            ("Project Code", () => { DbSeeder.ResetProjectCodes(_context); }),
+            ("Machine Name", () => { DbSeeder.ResetMachineNames(_context); }),
+            ("Machine Workcenter", () => { DbSeeder.ResetMachineWorkcenters(_context); }),
+            ("Machine Model", () => { DbSeeder.ResetMachineModels(_context); }),
+            ("Operation", () => { DbSeeder.ResetOperations(_context); }),
+            ("Revision", () => { DbSeeder.ResetRevisions(_context); }),
+            ("CAM Leader", () => { DbSeeder.ResetCamLeaders(_context); }),
+            ("CAM Programmer", () => { DbSeeder.ResetCamProgrammers(_context); }),
+            ("Material Specification", () => { DbSeeder.ResetMaterialSpecs(_context); }),
+            ("Tool Supplier", () => { DbSeeder.ResetToolSuppliers(_context); }),
+        };
+        foreach (var (name, reset) in order)
+        {
+            try { reset(); }
+            catch (Exception ex) { errors.Add($"{name}: {ex.InnerException?.Message ?? ex.Message}"); }
+        }
+        if (errors.Count == 0)
+            return Json(new { success = true, message = "All 12 settings reset from seed files successfully. You may need to log in again." });
+        return Json(new { success = false, message = "Reset completed with errors: " + string.Join("; ", errors) });
+    }
+    
     private static string BuildPaginationQuery(string? search, string? sortColumn, string? sortDirection)
     {
         var qb = new List<string>();

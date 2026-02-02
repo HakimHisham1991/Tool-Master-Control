@@ -4,6 +4,15 @@
 
 <div class="module-header">
     <h2>Settings</h2>
+    <div style="display: flex; gap: 0.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="resetAllSettings()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Reset All Settings
+        </button>
+    </div>
 </div>
 
 <div class="settings-grid">
@@ -220,3 +229,28 @@
     font-size: 0.9rem;
 }
 </style>
+
+@section Scripts {
+<script>
+    function resetAllSettings() {
+        if (!confirm('This will reset all 12 settings (User, Part Number, Project Code, Machine Name, Machine Workcenter, Machine Model, Operation, Revision, CAM Leader, CAM Programmer, Material Specification, Tool Supplier) from their seed Excel files. You may need to log in again. This action cannot be undone.\n\nDo you want to continue?')) {
+            return;
+        }
+        fetch('/Settings/ResetAllSettings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: ''
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(function(e) { alert('Error: ' + e.message); });
+    }
+</script>
+}
