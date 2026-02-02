@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Models.ViewModels;
@@ -38,6 +39,20 @@ public class ToolCodeService : IToolCodeService
         int page,
         int pageSize)
     {
+        // Parse decimal filters once to avoid EF Core translation issues with out var in lambdas
+        decimal? diameterVal = null;
+        decimal? fluteLengthVal = null;
+        decimal? protrusionLengthVal = null;
+        decimal? cornerRadiusVal = null;
+        if (!string.IsNullOrWhiteSpace(diameterFilter) && decimal.TryParse(diameterFilter, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
+            diameterVal = d;
+        if (!string.IsNullOrWhiteSpace(fluteLengthFilter) && decimal.TryParse(fluteLengthFilter, NumberStyles.Any, CultureInfo.InvariantCulture, out var f))
+            fluteLengthVal = f;
+        if (!string.IsNullOrWhiteSpace(protrusionLengthFilter) && decimal.TryParse(protrusionLengthFilter, NumberStyles.Any, CultureInfo.InvariantCulture, out var p))
+            protrusionLengthVal = p;
+        if (!string.IsNullOrWhiteSpace(cornerRadiusFilter) && decimal.TryParse(cornerRadiusFilter, NumberStyles.Any, CultureInfo.InvariantCulture, out var c))
+            cornerRadiusVal = c;
+
         var query = from detail in _context.ToolListDetails
                     join header in _context.ToolListHeaders on detail.ToolListHeaderId equals header.Id
                     select new ToolCodeViewModel
@@ -85,14 +100,14 @@ public class ToolCodeService : IToolCodeService
             query = query.Where(t => t.Supplier == supplierFilter);
         if (!string.IsNullOrWhiteSpace(holderExtensionFilter))
             query = query.Where(t => t.HolderExtensionCode == holderExtensionFilter);
-        if (!string.IsNullOrWhiteSpace(diameterFilter) && decimal.TryParse(diameterFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var dia))
-            query = query.Where(t => t.Diameter == dia);
-        if (!string.IsNullOrWhiteSpace(fluteLengthFilter) && decimal.TryParse(fluteLengthFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var fl))
-            query = query.Where(t => t.FluteLength == fl);
-        if (!string.IsNullOrWhiteSpace(protrusionLengthFilter) && decimal.TryParse(protrusionLengthFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var pl))
-            query = query.Where(t => t.ProtrusionLength == pl);
-        if (!string.IsNullOrWhiteSpace(cornerRadiusFilter) && decimal.TryParse(cornerRadiusFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var cr))
-            query = query.Where(t => t.CornerRadius == cr);
+        if (diameterVal.HasValue)
+            query = query.Where(t => t.Diameter == diameterVal.Value);
+        if (fluteLengthVal.HasValue)
+            query = query.Where(t => t.FluteLength == fluteLengthVal.Value);
+        if (protrusionLengthVal.HasValue)
+            query = query.Where(t => t.ProtrusionLength == protrusionLengthVal.Value);
+        if (cornerRadiusVal.HasValue)
+            query = query.Where(t => t.CornerRadius == cornerRadiusVal.Value);
         if (!string.IsNullOrWhiteSpace(arborCodeFilter))
             query = query.Where(t => t.ArborCode == arborCodeFilter);
         if (!string.IsNullOrWhiteSpace(partNumberFilter))
@@ -166,10 +181,10 @@ public class ToolCodeService : IToolCodeService
             if (skip != "consumableCode" && !string.IsNullOrWhiteSpace(consumableCodeFilter)) q = q.Where(t => t.ConsumableCode == consumableCodeFilter);
             if (skip != "supplier" && !string.IsNullOrWhiteSpace(supplierFilter)) q = q.Where(t => t.Supplier == supplierFilter);
             if (skip != "holderExtension" && !string.IsNullOrWhiteSpace(holderExtensionFilter)) q = q.Where(t => t.HolderExtensionCode == holderExtensionFilter);
-            if (skip != "diameter" && !string.IsNullOrWhiteSpace(diameterFilter) && decimal.TryParse(diameterFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var dia)) q = q.Where(t => t.Diameter == dia);
-            if (skip != "fluteLength" && !string.IsNullOrWhiteSpace(fluteLengthFilter) && decimal.TryParse(fluteLengthFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var fl)) q = q.Where(t => t.FluteLength == fl);
-            if (skip != "protrusionLength" && !string.IsNullOrWhiteSpace(protrusionLengthFilter) && decimal.TryParse(protrusionLengthFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var pl)) q = q.Where(t => t.ProtrusionLength == pl);
-            if (skip != "cornerRadius" && !string.IsNullOrWhiteSpace(cornerRadiusFilter) && decimal.TryParse(cornerRadiusFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var cr)) q = q.Where(t => t.CornerRadius == cr);
+            if (skip != "diameter" && diameterVal.HasValue) q = q.Where(t => t.Diameter == diameterVal.Value);
+            if (skip != "fluteLength" && fluteLengthVal.HasValue) q = q.Where(t => t.FluteLength == fluteLengthVal.Value);
+            if (skip != "protrusionLength" && protrusionLengthVal.HasValue) q = q.Where(t => t.ProtrusionLength == protrusionLengthVal.Value);
+            if (skip != "cornerRadius" && cornerRadiusVal.HasValue) q = q.Where(t => t.CornerRadius == cornerRadiusVal.Value);
             if (skip != "arborCode" && !string.IsNullOrWhiteSpace(arborCodeFilter)) q = q.Where(t => t.ArborCode == arborCodeFilter);
             if (skip != "partNumber" && !string.IsNullOrWhiteSpace(partNumberFilter)) q = q.Where(t => t.PartNumber == partNumberFilter);
             if (skip != "operation" && !string.IsNullOrWhiteSpace(operationFilter)) q = q.Where(t => t.Operation == operationFilter);
