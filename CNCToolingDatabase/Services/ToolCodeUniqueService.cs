@@ -75,27 +75,57 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
         if (createdDateVal.HasValue)
             query = query.Where(t => t.CreatedDate.Date == createdDateVal.Value.Date);
 
-        query = ApplySort(query, sortColumn, sortDirection);
-
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-        var items = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(t => new ToolCodeUniqueItemViewModel
-            {
-                No = t.Id,
-                SystemToolName = t.SystemToolName,
-                ConsumableCode = t.ConsumableCode,
-                Supplier = t.Supplier,
-                Diameter = t.Diameter,
-                FluteLength = t.FluteLength,
-                CornerRadius = t.CornerRadius,
-                CreatedDate = t.CreatedDate,
-                LastModifiedDate = t.LastModifiedDate
-            })
-            .ToListAsync();
+        // SQLite/EF Core may not translate ORDER BY on decimal columns; sort in memory for decimal columns
+        var sortCol = sortColumn?.ToLower();
+        var isDecimalSort = sortCol == "diameter" || sortCol == "flutelength" || sortCol == "cornerradius";
+        List<ToolCodeUniqueItemViewModel> items;
+        if (isDecimalSort)
+        {
+            var all = await query
+                .Select(t => new ToolCodeUniqueItemViewModel
+                {
+                    No = t.Id,
+                    SystemToolName = t.SystemToolName,
+                    ConsumableCode = t.ConsumableCode,
+                    Supplier = t.Supplier,
+                    Diameter = t.Diameter,
+                    FluteLength = t.FluteLength,
+                    CornerRadius = t.CornerRadius,
+                    CreatedDate = t.CreatedDate,
+                    LastModifiedDate = t.LastModifiedDate
+                })
+                .ToListAsync();
+            var isDesc = sortDirection?.ToLower() == "desc";
+            var sorted = sortCol == "diameter"
+                ? (isDesc ? all.OrderByDescending(x => x.Diameter) : all.OrderBy(x => x.Diameter))
+                : sortCol == "flutelength"
+                    ? (isDesc ? all.OrderByDescending(x => x.FluteLength) : all.OrderBy(x => x.FluteLength))
+                    : (isDesc ? all.OrderByDescending(x => x.CornerRadius) : all.OrderBy(x => x.CornerRadius));
+            items = sorted.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        }
+        else
+        {
+            query = ApplySort(query, sortColumn, sortDirection);
+            items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => new ToolCodeUniqueItemViewModel
+                {
+                    No = t.Id,
+                    SystemToolName = t.SystemToolName,
+                    ConsumableCode = t.ConsumableCode,
+                    Supplier = t.Supplier,
+                    Diameter = t.Diameter,
+                    FluteLength = t.FluteLength,
+                    CornerRadius = t.CornerRadius,
+                    CreatedDate = t.CreatedDate,
+                    LastModifiedDate = t.LastModifiedDate
+                })
+                .ToListAsync();
+        }
 
         // Bidirectional filter options: each dropdown shows only values that exist given ALL OTHER filters
         var baseQuery = _context.ToolCodeUniques.AsNoTracking().AsQueryable();

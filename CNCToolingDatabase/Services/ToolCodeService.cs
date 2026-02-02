@@ -109,16 +109,32 @@ public class ToolCodeService : IToolCodeService
                 t.PartNumber.ToLower().Contains(term));
         }
 
-        query = ApplySort(query, sortColumn, sortDirection);
-        
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-        
-        var tools = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-        
+
+        // SQLite/EF Core may not translate ORDER BY on decimal columns; sort in memory for decimal columns
+        var sortCol = sortColumn?.ToLower();
+        var isDecimalSort = sortCol == "diameter" || sortCol == "flutelength" || sortCol == "protrusionlength" || sortCol == "cornerradius";
+        List<ToolCodeViewModel> tools;
+        if (isDecimalSort)
+        {
+            var all = await query.ToListAsync();
+            var isDesc = sortDirection?.ToLower() == "desc";
+            var sorted = sortCol == "diameter"
+                ? (isDesc ? all.OrderByDescending(t => t.Diameter) : all.OrderBy(t => t.Diameter))
+                : sortCol == "flutelength"
+                    ? (isDesc ? all.OrderByDescending(t => t.FluteLength) : all.OrderBy(t => t.FluteLength))
+                    : sortCol == "protrusionlength"
+                        ? (isDesc ? all.OrderByDescending(t => t.ProtrusionLength) : all.OrderBy(t => t.ProtrusionLength))
+                        : (isDesc ? all.OrderByDescending(t => t.CornerRadius) : all.OrderBy(t => t.CornerRadius));
+            tools = sorted.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        }
+        else
+        {
+            query = ApplySort(query, sortColumn, sortDirection);
+            tools = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        }
+
         // Bidirectional filter options: build query with entity-based filters, skipping one filter per dropdown
         IQueryable<ToolCodeViewModel> BuildFilteredQuery(string? skipFilter)
         {
