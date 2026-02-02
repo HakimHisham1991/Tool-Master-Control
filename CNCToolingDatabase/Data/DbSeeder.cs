@@ -20,6 +20,30 @@ public static class DbSeeder
             connection.Open();
             try
             {
+                // Add Website column to ToolSuppliers if it doesn't exist
+                using (var checkCommand = connection.CreateCommand())
+                {
+                    checkCommand.CommandText = "PRAGMA table_info(ToolSuppliers);";
+                    var hasWebsite = false;
+                    using (var reader = checkCommand.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            if (reader.GetString(1) == "Website")
+                            {
+                                hasWebsite = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!hasWebsite)
+                    {
+                        using var alterCommand = connection.CreateCommand();
+                        alterCommand.CommandText = "ALTER TABLE ToolSuppliers ADD COLUMN Website TEXT;";
+                        alterCommand.ExecuteNonQuery();
+                    }
+                }
+                
                 using var command = connection.CreateCommand();
                 command.CommandText = @"
                     CREATE TABLE IF NOT EXISTS ProjectCodes (
@@ -117,6 +141,14 @@ public static class DbSeeder
                         CreatedDate TEXT NOT NULL,
                         LastModifiedDate TEXT NOT NULL
                     );
+                    CREATE TABLE IF NOT EXISTS ToolSuppliers (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL UNIQUE,
+                        Website TEXT,
+                        Status TEXT NOT NULL,
+                        CreatedDate TEXT NOT NULL,
+                        CreatedBy TEXT NOT NULL
+                    );
                     
                     CREATE TABLE IF NOT EXISTS RunOnce (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -133,6 +165,7 @@ public static class DbSeeder
                     CREATE INDEX IF NOT EXISTS IX_Revisions_Name ON Revisions(Name);
                     CREATE INDEX IF NOT EXISTS IX_PartNumbers_Name ON PartNumbers(Name);
                     CREATE UNIQUE INDEX IF NOT EXISTS IX_MaterialSpecs_Spec_Material ON MaterialSpecs(Spec, Material);
+                    CREATE INDEX IF NOT EXISTS IX_ToolSuppliers_Name ON ToolSuppliers(Name);
                 ";
                 command.ExecuteNonQuery();
                 try { command.CommandText = "ALTER TABLE ProjectCodes ADD COLUMN Project TEXT;"; command.ExecuteNonQuery(); } catch { /* column may exist */ }
@@ -389,6 +422,34 @@ public static class DbSeeder
         {
             throw;
         }
+        
+        try
+        {
+            if (context.ToolSuppliers != null && !context.ToolSuppliers.Any())
+            {
+                var toolSupplierPath = ResolveToolSupplierMasterPath();
+                if (string.IsNullOrEmpty(toolSupplierPath))
+                    throw new InvalidOperationException("Missing file: TOOL SUPPLIER MASTER.xlsx not found. Place the file in the Data folder.");
+                var rows = LoadToolSupplierFromExcel(toolSupplierPath);
+                if (rows.Count == 0)
+                    throw new InvalidOperationException("No data loaded: TOOL SUPPLIER MASTER.xlsx is empty or column headers do not match. Expected: Supplier or Tool Supplier or Name; Website; Status.");
+                foreach (var (name, website, status) in rows)
+                {
+                    if (string.IsNullOrWhiteSpace(name)) continue;
+                    context.ToolSuppliers.Add(new ToolSupplier
+                    {
+                        Name = name ?? "",
+                        Website = website,
+                        Status = status ?? "",
+                        CreatedDate = DateTime.UtcNow,
+                        CreatedBy = "system"
+                    });
+                }
+                context.SaveChanges();
+            }
+        }
+        catch (InvalidOperationException) { throw; }
+        catch (Exception) { }
         
         try
         {
@@ -1011,6 +1072,72 @@ public static class DbSeeder
         }
     }
 
+    /// <summary>Resolve path to TOOL SUPPLIER MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    private static string? ResolveToolSupplierMasterPath()
+    {
+        const string fileName = "TOOL SUPPLIER MASTER.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return null;
+    }
+
+    /// <summary>Load Tool Supplier rows from TOOL SUPPLIER MASTER.xlsx. Columns: Supplier or Tool Supplier or Name; Website; Status (exact value from Excel).</summary>
+    private static List<(string Name, string? Website, string Status)> LoadToolSupplierFromExcel(string? path)
+    {
+        var result = new List<(string, string?, string)>();
+        if (string.IsNullOrEmpty(path))
+            return result;
+        if (!File.Exists(path))
+            throw new InvalidOperationException("Missing file: TOOL SUPPLIER MASTER.xlsx not found at " + path + ". Place the file in the Data folder.");
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        try
+        {
+            using var package = new ExcelPackage(new FileInfo(path));
+            var ws = package.Workbook.Worksheets.FirstOrDefault();
+            if (ws?.Dimension == null) return result;
+            int cols = ws.Dimension.End.Column;
+            int rows = ws.Dimension.End.Row;
+            if (rows < 2) return result;
+            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+            {
+                for (int c = 1; c <= totalCols; c++)
+                {
+                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                    if (string.IsNullOrEmpty(v)) continue;
+                    foreach (var h in headerNames)
+                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+                }
+                return -1;
+            }
+            int colName = GetCol(ws, cols, "Supplier", "Tool Supplier", "Name");
+            int colWebsite = GetCol(ws, cols, "Website", "URL", "Link");
+            int colStatus = GetCol(ws, cols, "Status");
+            if (colName < 1) return result;
+            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+            for (int r = 2; r <= rows; r++)
+            {
+                var name = GetStr(ws, r, colName);
+                var website = colWebsite >= 1 ? GetStr(ws, r, colWebsite) : null;
+                var status = colStatus >= 1 ? GetStr(ws, r, colStatus) : "";
+                if (string.IsNullOrWhiteSpace(name)) continue;
+                result.Add((name ?? "", string.IsNullOrWhiteSpace(website) ? null : website, status ?? ""));
+            }
+            return result;
+        }
+        catch (InvalidOperationException) { throw; }
+        catch (Exception ex) { throw new InvalidOperationException("Cannot open file or file corrupted: " + ex.Message, ex); }
+    }
+
     /// <summary>Resolve path to MATERIAL SPEC MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
     private static string? ResolveMaterialSpecMasterPath()
     {
@@ -1363,6 +1490,32 @@ public static class DbSeeder
                 CreatedDate = DateTime.UtcNow,
                 CreatedBy = "system",
                 IsActive = isActive
+            });
+        }
+        context.SaveChanges();
+    }
+
+    public static void ResetToolSuppliers(ApplicationDbContext context)
+    {
+        if (context.ToolSuppliers == null) return;
+        context.ToolSuppliers.RemoveRange(context.ToolSuppliers.ToList());
+        context.SaveChanges();
+        var excelPath = ResolveToolSupplierMasterPath();
+        if (string.IsNullOrEmpty(excelPath))
+            throw new InvalidOperationException("Missing file: TOOL SUPPLIER MASTER.xlsx not found. Place the file in the Data folder.");
+        var rows = LoadToolSupplierFromExcel(excelPath);
+        if (rows.Count == 0)
+            throw new InvalidOperationException("No data loaded: TOOL SUPPLIER MASTER.xlsx is empty or column headers do not match. Expected: Supplier or Tool Supplier or Name; Website; Status.");
+        foreach (var (name, website, status) in rows)
+        {
+            if (string.IsNullOrWhiteSpace(name)) continue;
+            context.ToolSuppliers.Add(new ToolSupplier
+            {
+                Name = name ?? "",
+                Website = website,
+                Status = status ?? "",
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = "system"
             });
         }
         context.SaveChanges();
