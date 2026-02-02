@@ -538,25 +538,26 @@ public class ToolListEditorController : Controller
                             if (System.IO.File.Exists(logoPath))
                                 e.Image(logoPath).FitWidth();
                         });
-                        headerRow.RelativeItem().Column(column =>
-                        {
-                            column.Item().AlignCenter().Text("Master Tooling List").Bold().FontFamily(arialNarrow).FontSize(22).FontColor(Colors.Black);
-                            column.Item().Height(8);
-                            column.Item().Text($"Tool List No.: {viewModel.ToolListName}").FontFamily(arialNarrow).FontSize(9);
-                            column.Item().Text($"Unit: MM").FontFamily(arialNarrow).FontSize(9);
-                            column.Item().Text($"Part Number: {viewModel.PartNumber}").FontFamily(arialNarrow).FontSize(9);
-                            if (!string.IsNullOrWhiteSpace(viewModel.PartDescription))
-                                column.Item().Text($"Part Description: {viewModel.PartDescription}").FontFamily(arialNarrow).FontSize(9);
-                            column.Item().Row(row =>
-                            {
-                                row.RelativeItem().Text($"Machine: {viewModel.MachineName}").FontFamily(arialNarrow);
-                                row.RelativeItem().Text($"Workcenter: {viewModel.MachineWorkcenter}").FontFamily(arialNarrow);
-                                row.RelativeItem().Text($"Project Code: {viewModel.ProjectCode}").FontFamily(arialNarrow);
-                            });
-                        });
+                        headerRow.RelativeItem().AlignCenter().Text("Master Tooling List").Bold().FontFamily(arialNarrow).FontSize(22).FontColor(Colors.Black);
                     });
                     page.Content().PaddingTop(0.5f, Unit.Centimetre).Column(content =>
                     {
+                        // Header info aligned with table edges (font size 6 to match table cells)
+                        content.Item().Row(infoRow =>
+                        {
+                            infoRow.RelativeItem(3).AlignLeft().Column(leftCol =>
+                            {
+                                leftCol.Item().Text($"Tool List No.: {viewModel.ToolListName}").FontFamily(arialNarrow).FontSize(6);
+                                leftCol.Item().Text("Unit: MM").FontFamily(arialNarrow).FontSize(6);
+                                leftCol.Item().Text($"Part Number: {viewModel.PartNumber}").FontFamily(arialNarrow).FontSize(6);
+                                if (!string.IsNullOrWhiteSpace(viewModel.PartDescription))
+                                    leftCol.Item().Text($"Part Description: {viewModel.PartDescription}").FontFamily(arialNarrow).FontSize(6);
+                                leftCol.Item().Text($"Machine: {viewModel.MachineName}").FontFamily(arialNarrow).FontSize(6);
+                                leftCol.Item().Text($"Machine Model: {viewModel.MachineModel}").FontFamily(arialNarrow).FontSize(6);
+                            });
+                            infoRow.RelativeItem(1).AlignRight().Text($"Project Code: {viewModel.ProjectCode}").FontFamily(arialNarrow).FontSize(6);
+                        });
+                        content.Item().Height(6);
                         // Table with exact headers from Create/Edit Tool List page
                         content.Item().Table(table =>
                         {
