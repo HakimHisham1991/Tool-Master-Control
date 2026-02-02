@@ -1,6 +1,7 @@
 using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Infrastructure;
 using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Repositories;
 using CNCToolingDatabase.Services;
@@ -24,6 +25,8 @@ static void EnsureColumn(DbConnection conn, string table, string column, string 
     cmd.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {typeAndDefault};";
     cmd.ExecuteNonQuery();
 }
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 

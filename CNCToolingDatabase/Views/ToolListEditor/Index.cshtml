@@ -60,6 +60,7 @@
         @if (Model.Id.HasValue)
         {
             <a href="/ToolListEditor/Export?id=@Model.Id&format=excel" class="btn btn-secondary btn-sm">Excel</a>
+            <a href="/ToolListEditor/Export?id=@Model.Id&format=pdf" class="btn btn-secondary btn-sm">PDF</a>
             <a href="/ToolListEditor/Export?id=@Model.Id&format=csv" class="btn btn-secondary btn-sm">CSV</a>
             <a href="/ToolListEditor/Export?id=@Model.Id&format=txt" class="btn btn-secondary btn-sm">TXT</a>
         }
