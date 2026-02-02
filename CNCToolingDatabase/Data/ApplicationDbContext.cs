@@ -24,6 +24,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<PartNumber> PartNumbers { get; set; }
     public DbSet<MaterialSpec> MaterialSpecs { get; set; }
     public DbSet<ToolCodeUnique> ToolCodeUniques { get; set; }
+    public DbSet<ToolSupplier> ToolSuppliers { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -136,6 +137,12 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ToolCodeUnique>(entity =>
         {
             entity.HasKey(e => e.Id);
+        });
+        
+        modelBuilder.Entity<ToolSupplier>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Name).IsUnique();
         });
     }
 }

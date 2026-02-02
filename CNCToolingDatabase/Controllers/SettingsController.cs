@@ -1305,6 +1305,110 @@ public class SettingsController : Controller
         }
     }
     
+    // Tool Supplier Management
+    public async Task<IActionResult> ToolSupplier(string? search, int page = 1, int pageSize = 250, string? sortColumn = null, string? sortDirection = null)
+    {
+        pageSize = Math.Clamp(pageSize, 10, 250);
+        var query = _context.ToolSuppliers.AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(t =>
+                t.Name.ToLower().Contains(term) ||
+                (t.Website != null && t.Website.ToLower().Contains(term)) ||
+                (t.Status != null && t.Status.ToLower().Contains(term)));
+        }
+        
+        var isDesc = sortDirection?.ToLower() == "desc";
+        query = (sortColumn?.ToLower()) switch
+        {
+            "id" => isDesc ? query.OrderByDescending(t => t.Id) : query.OrderBy(t => t.Id),
+            "name" => isDesc ? query.OrderByDescending(t => t.Name) : query.OrderBy(t => t.Name),
+            "website" => isDesc ? query.OrderByDescending(t => t.Website ?? "") : query.OrderBy(t => t.Website ?? ""),
+            "status" => isDesc ? query.OrderByDescending(t => t.Status) : query.OrderBy(t => t.Status),
+            "createdby" => isDesc ? query.OrderByDescending(t => t.CreatedBy) : query.OrderBy(t => t.CreatedBy),
+            "createddate" => isDesc ? query.OrderByDescending(t => t.CreatedDate) : query.OrderBy(t => t.CreatedDate),
+            _ => query.OrderBy(t => t.Name)
+        };
+        
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        var list = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        
+        ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.PageSize = pageSize;
+        ViewBag.SortColumn = sortColumn;
+        ViewBag.SortDirection = sortDirection;
+        ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
+        
+        return View(list);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> CreateToolSupplier(string name, string? website, string status)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Json(new { success = false, message = "Tool Supplier name is required" });
+        
+        if (await _context.ToolSuppliers.AnyAsync(t => t.Name == name))
+            return Json(new { success = false, message = "Tool Supplier already exists" });
+        
+        _context.ToolSuppliers.Add(new ToolSupplier
+        {
+            Name = name,
+            Website = string.IsNullOrWhiteSpace(website) ? null : website.Trim(),
+            Status = status ?? "",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = HttpContext.Session.GetString("Username") ?? ""
+        });
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Tool Supplier created successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdateToolSupplier(int id, string? website, string? status)
+    {
+        var item = await _context.ToolSuppliers.FindAsync(id);
+        if (item == null)
+            return Json(new { success = false, message = "Tool Supplier not found" });
+        
+        if (website != null) item.Website = string.IsNullOrWhiteSpace(website) ? null : website.Trim();
+        if (status != null) item.Status = status;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Tool Supplier updated successfully" });
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> DeleteToolSupplier(int id)
+    {
+        var item = await _context.ToolSuppliers.FindAsync(id);
+        if (item == null)
+            return Json(new { success = false, message = "Tool Supplier not found" });
+        
+        _context.ToolSuppliers.Remove(item);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "Tool Supplier deleted successfully" });
+    }
+    
+    [HttpPost]
+    public IActionResult ResetToolSupplier()
+    {
+        try
+        {
+            DbSeeder.ResetToolSuppliers(_context);
+            return Json(new { success = true, message = "Tool Suppliers reloaded from TOOL SUPPLIER MASTER.xlsx successfully." });
+        }
+        catch (Exception ex)
+        {
+            var msg = ex.InnerException?.Message ?? ex.Message;
+            return Json(new { success = false, message = msg });
+        }
+    }
+    
     private static string BuildPaginationQuery(string? search, string? sortColumn, string? sortDirection)
     {
         var qb = new List<string>();
