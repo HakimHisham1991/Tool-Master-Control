@@ -128,7 +128,7 @@ public class SettingsController : Controller
         try
         {
             DbSeeder.ResetUsers(_context);
-            return Json(new { success = true, message = "Users reloaded from USER MASTER.xlsx successfully." });
+            return Json(new { success = true, message = "Users reloaded from MASTER - USER.xlsx successfully." });
         }
         catch (Exception ex)
         {
@@ -730,7 +730,7 @@ public class SettingsController : Controller
         try
         {
             DbSeeder.ResetCamLeaders(_context);
-            return Json(new { success = true, message = "CAM leaders reloaded from CAM LEADER MASTER.xlsx successfully." });
+            return Json(new { success = true, message = "CAM leaders reloaded from MASTER - CAM LEADER.xlsx successfully." });
         }
         catch (Exception ex)
         {
@@ -834,7 +834,7 @@ public class SettingsController : Controller
         try
         {
             DbSeeder.ResetCamProgrammers(_context);
-            return Json(new { success = true, message = "CAM programmers reloaded from CAM PROGRAMMER MASTER.xlsx successfully." });
+            return Json(new { success = true, message = "CAM programmers reloaded from MASTER - CAM PROGRAMMER.xlsx successfully." });
         }
         catch (Exception ex)
         {
@@ -918,7 +918,7 @@ public class SettingsController : Controller
     [HttpPost]
     public IActionResult ResetOperation()
     {
-        try { DbSeeder.ResetOperations(_context); return Json(new { success = true, message = "Operations reset to seed data successfully." }); }
+        try { DbSeeder.ResetOperations(_context); return Json(new { success = true, message = "Operations reloaded from MASTER - OPERATION.xlsx successfully." }); }
         catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
     }
     
@@ -1400,7 +1400,7 @@ public class SettingsController : Controller
         try
         {
             DbSeeder.ResetToolSuppliers(_context);
-            return Json(new { success = true, message = "Tool Suppliers reloaded from TOOL SUPPLIER MASTER.xlsx successfully." });
+            return Json(new { success = true, message = "Tool Suppliers reloaded from MASTER - TOOL SUPPLIER.xlsx successfully." });
         }
         catch (Exception ex)
         {

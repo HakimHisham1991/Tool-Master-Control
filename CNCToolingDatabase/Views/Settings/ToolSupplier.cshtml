@@ -61,7 +61,7 @@
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                         <p>No tool suppliers found</p>
-                        <p style="font-size: 0.9rem; color: #666;">Add data or click Reset to load from TOOL SUPPLIER MASTER.xlsx</p>
+                        <p style="font-size: 0.9rem; color: #666;">Add data or click Reset to load from MASTER - TOOL SUPPLIER.xlsx</p>
                     </td>
                 </tr>
             }
@@ -204,7 +204,7 @@
     }
     
     function resetFromSeed() {
-        if (!confirm('This will delete all current tool supplier data and restore seed data from TOOL SUPPLIER MASTER.xlsx only. This action cannot be undone.\n\nDo you want to continue?')) return;
+        if (!confirm('This will delete all current tool supplier data and restore seed data from MASTER - TOOL SUPPLIER.xlsx only. This action cannot be undone.\n\nDo you want to continue?')) return;
         fetch('/Settings/ResetToolSupplier', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
             .then(r => r.json())
             .then(data => { if (data.success) location.reload(); else alert('Error: ' + data.message); })

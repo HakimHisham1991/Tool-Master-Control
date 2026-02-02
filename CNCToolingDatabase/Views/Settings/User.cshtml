@@ -216,7 +216,7 @@
     }
     
     function resetFromSeed() {
-        if (!confirm('This will delete all users and reload from USER MASTER.xlsx. You may need to log in again. This action cannot be undone.\n\nDo you want to continue?')) {
+        if (!confirm('This will delete all users and reload from MASTER - USER.xlsx. You may need to log in again. This action cannot be undone.\n\nDo you want to continue?')) {
             return;
         }
         fetch('/Settings/ResetUser', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })

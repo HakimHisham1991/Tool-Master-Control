@@ -224,15 +224,15 @@ public static class DbSeeder
             // Tables might already exist or be created by EF, ignore
         }
         
-        // Seed users from USER MASTER.xlsx only when empty; no hard-coded fallback
+        // Seed users from MASTER - USER.xlsx only when empty; no hard-coded fallback
         if (!context.Users.Any())
         {
             var userMasterPath = ResolveUserMasterPath();
             if (string.IsNullOrEmpty(userMasterPath))
-                throw new InvalidOperationException("Missing file: USER MASTER.xlsx not found. Place the file in the Data folder.");
+                throw new InvalidOperationException("Missing file: MASTER - USER.xlsx not found. Place the file in the Data folder.");
             var userRows = LoadUsersFromExcel(userMasterPath);
             if (userRows.Count == 0)
-                throw new InvalidOperationException("No data loaded: USER MASTER.xlsx is empty or column headers do not match. Expected: Username, Password, Display Name; optional: Status.");
+                throw new InvalidOperationException("No data loaded: MASTER - USER.xlsx is empty or column headers do not match. Expected: Username, Password, Display Name; optional: Status.");
             foreach (var (username, password, displayName, isActive) in userRows)
             {
                 context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName, IsActive = isActive, CreatedDate = DateTime.UtcNow });
@@ -321,10 +321,10 @@ public static class DbSeeder
             {
                 var camLeaderPath = ResolveCamLeaderPath();
                 if (string.IsNullOrEmpty(camLeaderPath))
-                    throw new InvalidOperationException("Missing file: CAM LEADER MASTER.xlsx not found. Place the file in the Data folder.");
+                    throw new InvalidOperationException("Missing file: MASTER - CAM LEADER.xlsx not found. Place the file in the Data folder.");
                 var camLeaderRows = LoadCamLeaderFromExcel(camLeaderPath);
                 if (camLeaderRows.Count == 0)
-                    throw new InvalidOperationException("No data loaded: CAM LEADER MASTER.xlsx is empty or column headers do not match. Expected: Name, Position; optional: Status (ACTIVE/INACTIVE).");
+                    throw new InvalidOperationException("No data loaded: MASTER - CAM LEADER.xlsx is empty or column headers do not match. Expected: Name, Position; optional: Status (ACTIVE/INACTIVE).");
                 foreach (var (name, position, isActive) in camLeaderRows)
                 {
                     context.CamLeaders.Add(new CamLeader { Name = name, Description = position ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
@@ -341,10 +341,10 @@ public static class DbSeeder
             {
                 var camProgrammerPath = ResolveCamProgrammerPath();
                 if (string.IsNullOrEmpty(camProgrammerPath))
-                    throw new InvalidOperationException("Missing file: CAM PROGRAMMER MASTER.xlsx not found. Place the file in the Data folder.");
+                    throw new InvalidOperationException("Missing file: MASTER - CAM PROGRAMMER.xlsx not found. Place the file in the Data folder.");
                 var camProgrammerRows = LoadCamProgrammerFromExcel(camProgrammerPath);
                 if (camProgrammerRows.Count == 0)
-                    throw new InvalidOperationException("No data loaded: CAM PROGRAMMER MASTER.xlsx is empty or column headers do not match. Expected: Name, Location; optional: Status (ACTIVE/INACTIVE).");
+                    throw new InvalidOperationException("No data loaded: MASTER - CAM PROGRAMMER.xlsx is empty or column headers do not match. Expected: Name, Location; optional: Status (ACTIVE/INACTIVE).");
                 foreach (var (name, location, isActive) in camProgrammerRows)
                 {
                     context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
@@ -359,15 +359,29 @@ public static class DbSeeder
         {
             if (context.Operations != null && !context.Operations.Any())
             {
-                var operationSeed = new[] { "OP10", "OP20", "OP30", "OP40", "OP50", "OP60", "OP70", "OP80", "OP90" };
-                foreach (var name in operationSeed)
+                var operationPath = ResolveOperationMasterPath();
+                if (!string.IsNullOrEmpty(operationPath))
                 {
-                    context.Operations.Add(new Operation { Name = name, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+                    var operationRows = LoadOperationFromExcel(operationPath);
+                    if (operationRows.Count == 0)
+                        throw new InvalidOperationException("No data loaded: MASTER - OPERATION.xlsx is empty or column headers do not match. Expected: No., Operation, Description, Status (ACTIVE/INACTIVE).");
+                    foreach (var (name, description, isActive) in operationRows)
+                    {
+                        context.Operations.Add(new Operation
+                        {
+                            Name = name,
+                            Description = description,
+                            CreatedDate = DateTime.UtcNow,
+                            CreatedBy = "system",
+                            IsActive = isActive
+                        });
+                    }
+                    context.SaveChanges();
                 }
-                context.SaveChanges();
             }
         }
-        catch { }
+        catch (InvalidOperationException) { throw; }
+        catch (Exception) { }
         
         try
         {
@@ -389,10 +403,10 @@ public static class DbSeeder
             {
                 var excelPath = ResolveMaterialSpecMasterPath();
                 if (string.IsNullOrEmpty(excelPath))
-                    throw new InvalidOperationException("Missing file: MATERIAL SPEC MASTER.xlsx not found. Place the file in the Data folder.");
+                    throw new InvalidOperationException("Missing file: MASTER - MATERIAL SPEC.xlsx not found. Place the file in the Data folder.");
                 var rows = LoadMaterialSpecFromExcel(excelPath);
                 if (rows.Count == 0)
-                    throw new InvalidOperationException("No data loaded: MATERIAL SPEC MASTER.xlsx is empty or column headers do not match. Expected headers: Material Specification (On Drawing), General Name; optional: Material Specification (Purchased), Material Supply Condition (Purchased), Material Type, Status.");
+                    throw new InvalidOperationException("No data loaded: MASTER - MATERIAL SPEC.xlsx is empty or column headers do not match. Expected headers: Material Specification (On Drawing), General Name; optional: Material Specification (Purchased), Material Supply Condition (Purchased), Material Type, Status.");
                 var seen = new HashSet<(string, string)>();
                 foreach (var (spec, specPurchased, material, supplyCondition, materialType, isActive) in rows)
                 {
@@ -429,10 +443,10 @@ public static class DbSeeder
             {
                 var toolSupplierPath = ResolveToolSupplierMasterPath();
                 if (string.IsNullOrEmpty(toolSupplierPath))
-                    throw new InvalidOperationException("Missing file: TOOL SUPPLIER MASTER.xlsx not found. Place the file in the Data folder.");
+                    throw new InvalidOperationException("Missing file: MASTER - TOOL SUPPLIER.xlsx not found. Place the file in the Data folder.");
                 var rows = LoadToolSupplierFromExcel(toolSupplierPath);
                 if (rows.Count == 0)
-                    throw new InvalidOperationException("No data loaded: TOOL SUPPLIER MASTER.xlsx is empty or column headers do not match. Expected: Supplier or Tool Supplier or Name; Website; Status.");
+                    throw new InvalidOperationException("No data loaded: MASTER - TOOL SUPPLIER.xlsx is empty or column headers do not match. Expected: Supplier or Tool Supplier or Name; Website; Status.");
                 foreach (var (name, website, status) in rows)
                 {
                     if (string.IsNullOrWhiteSpace(name)) continue;
@@ -485,7 +499,7 @@ public static class DbSeeder
         
         if (!context.ToolListHeaders.Any())
         {
-            var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
+            var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - TOOL CODE.xlsx");
             var toolCodeList = LoadToolCodeUniqueFromExcel(excelPath);
             // Group by ConsumableCode (Item2) and take first row per key so duplicate codes in Excel do not throw
             var masterLookup = toolCodeList
@@ -521,7 +535,7 @@ public static class DbSeeder
         
         if (context.ToolCodeUniques != null && !context.ToolCodeUniques.Any())
         {
-            var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
+            var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - TOOL CODE.xlsx");
             var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             foreach (var (systemName, consumable, supplier, dia, flute, radius) in LoadToolCodeUniqueFromExcel(excelPath))
             {
@@ -541,7 +555,7 @@ public static class DbSeeder
         }
     }
 
-    /// <summary>Load Machine Name rows from MACHINE NAME MASTER.xlsx. Columns: Machine Name, Serial Number, Machine Workcenter, Machine Model, Status.</summary>
+    /// <summary>Load Machine Name rows from MASTER - MACHINE NAME.xlsx. Columns: Machine Name, Serial Number, Machine Workcenter, Machine Model, Status.</summary>
     private static List<(string Name, string Serial, string Workcenter, string MachineModel, bool IsActive)> LoadMachineNameFromExcel(string path)
     {
         var result = new List<(string, string, string, string, bool)>();
@@ -592,11 +606,11 @@ public static class DbSeeder
 
     private static (string Name, string Serial, string Workcenter, string MachineModel, bool IsActive)[] GetMachineNameSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MACHINE NAME MASTER.xlsx");
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - MACHINE NAME.xlsx");
         return LoadMachineNameFromExcel(path).ToArray();
     }
 
-    /// <summary>Load Machine Model rows from MACHINE MODEL MASTER.xlsx. Columns: Model, Description (or Machine Builder), Type, Controller, Status (ACTIVE/INACTIVE).</summary>
+    /// <summary>Load Machine Model rows from MASTER - MACHINE MODEL.xlsx. Columns: Model, Description (or Machine Builder), Type, Controller, Status (ACTIVE/INACTIVE).</summary>
     private static List<(string Model, string Description, string Type, string Controller, bool IsActive)> LoadMachineModelFromExcel(string path)
     {
         var result = new List<(string, string, string, string, bool)>();
@@ -647,11 +661,11 @@ public static class DbSeeder
 
     private static (string Model, string Description, string Type, string Controller, bool IsActive)[] GetMachineModelSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MACHINE MODEL MASTER.xlsx");
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - MACHINE MODEL.xlsx");
         return LoadMachineModelFromExcel(path).ToArray();
     }
 
-    /// <summary>Load Project Code rows from PROJECT CODE MASTER.xlsx. Columns: Code, Description (or Customer), Project, Status (ACTIVE/INACTIVE).</summary>
+    /// <summary>Load Project Code rows from MASTER - PROJECT CODE.xlsx. Columns: Code, Description (or Customer), Project, Status (ACTIVE/INACTIVE).</summary>
     private static List<(string Code, string Description, string Project, bool IsActive)> LoadProjectCodeFromExcel(string path)
     {
         var result = new List<(string, string, string, bool)>();
@@ -700,11 +714,11 @@ public static class DbSeeder
 
     private static (string Code, string Description, string Project, bool IsActive)[] GetProjectCodeSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "PROJECT CODE MASTER.xlsx");
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - PROJECT CODE.xlsx");
         return LoadProjectCodeFromExcel(path).ToArray();
     }
 
-    /// <summary>Load Machine Workcenter rows from MACHINE WORKCENTER MASTER.xlsx. Columns: Workcenter, Axis, Status (ACTIVE/INACTIVE).</summary>
+    /// <summary>Load Machine Workcenter rows from MASTER - MACHINE WORKCENTER.xlsx. Columns: Workcenter, Axis, Status (ACTIVE/INACTIVE).</summary>
     private static List<(string Workcenter, string Axis, bool IsActive)> LoadMachineWorkcenterFromExcel(string path)
     {
         var result = new List<(string, string, bool)>();
@@ -751,7 +765,7 @@ public static class DbSeeder
 
     private static (string Workcenter, string Axis, bool IsActive)[] GetMachineWorkcenterSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MACHINE WORKCENTER MASTER.xlsx");
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - MACHINE WORKCENTER.xlsx");
         return LoadMachineWorkcenterFromExcel(path).ToArray();
     }
 
@@ -768,7 +782,7 @@ public static class DbSeeder
         };
     }
 
-    /// <summary>Load Part Number rows from PART NUMBERS MASTER.xlsx. Columns: Part Number, Description, Part Revision, Drawing Revision, Project Code, Ref. Drawing, Material Spec., Material. Sequence is 1-based Excel row order.</summary>
+    /// <summary>Load Part Number rows from MASTER - PART NUMBERS.xlsx. Columns: Part Number, Description, Part Revision, Drawing Revision, Project Code, Ref. Drawing, Material Spec., Material. Sequence is 1-based Excel row order.</summary>
     private static List<(string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec, int Sequence)> LoadPartNumberFromExcel(string path)
     {
         var result = new List<(string, string, string, string, string, string, string, int)>();
@@ -817,10 +831,10 @@ public static class DbSeeder
         return result;
     }
 
-    /// <summary>Resolve path to USER MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    /// <summary>Resolve path to MASTER - USER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
     private static string? ResolveUserMasterPath()
     {
-        const string fileName = "USER MASTER.xlsx";
+        const string fileName = "MASTER - USER.xlsx";
         var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
         if (File.Exists(baseData)) return baseData;
         var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
@@ -836,14 +850,14 @@ public static class DbSeeder
         return null;
     }
 
-    /// <summary>Load User rows from USER MASTER.xlsx. Throws on file not found or cannot open/corrupted. Columns: Username, Password, Display Name; optional: Status (ACTIVE/INACTIVE).</summary>
+    /// <summary>Load User rows from MASTER - USER.xlsx. Throws on file not found or cannot open/corrupted. Columns: Username, Password, Display Name; optional: Status (ACTIVE/INACTIVE).</summary>
     private static List<(string Username, string Password, string DisplayName, bool IsActive)> LoadUsersFromExcel(string path)
     {
         var result = new List<(string, string, string, bool)>();
         if (string.IsNullOrEmpty(path))
             return result;
         if (!File.Exists(path))
-            throw new InvalidOperationException("Missing file: USER MASTER.xlsx not found at " + path + ". Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: MASTER - USER.xlsx not found at " + path + ". Place the file in the Data folder.");
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
@@ -910,10 +924,10 @@ public static class DbSeeder
         }
     }
 
-    /// <summary>Resolve path to CAM PROGRAMMER MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    /// <summary>Resolve path to MASTER - CAM PROGRAMMER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
     private static string? ResolveCamProgrammerPath()
     {
-        const string fileName = "CAM PROGRAMMER MASTER.xlsx";
+        const string fileName = "MASTER - CAM PROGRAMMER.xlsx";
         var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
         if (File.Exists(baseData)) return baseData;
         var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
@@ -929,14 +943,14 @@ public static class DbSeeder
         return null;
     }
 
-    /// <summary>Load CAM Programmer rows from CAM PROGRAMMER MASTER.xlsx. Throws on file not found or cannot open/corrupted. Columns: No., Name, Location; optional: Status (ACTIVE/INACTIVE).</summary>
+    /// <summary>Load CAM Programmer rows from MASTER - CAM PROGRAMMER.xlsx. Throws on file not found or cannot open/corrupted. Columns: No., Name, Location; optional: Status (ACTIVE/INACTIVE).</summary>
     private static List<(string Name, string? Location, bool IsActive)> LoadCamProgrammerFromExcel(string path)
     {
         var result = new List<(string, string?, bool)>();
         if (string.IsNullOrEmpty(path))
             return result;
         if (!File.Exists(path))
-            throw new InvalidOperationException("Missing file: CAM PROGRAMMER MASTER.xlsx not found at " + path + ". Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: MASTER - CAM PROGRAMMER.xlsx not found at " + path + ". Place the file in the Data folder.");
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
@@ -991,10 +1005,10 @@ public static class DbSeeder
         }
     }
 
-    /// <summary>Resolve path to CAM LEADER MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    /// <summary>Resolve path to MASTER - CAM LEADER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
     private static string? ResolveCamLeaderPath()
     {
-        const string fileName = "CAM LEADER MASTER.xlsx";
+        const string fileName = "MASTER - CAM LEADER.xlsx";
         var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
         if (File.Exists(baseData)) return baseData;
         var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
@@ -1010,14 +1024,14 @@ public static class DbSeeder
         return null;
     }
 
-    /// <summary>Load CAM Leader rows from CAM LEADER MASTER.xlsx. Throws on file not found or cannot open/corrupted. Columns: No., Name, Position; optional: Status (ACTIVE/INACTIVE).</summary>
+    /// <summary>Load CAM Leader rows from MASTER - CAM LEADER.xlsx. Throws on file not found or cannot open/corrupted. Columns: No., Name, Position; optional: Status (ACTIVE/INACTIVE).</summary>
     private static List<(string Name, string? Position, bool IsActive)> LoadCamLeaderFromExcel(string path)
     {
         var result = new List<(string, string?, bool)>();
         if (string.IsNullOrEmpty(path))
             return result;
         if (!File.Exists(path))
-            throw new InvalidOperationException("Missing file: CAM LEADER MASTER.xlsx not found at " + path + ". Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: MASTER - CAM LEADER.xlsx not found at " + path + ". Place the file in the Data folder.");
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
@@ -1072,10 +1086,10 @@ public static class DbSeeder
         }
     }
 
-    /// <summary>Resolve path to TOOL SUPPLIER MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
-    private static string? ResolveToolSupplierMasterPath()
+    /// <summary>Resolve path to MASTER - OPERATION.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    private static string? ResolveOperationMasterPath()
     {
-        const string fileName = "TOOL SUPPLIER MASTER.xlsx";
+        const string fileName = "MASTER - OPERATION.xlsx";
         var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
         if (File.Exists(baseData)) return baseData;
         var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
@@ -1091,14 +1105,89 @@ public static class DbSeeder
         return null;
     }
 
-    /// <summary>Load Tool Supplier rows from TOOL SUPPLIER MASTER.xlsx. Columns: Supplier or Tool Supplier or Name; Website; Status (exact value from Excel).</summary>
+    /// <summary>Load Operation rows from MASTER - OPERATION.xlsx. Columns: No., Operation, Description, Status (ACTIVE/INACTIVE).</summary>
+    private static List<(string Name, string? Description, bool IsActive)> LoadOperationFromExcel(string? path)
+    {
+        var result = new List<(string, string?, bool)>();
+        if (string.IsNullOrEmpty(path))
+            return result;
+        if (!File.Exists(path))
+            throw new InvalidOperationException("Missing file: MASTER - OPERATION.xlsx not found at " + path + ". Place the file in the Data folder.");
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        try
+        {
+            using var package = new ExcelPackage(new FileInfo(path));
+            var ws = package.Workbook.Worksheets.FirstOrDefault();
+            if (ws?.Dimension == null) return result;
+            int cols = ws.Dimension.End.Column;
+            int rows = ws.Dimension.End.Row;
+            if (rows < 2) return result;
+            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
+            {
+                for (int c = 1; c <= totalCols; c++)
+                {
+                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
+                    if (string.IsNullOrEmpty(v)) continue;
+                    foreach (var h in headerNames)
+                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
+                }
+                return -1;
+            }
+            int colName = GetCol(ws, cols, "Operation", "Name");
+            int colDescription = GetCol(ws, cols, "Description");
+            int colStatus = GetCol(ws, cols, "Status");
+            if (colName < 1) return result;
+            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
+            static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
+            {
+                var val = GetStr(sheet, row, col);
+                if (string.IsNullOrWhiteSpace(val)) return true;
+                if (string.Equals(val, "INACTIVE", StringComparison.OrdinalIgnoreCase)) return false;
+                if (string.Equals(val, "NO", StringComparison.OrdinalIgnoreCase)) return false;
+                if (string.Equals(val, "0", StringComparison.OrdinalIgnoreCase)) return false;
+                return true;
+            }
+            for (int r = 2; r <= rows; r++)
+            {
+                var name = GetStr(ws, r, colName);
+                if (string.IsNullOrWhiteSpace(name)) continue;
+                var description = colDescription >= 1 ? GetStr(ws, r, colDescription) : null;
+                var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
+                result.Add((name, string.IsNullOrWhiteSpace(description) ? null : description, isActive));
+            }
+            return result;
+        }
+        catch (InvalidOperationException) { throw; }
+        catch (Exception ex) { throw new InvalidOperationException("Cannot open file or file corrupted: " + ex.Message, ex); }
+    }
+
+    /// <summary>Resolve path to MASTER - TOOL SUPPLIER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    private static string? ResolveToolSupplierMasterPath()
+    {
+        const string fileName = "MASTER - TOOL SUPPLIER.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return null;
+    }
+
+    /// <summary>Load Tool Supplier rows from MASTER - TOOL SUPPLIER.xlsx. Columns: Supplier or Tool Supplier or Name; Website; Status (exact value from Excel).</summary>
     private static List<(string Name, string? Website, string Status)> LoadToolSupplierFromExcel(string? path)
     {
         var result = new List<(string, string?, string)>();
         if (string.IsNullOrEmpty(path))
             return result;
         if (!File.Exists(path))
-            throw new InvalidOperationException("Missing file: TOOL SUPPLIER MASTER.xlsx not found at " + path + ". Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: MASTER - TOOL SUPPLIER.xlsx not found at " + path + ". Place the file in the Data folder.");
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
@@ -1138,10 +1227,10 @@ public static class DbSeeder
         catch (Exception ex) { throw new InvalidOperationException("Cannot open file or file corrupted: " + ex.Message, ex); }
     }
 
-    /// <summary>Resolve path to MATERIAL SPEC MASTER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
+    /// <summary>Resolve path to MASTER - MATERIAL SPEC.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
     private static string? ResolveMaterialSpecMasterPath()
     {
-        const string fileName = "MATERIAL SPEC MASTER.xlsx";
+        const string fileName = "MASTER - MATERIAL SPEC.xlsx";
         var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
         if (File.Exists(baseData)) return baseData;
         var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
@@ -1157,14 +1246,14 @@ public static class DbSeeder
         return null;
     }
 
-    /// <summary>Load Material Spec rows from MATERIAL SPEC MASTER.xlsx. Throws on missing path, file not found, or cannot open/corrupted. Returns empty list only when file has no data or headers don't match.</summary>
+    /// <summary>Load Material Spec rows from MASTER - MATERIAL SPEC.xlsx. Throws on missing path, file not found, or cannot open/corrupted. Returns empty list only when file has no data or headers don't match.</summary>
     private static List<(string Spec, string MaterialSpecPurchased, string Material, string MaterialSupplyConditionPurchased, string MaterialType, bool IsActive)> LoadMaterialSpecFromExcel(string? path)
     {
         var result = new List<(string, string, string, string, string, bool)>();
         if (string.IsNullOrEmpty(path))
             return result;
         if (!File.Exists(path))
-            throw new InvalidOperationException("Missing file: MATERIAL SPEC MASTER.xlsx not found at " + path + ". Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: MASTER - MATERIAL SPEC.xlsx not found at " + path + ". Place the file in the Data folder.");
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
@@ -1227,7 +1316,7 @@ public static class DbSeeder
 
     private static (string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec, int Sequence)[] GetPartNumberSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "PART NUMBERS MASTER.xlsx");
+        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - PART NUMBERS.xlsx");
         return LoadPartNumberFromExcel(path).ToArray();
     }
 
@@ -1323,10 +1412,10 @@ public static class DbSeeder
         context.SaveChanges();
         var userMasterPath = ResolveUserMasterPath();
         if (string.IsNullOrEmpty(userMasterPath))
-            throw new InvalidOperationException("Missing file: USER MASTER.xlsx not found. Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: MASTER - USER.xlsx not found. Place the file in the Data folder.");
         var userRows = LoadUsersFromExcel(userMasterPath);
         if (userRows.Count == 0)
-            throw new InvalidOperationException("No data loaded: USER MASTER.xlsx is empty or column headers do not match. Expected: Username, Password, Display Name; optional: Status.");
+            throw new InvalidOperationException("No data loaded: MASTER - USER.xlsx is empty or column headers do not match. Expected: Username, Password, Display Name; optional: Status.");
         foreach (var (username, password, displayName, isActive) in userRows)
         {
             context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName, IsActive = isActive, CreatedDate = DateTime.UtcNow });
@@ -1408,10 +1497,10 @@ public static class DbSeeder
         context.SaveChanges();
         var path = ResolveCamLeaderPath();
         if (string.IsNullOrEmpty(path))
-            throw new InvalidOperationException("Missing file: CAM LEADER MASTER.xlsx not found. Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: MASTER - CAM LEADER.xlsx not found. Place the file in the Data folder.");
         var rows = LoadCamLeaderFromExcel(path);
         if (rows.Count == 0)
-            throw new InvalidOperationException("No data loaded: CAM LEADER MASTER.xlsx is empty or column headers do not match. Expected: Name, Position; optional: Status (ACTIVE/INACTIVE).");
+            throw new InvalidOperationException("No data loaded: MASTER - CAM LEADER.xlsx is empty or column headers do not match. Expected: Name, Position; optional: Status (ACTIVE/INACTIVE).");
         foreach (var (name, position, isActive) in rows)
         {
             context.CamLeaders.Add(new CamLeader { Name = name, Description = position ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
@@ -1426,10 +1515,10 @@ public static class DbSeeder
         context.SaveChanges();
         var path = ResolveCamProgrammerPath();
         if (string.IsNullOrEmpty(path))
-            throw new InvalidOperationException("Missing file: CAM PROGRAMMER MASTER.xlsx not found. Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: MASTER - CAM PROGRAMMER.xlsx not found. Place the file in the Data folder.");
         var rows = LoadCamProgrammerFromExcel(path);
         if (rows.Count == 0)
-            throw new InvalidOperationException("No data loaded: CAM PROGRAMMER MASTER.xlsx is empty or column headers do not match. Expected: Name, Location; optional: Status (ACTIVE/INACTIVE).");
+            throw new InvalidOperationException("No data loaded: MASTER - CAM PROGRAMMER.xlsx is empty or column headers do not match. Expected: Name, Location; optional: Status (ACTIVE/INACTIVE).");
         foreach (var (name, location, isActive) in rows)
         {
             context.CamProgrammers.Add(new CamProgrammer { Name = name, Description = location ?? "", CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
@@ -1442,8 +1531,23 @@ public static class DbSeeder
         if (context.Operations == null) return;
         context.Operations.RemoveRange(context.Operations.ToList());
         context.SaveChanges();
-        foreach (var name in new[] { "OP10", "OP20", "OP30", "OP40", "OP50", "OP60", "OP70", "OP80", "OP90" })
-            context.Operations.Add(new Operation { Name = name, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
+        var excelPath = ResolveOperationMasterPath();
+        if (string.IsNullOrEmpty(excelPath))
+            throw new InvalidOperationException("Missing file: MASTER - OPERATION.xlsx not found. Place the file in the Data folder.");
+        var rows = LoadOperationFromExcel(excelPath);
+        if (rows.Count == 0)
+            throw new InvalidOperationException("No data loaded: MASTER - OPERATION.xlsx is empty or column headers do not match. Expected: No., Operation, Description, Status (ACTIVE/INACTIVE).");
+        foreach (var (name, description, isActive) in rows)
+        {
+            context.Operations.Add(new Operation
+            {
+                Name = name,
+                Description = description,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = "system",
+                IsActive = isActive
+            });
+        }
         context.SaveChanges();
     }
 
@@ -1470,10 +1574,10 @@ public static class DbSeeder
         context.SaveChanges();
         var excelPath = ResolveMaterialSpecMasterPath();
         if (string.IsNullOrEmpty(excelPath))
-            throw new InvalidOperationException("Missing file: MATERIAL SPEC MASTER.xlsx not found. Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: MASTER - MATERIAL SPEC.xlsx not found. Place the file in the Data folder.");
         var rows = LoadMaterialSpecFromExcel(excelPath);
         if (rows.Count == 0)
-            throw new InvalidOperationException("No data loaded: MATERIAL SPEC MASTER.xlsx is empty or column headers do not match. Expected headers: Material Specification (On Drawing), General Name; optional: Material Specification (Purchased), Material Supply Condition (Purchased), Material Type, Status.");
+            throw new InvalidOperationException("No data loaded: MASTER - MATERIAL SPEC.xlsx is empty or column headers do not match. Expected headers: Material Specification (On Drawing), General Name; optional: Material Specification (Purchased), Material Supply Condition (Purchased), Material Type, Status.");
         var seen = new HashSet<(string, string)>();
         foreach (var (spec, specPurchased, material, supplyCondition, materialType, isActive) in rows)
         {
@@ -1502,10 +1606,10 @@ public static class DbSeeder
         context.SaveChanges();
         var excelPath = ResolveToolSupplierMasterPath();
         if (string.IsNullOrEmpty(excelPath))
-            throw new InvalidOperationException("Missing file: TOOL SUPPLIER MASTER.xlsx not found. Place the file in the Data folder.");
+            throw new InvalidOperationException("Missing file: MASTER - TOOL SUPPLIER.xlsx not found. Place the file in the Data folder.");
         var rows = LoadToolSupplierFromExcel(excelPath);
         if (rows.Count == 0)
-            throw new InvalidOperationException("No data loaded: TOOL SUPPLIER MASTER.xlsx is empty or column headers do not match. Expected: Supplier or Tool Supplier or Name; Website; Status.");
+            throw new InvalidOperationException("No data loaded: MASTER - TOOL SUPPLIER.xlsx is empty or column headers do not match. Expected: Supplier or Tool Supplier or Name; Website; Status.");
         foreach (var (name, website, status) in rows)
         {
             if (string.IsNullOrWhiteSpace(name)) continue;
@@ -1539,7 +1643,7 @@ public static class DbSeeder
         context.SaveChanges();
     }
 
-    /// <summary>Load Master Tool Code rows from TOOL CODE MASTER.xlsx. Columns: System Tool Name, Tool Description, Procurement channel, Tool Ø (DC), Flute / Cutting edge length (APMXS) cutting width (CW), Corner rad.</summary>
+    /// <summary>Load Master Tool Code rows from MASTER - TOOL CODE.xlsx. Columns: System Tool Name, Tool Description, Procurement channel, Tool Ø (DC), Flute / Cutting edge length (APMXS) cutting width (CW), Corner rad.</summary>
     private static List<(string SystemToolName, string ConsumableCode, string Supplier, decimal Diameter, decimal FluteLength, decimal CornerRadius)> LoadToolCodeUniqueFromExcel(string path)
     {
         var result = new List<(string, string, string, decimal, decimal, decimal)>();
@@ -1614,7 +1718,7 @@ public static class DbSeeder
             const string insertSql = @"INSERT INTO ToolCodeUniques (SystemToolName, ConsumableCode, Supplier, Diameter, FluteLength, CornerRadius, CreatedDate, LastModifiedDate)
                 VALUES (@sn, @cc, @su, @di, @fl, @cr, @cd, @lm)";
             var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
+            var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - TOOL CODE.xlsx");
             var rowsToInsert = LoadToolCodeUniqueFromExcel(excelPath);
             foreach (var (systemName, consumable, supplier, dia, flute, radius) in rowsToInsert)
             {
@@ -1652,7 +1756,7 @@ public static class DbSeeder
     {
         context.ToolListHeaders.RemoveRange(context.ToolListHeaders.ToList());
         context.SaveChanges();
-        var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "TOOL CODE MASTER.xlsx");
+        var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - TOOL CODE.xlsx");
         var toolCodeList = LoadToolCodeUniqueFromExcel(excelPath);
         // Group by ConsumableCode and take first row per key so duplicate codes in Excel do not throw
         var masterLookup = toolCodeList

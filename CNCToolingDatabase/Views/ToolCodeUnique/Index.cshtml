@@ -225,7 +225,7 @@
         window.location.href = '/ToolCodeUnique?' + params.toString();
     }
     function resetFromSeed() {
-        if (!confirm('This will delete all Master Tool Code data and replace it with data from TOOL CODE MASTER.xlsx. This action cannot be undone.\n\nDo you want to continue?')) return;
+        if (!confirm('This will delete all Master Tool Code data and replace it with data from MASTER - TOOL CODE.xlsx. This action cannot be undone.\n\nDo you want to continue?')) return;
         const btn = document.getElementById('btnResetMasterToolCode');
         const originalHtml = btn ? btn.innerHTML : '';
         if (btn) { btn.disabled = true; btn.innerHTML = 'Resetting...'; }

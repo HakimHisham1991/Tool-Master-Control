@@ -17,7 +17,7 @@ public class AccountController : Controller
         _dbContext = dbContext;
     }
 
-    /// <summary>Reload users from USER MASTER.xlsx (fixes empty passwords). No login required. Call once then log in.</summary>
+    /// <summary>Reload users from MASTER - USER.xlsx (fixes empty passwords). No login required. Call once then log in.</summary>
     [HttpGet]
     [Route("Account/ReloadUsers")]
     public IActionResult ReloadUsers()
@@ -25,7 +25,7 @@ public class AccountController : Controller
         try
         {
             DbSeeder.ResetUsers(_dbContext);
-            return Json(new { success = true, message = "Users reloaded from USER MASTER.xlsx. You can now log in (e.g. adib.jamil / 123)." });
+            return Json(new { success = true, message = "Users reloaded from MASTER - USER.xlsx. You can now log in (e.g. adib.jamil / 123)." });
         }
         catch (Exception ex)
         {
