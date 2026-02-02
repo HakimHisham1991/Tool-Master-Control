@@ -141,8 +141,8 @@ public class ToolListEditorController : Controller
     [HttpGet]
     public async Task<IActionResult> GetProjectCodes()
     {
+        // Include INACTIVE project codes so Project Code auto-updates when Part Number belongs to an inactive code (e.g. AJ01)
         var codes = await _context.ProjectCodes
-            .Where(p => p.IsActive)
             .OrderBy(p => p.Code)
             .Select(p => new { value = p.Code, text = p.Code })
             .ToListAsync();
