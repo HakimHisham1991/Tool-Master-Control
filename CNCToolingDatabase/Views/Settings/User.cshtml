@@ -71,8 +71,9 @@
                     var currentPage = Math.Max(1, (int)(ViewBag.CurrentPage ?? 1));
                     var pageSize = Math.Max(1, (int)(ViewBag.PageSize ?? 250));
                     var no = (currentPage - 1) * pageSize + i + 1;
+                    var sortById = string.Equals(ViewBag.SortColumn as string, "id", StringComparison.OrdinalIgnoreCase);
                     <tr>
-                        <td>@no</td>
+                        <td>@(sortById ? user.Id : no)</td>
                         <td>@user.Username</td>
                         <td>@user.DisplayName</td>
                         <td>@user.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>

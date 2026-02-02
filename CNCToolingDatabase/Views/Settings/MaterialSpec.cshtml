@@ -87,13 +87,14 @@
                     var currentPage = Math.Max(1, (int)(ViewBag.CurrentPage ?? 1));
                     var pageSize = Math.Max(1, (int)(ViewBag.PageSize ?? 250));
                     var no = (currentPage - 1) * pageSize + i + 1;
+                    var sortById = string.Equals(ViewBag.SortColumn as string, "id", StringComparison.OrdinalIgnoreCase);
                     var specJs = (item.Spec ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
                     var specPurchasedJs = (item.MaterialSpecPurchased ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
                     var materialJs = (item.Material ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
                     var supplyConditionJs = (item.MaterialSupplyConditionPurchased ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
                     var materialTypeJs = (item.MaterialType ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "").Replace("\n", " ");
                     <tr>
-                        <td>@no</td>
+                        <td>@(sortById ? item.Id : no)</td>
                         <td>@item.Spec</td>
                         <td>@(item.MaterialSpecPurchased ?? "")</td>
                         <td>@item.Material</td>

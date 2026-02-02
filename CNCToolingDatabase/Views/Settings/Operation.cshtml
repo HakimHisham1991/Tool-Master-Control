@@ -75,8 +75,9 @@
                     var currentPage = Math.Max(1, (int)(ViewBag.CurrentPage ?? 1));
                     var pageSize = Math.Max(1, (int)(ViewBag.PageSize ?? 250));
                     var no = (currentPage - 1) * pageSize + i + 1;
+                    var sortById = string.Equals(ViewBag.SortColumn as string, "id", StringComparison.OrdinalIgnoreCase);
                     <tr>
-                        <td>@no</td>
+                        <td>@(sortById ? item.Id : no)</td>
                         <td>@item.Name</td>
                         <td>@(item.Description ?? "-")</td>
                         <td>@item.CreatedBy</td>
