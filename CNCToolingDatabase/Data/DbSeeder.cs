@@ -1098,18 +1098,27 @@ public static class DbSeeder
         }
     }
 
-    /// <summary>Resolve stamp image path from Excel (e.g. \\STAMP\\user.PNG) and read file bytes; returns null if not found or empty path.</summary>
+    /// <summary>Resolve stamp image path from Excel (e.g. \\STAMP\\user.PNG) and read file bytes; returns null if not found or empty path. Tries excel dir, output Data, then project Data (walk up from bin).</summary>
     private static byte[]? LoadStampImageBytes(string? stampImagePath, string excelDirectory)
     {
         if (string.IsNullOrWhiteSpace(stampImagePath)) return null;
         var relative = stampImagePath.Trim().TrimStart('\\', '/').Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
         if (string.IsNullOrEmpty(relative)) return null;
-        var candidates = new[]
+        var candidates = new List<string>
         {
             Path.Combine(excelDirectory, relative),
             Path.Combine(AppContext.BaseDirectory, relative),
             Path.Combine(AppContext.BaseDirectory, "Data", relative),
         };
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var projectDataStamp = Path.Combine(dir, "Data", relative);
+            if (!candidates.Contains(projectDataStamp))
+                candidates.Add(projectDataStamp);
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
         foreach (var filePath in candidates)
         {
             try
