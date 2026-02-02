@@ -239,10 +239,12 @@ public static class DbSeeder
                 throw new InvalidOperationException("Missing file: MASTER - USER.xlsx not found. Place the file in the Data folder.");
             var userRows = LoadUsersFromExcel(userMasterPath);
             if (userRows.Count == 0)
-                throw new InvalidOperationException("No data loaded: MASTER - USER.xlsx is empty or column headers do not match. Expected: Username, Password, Display Name; optional: Status.");
-            foreach (var (username, password, displayName, isActive) in userRows)
+                throw new InvalidOperationException("No data loaded: MASTER - USER.xlsx is empty or column headers do not match. Expected: Username, Password, Display Name; optional: Stamp Image, Status.");
+            var excelDir = Path.GetDirectoryName(userMasterPath) ?? AppContext.BaseDirectory;
+            foreach (var (username, password, displayName, isActive, stampImagePath) in userRows)
             {
-                context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName, IsActive = isActive, CreatedDate = DateTime.UtcNow });
+                var stamp = LoadStampImageBytes(stampImagePath, excelDir);
+                context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName, IsActive = isActive, CreatedDate = DateTime.UtcNow, Stamp = stamp });
             }
             context.SaveChanges();
         }
@@ -1020,10 +1022,10 @@ public static class DbSeeder
         return null;
     }
 
-    /// <summary>Load User rows from MASTER - USER.xlsx. Throws on file not found or cannot open/corrupted. Columns: Username, Password, Display Name; optional: Status (ACTIVE/INACTIVE).</summary>
-    private static List<(string Username, string Password, string DisplayName, bool IsActive)> LoadUsersFromExcel(string path)
+    /// <summary>Load User rows from MASTER - USER.xlsx. Throws on file not found or cannot open/corrupted. Columns: Username, Password, Display Name; optional: Stamp Image (path e.g. \\STAMP\\user.PNG), Status (ACTIVE/INACTIVE).</summary>
+    private static List<(string Username, string Password, string DisplayName, bool IsActive, string StampImagePath)> LoadUsersFromExcel(string path)
     {
-        var result = new List<(string, string, string, bool)>();
+        var result = new List<(string, string, string, bool, string)>();
         if (string.IsNullOrEmpty(path))
             return result;
         if (!File.Exists(path))
@@ -1051,6 +1053,7 @@ public static class DbSeeder
             int colUsername = GetCol(ws, cols, "Username", "User Name");
             int colPassword = GetCol(ws, cols, "Password");
             int colDisplayName = GetCol(ws, cols, "Display Name", "DisplayName");
+            int colStampImage = GetCol(ws, cols, "Stamp Image");
             int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
             if (colUsername < 1 || colPassword < 1) return result;
             static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
@@ -1079,8 +1082,9 @@ public static class DbSeeder
                 if (string.IsNullOrWhiteSpace(username)) continue;
                 var password = GetPasswordStr(ws, r, colPassword);
                 var displayName = GetStr(ws, r, colDisplayName);
+                var stampImagePath = colStampImage >= 1 ? GetStr(ws, r, colStampImage) : "";
                 var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
-                result.Add((username, password ?? "", displayName ?? username, isActive));
+                result.Add((username, password ?? "", displayName ?? username, isActive, stampImagePath ?? ""));
             }
             return result;
         }
@@ -1092,6 +1096,33 @@ public static class DbSeeder
         {
             throw new InvalidOperationException("Cannot open file or file corrupted: " + ex.Message, ex);
         }
+    }
+
+    /// <summary>Resolve stamp image path from Excel (e.g. \\STAMP\\user.PNG) and read file bytes; returns null if not found or empty path.</summary>
+    private static byte[]? LoadStampImageBytes(string? stampImagePath, string excelDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(stampImagePath)) return null;
+        var relative = stampImagePath.Trim().TrimStart('\\', '/').Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
+        if (string.IsNullOrEmpty(relative)) return null;
+        var candidates = new[]
+        {
+            Path.Combine(excelDirectory, relative),
+            Path.Combine(AppContext.BaseDirectory, relative),
+            Path.Combine(AppContext.BaseDirectory, "Data", relative),
+        };
+        foreach (var filePath in candidates)
+        {
+            try
+            {
+                if (File.Exists(filePath))
+                {
+                    var bytes = File.ReadAllBytes(filePath);
+                    return bytes.Length > 0 ? bytes : null;
+                }
+            }
+            catch { /* skip */ }
+        }
+        return null;
     }
 
     /// <summary>Resolve path to MASTER - CAM PROGRAMMER.xlsx: try output Data folder, then current directory Data folder, then project Data folder (walk up from bin).</summary>
@@ -1537,10 +1568,12 @@ public static class DbSeeder
             throw new InvalidOperationException("Missing file: MASTER - USER.xlsx not found. Place the file in the Data folder.");
         var userRows = LoadUsersFromExcel(userMasterPath);
         if (userRows.Count == 0)
-            throw new InvalidOperationException("No data loaded: MASTER - USER.xlsx is empty or column headers do not match. Expected: Username, Password, Display Name; optional: Status.");
-        foreach (var (username, password, displayName, isActive) in userRows)
+            throw new InvalidOperationException("No data loaded: MASTER - USER.xlsx is empty or column headers do not match. Expected: Username, Password, Display Name; optional: Stamp Image, Status.");
+        var excelDir = Path.GetDirectoryName(userMasterPath) ?? AppContext.BaseDirectory;
+        foreach (var (username, password, displayName, isActive, stampImagePath) in userRows)
         {
-            context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName, IsActive = isActive, CreatedDate = DateTime.UtcNow });
+            var stamp = LoadStampImageBytes(stampImagePath, excelDir);
+            context.Users.Add(new User { Username = username, Password = password, DisplayName = displayName, IsActive = isActive, CreatedDate = DateTime.UtcNow, Stamp = stamp });
         }
         context.SaveChanges();
     }
