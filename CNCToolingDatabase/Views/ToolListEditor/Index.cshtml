@@ -219,7 +219,7 @@
 }
 
 <div class="verified-by-section">
-    <label class="verified-by-label">Verified by:</label>
+    <label class="verified-by-label">CAM Programmer:</label>
     <div class="verified-by-stamp-area">
         <div class="verified-by-box">
             <div id="verifiedByPlaceholder" class="verified-by-placeholder" style="@(Model.ApprovedByUserId.HasValue ? "display: none;" : "")"></div>
@@ -315,6 +315,7 @@
     font-weight: 600;
     color: #333;
     margin: 0;
+    min-width: 140px;
 }
 .verified-by-box {
     width: 160px;
@@ -341,6 +342,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
+    width: 160px;
 }
 .verified-by-date {
     font-size: 0.85rem;
