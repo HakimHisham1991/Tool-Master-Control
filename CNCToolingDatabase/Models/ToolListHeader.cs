@@ -14,6 +14,8 @@ public class ToolListHeader
     public string ApprovedBy { get; set; } = string.Empty;
     /// <summary>User id of the verifier; their stamp is shown in Verified by.</summary>
     public int? ApprovedByUserId { get; set; }
+    /// <summary>Date when the tool list was approved (stamp applied).</summary>
+    public DateTime? ApprovedDate { get; set; }
     public string CamProgrammer { get; set; } = string.Empty;
     public int? MaterialSpecId { get; set; }
     public MaterialSpec? MaterialSpec { get; set; }

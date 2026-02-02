@@ -90,8 +90,10 @@ public class ToolListEditorController : Controller
             return Json(new { success = false, message = "Tool list not found." });
         header.ApprovedByUserId = userId.Value;
         header.ApprovedBy = displayName;
+        header.ApprovedDate = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        return Json(new { success = true, approvedByUserId = userId.Value });
+        var approvedDateFormatted = header.ApprovedDate?.ToString("dd/MM/yyyy") ?? "";
+        return Json(new { success = true, approvedByUserId = userId.Value, approvedDateFormatted });
     }
     
     [HttpPost]
@@ -102,6 +104,7 @@ public class ToolListEditorController : Controller
             return Json(new { success = false, message = "Tool list not found." });
         header.ApprovedByUserId = null;
         header.ApprovedBy = "";
+        header.ApprovedDate = null;
         await _context.SaveChangesAsync();
         return Json(new { success = true });
     }

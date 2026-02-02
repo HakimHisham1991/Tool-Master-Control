@@ -220,9 +220,12 @@
 
 <div class="verified-by-section">
     <label class="verified-by-label">Verified by:</label>
-    <div class="verified-by-box">
-        <div id="verifiedByPlaceholder" class="verified-by-placeholder" style="@(Model.ApprovedByUserId.HasValue ? "display: none;" : "")"></div>
-        <img id="verifiedByStamp" class="verified-by-stamp" alt="Verifier stamp" src="@(Model.ApprovedByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.ApprovedByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.ApprovedByUserId.HasValue ? "" : "display: none;")" />
+    <div class="verified-by-stamp-area">
+        <div class="verified-by-box">
+            <div id="verifiedByPlaceholder" class="verified-by-placeholder" style="@(Model.ApprovedByUserId.HasValue ? "display: none;" : "")"></div>
+            <img id="verifiedByStamp" class="verified-by-stamp" alt="Verifier stamp" src="@(Model.ApprovedByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.ApprovedByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.ApprovedByUserId.HasValue ? "" : "display: none;")" />
+        </div>
+        <div id="verifiedByDate" class="verified-by-date" style="@(Model.ApprovedByUserId.HasValue && Model.ApprovedDate.HasValue ? "" : "display: none;")">@(Model.ApprovedDate?.ToString("dd/MM/yyyy"))</div>
     </div>
     @if (Model.Id.HasValue)
     {
@@ -296,6 +299,16 @@
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+}
+.verified-by-stamp-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+}
+.verified-by-date {
+    font-size: 0.85rem;
+    color: #555;
 }
 .verified-by-buttons {
     display: flex;
@@ -881,10 +894,15 @@
     var rejectBtn = document.getElementById('rejectBtn');
     var verifiedByPlaceholder = document.getElementById('verifiedByPlaceholder');
     var verifiedByStamp = document.getElementById('verifiedByStamp');
-    function setStampApproved(userId) {
+    var verifiedByDate = document.getElementById('verifiedByDate');
+    function setStampApproved(userId, dateFormatted) {
         verifiedByStamp.src = '/Settings/UserStamp?id=' + userId + '&t=' + Date.now();
         verifiedByStamp.style.display = '';
         if (verifiedByPlaceholder) verifiedByPlaceholder.style.display = 'none';
+        if (verifiedByDate) {
+            verifiedByDate.textContent = dateFormatted || '';
+            verifiedByDate.style.display = dateFormatted ? '' : 'none';
+        }
         if (approveBtn) approveBtn.disabled = true;
         if (rejectBtn) rejectBtn.disabled = false;
     }
@@ -892,6 +910,7 @@
         verifiedByStamp.src = '';
         verifiedByStamp.style.display = 'none';
         if (verifiedByPlaceholder) verifiedByPlaceholder.style.display = '';
+        if (verifiedByDate) { verifiedByDate.textContent = ''; verifiedByDate.style.display = 'none'; }
         if (approveBtn) approveBtn.disabled = false;
         if (rejectBtn) rejectBtn.disabled = true;
     }
@@ -906,7 +925,7 @@
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (data.success && data.approvedByUserId != null) {
-                        setStampApproved(data.approvedByUserId);
+                        setStampApproved(data.approvedByUserId, data.approvedDateFormatted || '');
                     } else {
                         approveBtn.disabled = false;
                         if (rejectBtn) rejectBtn.disabled = !verifiedByStamp.src;

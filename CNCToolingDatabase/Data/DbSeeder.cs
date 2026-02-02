@@ -212,6 +212,7 @@ public static class DbSeeder
                 try { command.CommandText = "ALTER TABLE MachineModels ADD COLUMN Controller TEXT;"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE ToolListHeaders ADD COLUMN MaterialSpecId INTEGER REFERENCES MaterialSpecs(Id);"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE ToolListHeaders ADD COLUMN ApprovedByUserId INTEGER;"; command.ExecuteNonQuery(); } catch { }
+                try { command.CommandText = "ALTER TABLE ToolListHeaders ADD COLUMN ApprovedDate TEXT;"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE MaterialSpecs ADD COLUMN MaterialSpecPurchased TEXT;"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE MaterialSpecs ADD COLUMN MaterialSupplyConditionPurchased TEXT;"; command.ExecuteNonQuery(); } catch { }
                 try { command.CommandText = "ALTER TABLE MaterialSpecs ADD COLUMN MaterialType TEXT;"; command.ExecuteNonQuery(); } catch { }

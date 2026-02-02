@@ -195,6 +195,7 @@ public class ToolListService : IToolListService
             MachineModel = header.MachineModel,
             ApprovedBy = header.ApprovedBy ?? "",
             ApprovedByUserId = header.ApprovedByUserId,
+            ApprovedDate = header.ApprovedDate,
             CamProgrammer = header.CamProgrammer ?? "",
             MaterialSpecId = header.MaterialSpecId,
             Material = header.MaterialSpec?.Material ?? "",
