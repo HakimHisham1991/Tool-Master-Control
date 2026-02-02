@@ -542,21 +542,19 @@ public class ToolListEditorController : Controller
                     });
                     page.Content().PaddingTop(0.5f, Unit.Centimetre).Column(content =>
                     {
-                        // Header 2x8 table with all borders
-                        var headerBorder = 0.5f;
-                        var headerBorderColor = Colors.Black;
+                        // Header 2x6 table (no borders)
                         content.Item().Table(headerTable =>
                         {
                             headerTable.ColumnsDefinition(cols =>
                             {
                                 cols.RelativeColumn(); cols.RelativeColumn(2); cols.RelativeColumn(); cols.RelativeColumn(2);
-                                cols.RelativeColumn(); cols.RelativeColumn(); cols.RelativeColumn(); cols.RelativeColumn();
+                                cols.RelativeColumn(); cols.RelativeColumn();
                             });
-                            void Hc(string t) => headerTable.Cell().Border(headerBorder).BorderColor(headerBorderColor).Padding(3).AlignCenter().AlignMiddle().Text(t).FontFamily(arialNarrow).FontSize(6);
-                            // Row 1: Tool List No.|<data>|Part Description:|<data>|<blank>|<blank>|Project Code|<data>
-                            Hc("Tool List No."); Hc(viewModel.ToolListName ?? ""); Hc("Part Description:"); Hc(viewModel.PartDescription ?? ""); Hc(""); Hc(""); Hc("Project Code"); Hc(viewModel.ProjectCode ?? "");
-                            // Row 2: Unit:|MM|Work Centre:|<data>|Machine Model:|<data>|<blank>|<blank>
-                            Hc("Unit:"); Hc("MM"); Hc("Work Centre:"); Hc(viewModel.MachineWorkcenter ?? ""); Hc("Machine Model:"); Hc(viewModel.MachineModel ?? ""); Hc(""); Hc("");
+                            void Hc(string t) => headerTable.Cell().Padding(2).AlignCenter().AlignMiddle().Text(t).FontFamily(arialNarrow).FontSize(6);
+                            // Row 1: Tool List No.|<data>|Part Description:|<data>|Project Code|<data>
+                            Hc("Tool List No."); Hc(viewModel.ToolListName ?? ""); Hc("Part Description:"); Hc(viewModel.PartDescription ?? ""); Hc("Project Code"); Hc(viewModel.ProjectCode ?? "");
+                            // Row 2: Unit:|MM|Work Centre:|<data>|Machine Model:|<data>
+                            Hc("Unit:"); Hc("MM"); Hc("Work Centre:"); Hc(viewModel.MachineWorkcenter ?? ""); Hc("Machine Model:"); Hc(viewModel.MachineModel ?? "");
                         });
                         content.Item().Height(6);
                         // Table with exact headers from Create/Edit Tool List page
