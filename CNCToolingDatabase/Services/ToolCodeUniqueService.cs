@@ -82,7 +82,85 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
             })
             .ToListAsync();
 
-        var all = await _context.ToolCodeUniques.AsNoTracking().ToListAsync();
+        // Cascading filter options: each dropdown shows only values that exist given filters to its left
+        var baseQuery = _context.ToolCodeUniques.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.ToLower();
+            baseQuery = baseQuery.Where(t =>
+                (t.SystemToolName != null && t.SystemToolName.ToLower().Contains(term)) ||
+                (t.ConsumableCode != null && t.ConsumableCode.ToLower().Contains(term)) ||
+                (t.Supplier != null && t.Supplier.ToLower().Contains(term)));
+        }
+
+        // Column 2: System Tool Name - from unfiltered base
+        var qSystemTool = baseQuery;
+        var availableSystemToolNames = await qSystemTool
+            .Select(t => t.SystemToolName)
+            .Where(x => x != null && x != "")
+            .Distinct()
+            .OrderBy(x => x)
+            .ToListAsync();
+
+        // Column 3: Consumable Tool Description - filtered by System Tool Name
+        var qConsumable = qSystemTool;
+        if (!string.IsNullOrWhiteSpace(systemToolNameFilter))
+            qConsumable = qConsumable.Where(t => t.SystemToolName == systemToolNameFilter);
+        var availableConsumableCodes = await qConsumable
+            .Select(t => t.ConsumableCode)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToListAsync();
+
+        // Column 4: Supplier - filtered by System Tool Name + Consumable Code
+        var qSupplier = qConsumable;
+        if (!string.IsNullOrWhiteSpace(consumableCodeFilter))
+            qSupplier = qSupplier.Where(t => t.ConsumableCode == consumableCodeFilter);
+        var availableSuppliers = await qSupplier
+            .Select(t => t.Supplier)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToListAsync();
+
+        // Column 5: Diameter - filtered by previous columns
+        var qDiameter = qSupplier;
+        if (!string.IsNullOrWhiteSpace(supplierFilter))
+            qDiameter = qDiameter.Where(t => t.Supplier == supplierFilter);
+        var availableDiameters = await qDiameter
+            .Select(t => t.Diameter.ToString("0.##"))
+            .Distinct()
+            .OrderBy(x => x, StringComparer.Ordinal)
+            .ToListAsync();
+
+        // Column 6: Flute Length - filtered by previous columns
+        var qFluteLength = qDiameter;
+        if (!string.IsNullOrWhiteSpace(diameterFilter) && decimal.TryParse(diameterFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var diaVal))
+            qFluteLength = qFluteLength.Where(t => t.Diameter == diaVal);
+        var availableFluteLengths = await qFluteLength
+            .Select(t => t.FluteLength.ToString("0.##"))
+            .Distinct()
+            .OrderBy(x => x, StringComparer.Ordinal)
+            .ToListAsync();
+
+        // Column 7: Corner Radius - filtered by previous columns
+        var qCornerRadius = qFluteLength;
+        if (!string.IsNullOrWhiteSpace(fluteLengthFilter) && decimal.TryParse(fluteLengthFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var flVal))
+            qCornerRadius = qCornerRadius.Where(t => t.FluteLength == flVal);
+        var availableCornerRadii = await qCornerRadius
+            .Select(t => t.CornerRadius.ToString("0.##"))
+            .Distinct()
+            .OrderBy(x => x, StringComparer.Ordinal)
+            .ToListAsync();
+
+        // Column 8: Created Date - filtered by previous columns
+        var qCreatedDate = qCornerRadius;
+        if (!string.IsNullOrWhiteSpace(cornerRadiusFilter) && decimal.TryParse(cornerRadiusFilter, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var crVal))
+            qCreatedDate = qCreatedDate.Where(t => t.CornerRadius == crVal);
+        var availableCreatedDates = await qCreatedDate
+            .Select(t => t.CreatedDate.Date.ToString("yyyy-MM-dd"))
+            .Distinct()
+            .OrderByDescending(x => x)
+            .ToListAsync();
 
         return new ToolCodeUniqueListViewModel
         {
@@ -101,13 +179,13 @@ public class ToolCodeUniqueService : IToolCodeUniqueService
             TotalPages = totalPages,
             TotalItems = totalItems,
             PageSize = pageSize,
-            AvailableSystemToolNames = all.Select(t => t.SystemToolName).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList(),
-            AvailableConsumableCodes = all.Select(t => t.ConsumableCode).Distinct().OrderBy(x => x).ToList(),
-            AvailableSuppliers = all.Select(t => t.Supplier).Distinct().OrderBy(x => x).ToList(),
-            AvailableDiameters = all.Select(t => t.Diameter.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
-            AvailableFluteLengths = all.Select(t => t.FluteLength.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
-            AvailableCornerRadii = all.Select(t => t.CornerRadius.ToString("0.##")).Distinct().OrderBy(x => x, StringComparer.Ordinal).ToList(),
-            AvailableCreatedDates = all.Select(t => t.CreatedDate.Date.ToString("yyyy-MM-dd")).Distinct().OrderByDescending(x => x).ToList()
+            AvailableSystemToolNames = availableSystemToolNames,
+            AvailableConsumableCodes = availableConsumableCodes,
+            AvailableSuppliers = availableSuppliers,
+            AvailableDiameters = availableDiameters,
+            AvailableFluteLengths = availableFluteLengths,
+            AvailableCornerRadii = availableCornerRadii,
+            AvailableCreatedDates = availableCreatedDates
         };
     }
 

@@ -46,7 +46,7 @@
             <tr class="table-filter-row">
                 <th></th>
                 <th>
-                    <select id="filterSystemToolName" class="filter-cell-select" onchange="applyFilters()">
+                    <select id="filterSystemToolName" class="filter-cell-select" onchange="onFilterChange(1)">
                         <option value="">All</option>
                         @foreach (var s in Model.AvailableSystemToolNames)
                         {
@@ -56,7 +56,7 @@
                     </select>
                 </th>
                 <th>
-                    <select id="filterConsumableCode" class="filter-cell-select" onchange="applyFilters()">
+                    <select id="filterConsumableCode" class="filter-cell-select" onchange="onFilterChange(2)">
                         <option value="">All</option>
                         @foreach (var code in Model.AvailableConsumableCodes)
                         {
@@ -66,7 +66,7 @@
                     </select>
                 </th>
                 <th>
-                    <select id="filterSupplier" class="filter-cell-select" onchange="applyFilters()">
+                    <select id="filterSupplier" class="filter-cell-select" onchange="onFilterChange(3)">
                         <option value="">All</option>
                         @foreach (var s in Model.AvailableSuppliers)
                         {
@@ -76,7 +76,7 @@
                     </select>
                 </th>
                 <th>
-                    <select id="filterDiameter" class="filter-cell-select" onchange="applyFilters()">
+                    <select id="filterDiameter" class="filter-cell-select" onchange="onFilterChange(4)">
                         <option value="">All</option>
                         @foreach (var d in Model.AvailableDiameters)
                         {
@@ -86,7 +86,7 @@
                     </select>
                 </th>
                 <th>
-                    <select id="filterFluteLength" class="filter-cell-select" onchange="applyFilters()">
+                    <select id="filterFluteLength" class="filter-cell-select" onchange="onFilterChange(5)">
                         <option value="">All</option>
                         @foreach (var f in Model.AvailableFluteLengths)
                         {
@@ -96,7 +96,7 @@
                     </select>
                 </th>
                 <th>
-                    <select id="filterCornerRadius" class="filter-cell-select" onchange="applyFilters()">
+                    <select id="filterCornerRadius" class="filter-cell-select" onchange="onFilterChange(6)">
                         <option value="">All</option>
                         @foreach (var r in Model.AvailableCornerRadii)
                         {
@@ -106,7 +106,7 @@
                     </select>
                 </th>
                 <th>
-                    <select id="filterCreatedDate" class="filter-cell-select" onchange="applyFilters()">
+                    <select id="filterCreatedDate" class="filter-cell-select" onchange="onFilterChange(7)">
                         <option value="">All</option>
                         @foreach (var d in Model.AvailableCreatedDates)
                         {
@@ -194,6 +194,15 @@
 <script>
     const searchForm = document.getElementById('searchForm');
     searchForm.addEventListener('submit', function(e) { e.preventDefault(); applyFilters(); });
+    // When an upstream filter changes, clear downstream filters so selections stay valid
+    function onFilterChange(level) {
+        const filters = ['filterConsumableCode','filterSupplier','filterDiameter','filterFluteLength','filterCornerRadius','filterCreatedDate'];
+        for (let i = level; i < filters.length; i++) {
+            const el = document.getElementById(filters[i]);
+            if (el) el.value = '';
+        }
+        applyFilters();
+    }
     function applyFilters() {
         const params = new URLSearchParams();
         const search = document.getElementById('searchInput').value;
