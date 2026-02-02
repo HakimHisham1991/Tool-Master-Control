@@ -182,7 +182,6 @@ public class ToolListEditorController : Controller
         try
         {
             var fromTable = await _context.PartNumbers
-                .Where(p => p.IsActive)
                 .Include(p => p.ProjectCode)
                 .Select(p => new { p.Name, ProjectCode = p.ProjectCode != null ? p.ProjectCode.Code : (string?)null })
                 .ToListAsync();
@@ -240,7 +239,6 @@ public class ToolListEditorController : Controller
     public async Task<IActionResult> GetMachineNames()
     {
         var names = await _context.MachineNames
-            .Where(m => m.IsActive)
             .Include(m => m.MachineModel)
             .OrderBy(m => m.Name)
             .Select(m => new
@@ -258,7 +256,6 @@ public class ToolListEditorController : Controller
     public async Task<IActionResult> GetMachineWorkcenters()
     {
         var workcenters = await _context.MachineWorkcenters
-            .Where(w => w.IsActive)
             .OrderBy(w => w.Workcenter)
             .Select(w => new { value = w.Workcenter, text = w.Workcenter })
             .ToListAsync();
@@ -269,7 +266,6 @@ public class ToolListEditorController : Controller
     public async Task<IActionResult> GetMachineModels()
     {
         var models = await _context.MachineModels
-            .Where(m => m.IsActive)
             .OrderBy(m => m.Model)
             .Select(m => new { value = m.Model, text = m.Model })
             .ToListAsync();
@@ -280,7 +276,6 @@ public class ToolListEditorController : Controller
     public async Task<IActionResult> GetCamLeaders()
     {
         var leaders = await _context.CamLeaders
-            .Where(c => c.IsActive)
             .OrderBy(c => c.Name)
             .Select(c => new { value = c.Name, text = c.Name })
             .ToListAsync();
@@ -291,7 +286,6 @@ public class ToolListEditorController : Controller
     public async Task<IActionResult> GetCamProgrammers()
     {
         var programmers = await _context.CamProgrammers
-            .Where(c => c.IsActive)
             .OrderBy(c => c.Name)
             .Select(c => new { value = c.Name, text = c.Name })
             .ToListAsync();
@@ -302,7 +296,6 @@ public class ToolListEditorController : Controller
     public async Task<IActionResult> GetOperations()
     {
         var operations = await _context.Operations
-            .Where(o => o.IsActive)
             .OrderBy(o => o.Name)
             .Select(o => new { value = o.Name, text = o.Name })
             .ToListAsync();
@@ -313,7 +306,6 @@ public class ToolListEditorController : Controller
     public async Task<IActionResult> GetRevisions()
     {
         var revisions = await _context.Revisions
-            .Where(r => r.IsActive)
             .OrderBy(r => r.Name)
             .Select(r => new { value = r.Name, text = r.Name })
             .ToListAsync();
@@ -325,7 +317,6 @@ public class ToolListEditorController : Controller
     public async Task<IActionResult> GetMaterialSpecs()
     {
         var list = await _context.MaterialSpecs
-            .Where(m => m.IsActive)
             .OrderBy(m => m.Spec)
             .ThenBy(m => m.Material)
             .Select(m => new { id = m.Id, spec = m.Spec, material = m.Material })
