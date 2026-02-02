@@ -437,6 +437,30 @@ html, body {
     background-color: #F3F4F6;
 }
 
+/* Tool Code Database with Tool List: fit width to view, wrap headers and content */
+.table-container-toolcode {
+    overflow-x: auto;
+    max-width: 100%;
+}
+.data-table-toolcode {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 0;
+}
+.data-table-toolcode th,
+.data-table-toolcode td {
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 0;
+}
+.data-table-toolcode thead tr.table-filter-row th,
+.data-table-toolcode thead tr:last-of-type th {
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
 .sort-icon {
     font-size: 10px;
     margin-left: 4px;
