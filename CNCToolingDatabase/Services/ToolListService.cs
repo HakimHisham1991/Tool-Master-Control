@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Models;
 using CNCToolingDatabase.Models.ViewModels;
 using CNCToolingDatabase.Repositories;
@@ -8,11 +10,13 @@ public class ToolListService : IToolListService
 {
     private readonly IToolListRepository _toolListRepository;
     private readonly IToolMasterRepository _toolMasterRepository;
+    private readonly ApplicationDbContext _context;
     
-    public ToolListService(IToolListRepository toolListRepository, IToolMasterRepository toolMasterRepository)
+    public ToolListService(IToolListRepository toolListRepository, IToolMasterRepository toolMasterRepository, ApplicationDbContext context)
     {
         _toolListRepository = toolListRepository;
         _toolMasterRepository = toolMasterRepository;
+        _context = context;
     }
     
     public async Task<ToolListDatabaseViewModel> GetToolListsAsync(
@@ -182,6 +186,16 @@ public class ToolListService : IToolListService
             details.Add(new ToolListDetailRow());
         }
         
+        var partDescription = "";
+        if (!string.IsNullOrWhiteSpace(header.PartNumber))
+        {
+            var pn = await _context.PartNumbers
+                .Where(p => p.Name == header.PartNumber)
+                .Select(p => p.Description)
+                .FirstOrDefaultAsync();
+            partDescription = pn ?? "";
+        }
+        
         return new ToolListEditorViewModel
         {
             Id = header.Id,
@@ -189,6 +203,7 @@ public class ToolListService : IToolListService
             PartNumber = header.PartNumber,
             Operation = header.Operation,
             Revision = header.Revision,
+            PartDescription = partDescription,
             ProjectCode = header.ProjectCode,
             MachineName = header.MachineName,
             MachineWorkcenter = header.MachineWorkcenter,

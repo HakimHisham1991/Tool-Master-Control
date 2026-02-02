@@ -90,6 +90,10 @@
     </div>
     <div class="form-row">
         <div class="form-group">
+            <label for="partDescription">Part Description</label>
+            <input type="text" id="partDescription" class="form-control" readonly placeholder="Auto from Part Number (Settings &gt; Part Number Management)" />
+        </div>
+        <div class="form-group">
             <label for="projectCode">Project Code</label>
             <select id="projectCode" class="form-control" disabled title="Set by Part Number (Settings &gt; Part Number Management)">
                 <option value="">-- Select Project Code --</option>
@@ -370,6 +374,7 @@
     const toolListId = document.getElementById('toolListId').value;
     const isReadOnly = document.getElementById('isReadOnly').value === 'true';
     const currentPartNumber = '@((Model.PartNumber ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    const currentPartDescription = '@((Model.PartDescription ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentProjectCode = '@Model.ProjectCode';
     const currentMachineName = '@Model.MachineName';
     const currentMachineWorkcenter = '@Model.MachineWorkcenter';
@@ -398,11 +403,15 @@
                 if (p.projectCode != null && p.projectCode !== '') {
                     option.dataset.projectCode = p.projectCode;
                 }
+                if (p.description != null && p.description !== '') {
+                    option.dataset.description = p.description;
+                }
                 if (p.value === currentPartNumber) {
                     option.selected = true;
                 }
                 partNumberSelect.appendChild(option);
             });
+            document.getElementById('partDescription').value = currentPartDescription;
         } catch (error) {
             console.error('Error loading part numbers:', error);
         }
@@ -757,15 +766,22 @@
     document.getElementById('partNumber').addEventListener('change', function() {
         hasUnsavedChanges = true;
         updateToolListName();
-        // Auto-populate Project Code from Settings > Part Number Management
         const partNumberSelect = document.getElementById('partNumber');
         const selectedOption = partNumberSelect.options[partNumberSelect.selectedIndex];
         const projectCodeSelect = document.getElementById('projectCode');
-        if (selectedOption && selectedOption.dataset.projectCode && projectCodeSelect) {
-            const code = selectedOption.dataset.projectCode;
-            if (Array.from(projectCodeSelect.options).some(opt => opt.value === code)) {
-                projectCodeSelect.value = code;
+        const partDescriptionInput = document.getElementById('partDescription');
+        if (selectedOption) {
+            if (selectedOption.dataset.projectCode && projectCodeSelect) {
+                const code = selectedOption.dataset.projectCode;
+                if (Array.from(projectCodeSelect.options).some(opt => opt.value === code)) {
+                    projectCodeSelect.value = code;
+                }
             }
+            if (partDescriptionInput) {
+                partDescriptionInput.value = selectedOption.dataset.description || '';
+            }
+        } else if (partDescriptionInput) {
+            partDescriptionInput.value = '';
         }
     });
     

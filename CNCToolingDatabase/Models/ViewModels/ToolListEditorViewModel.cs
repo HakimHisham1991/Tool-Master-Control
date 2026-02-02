@@ -24,6 +24,7 @@ public class ToolListEditorViewModel
     public string PartNumber { get; set; } = string.Empty;
     public string Operation { get; set; } = string.Empty;
     public string Revision { get; set; } = string.Empty;
+    public string PartDescription { get; set; } = string.Empty;
     public string ProjectCode { get; set; } = string.Empty;
     public string MachineName { get; set; } = string.Empty;
     public string MachineWorkcenter { get; set; } = string.Empty;

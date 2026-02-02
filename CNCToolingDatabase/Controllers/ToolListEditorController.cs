@@ -202,11 +202,12 @@ public class ToolListEditorController : Controller
         var partNumberToProjectCode = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
         
         // From PartNumbers settings table (if it exists and has data) - include Project Code from Part Number Management
+        var partNumberToDescription = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
         try
         {
             var fromTable = await _context.PartNumbers
                 .Include(p => p.ProjectCode)
-                .Select(p => new { p.Name, ProjectCode = p.ProjectCode != null ? p.ProjectCode.Code : (string?)null })
+                .Select(p => new { p.Name, p.Description, ProjectCode = p.ProjectCode != null ? p.ProjectCode.Code : (string?)null })
                 .ToListAsync();
             foreach (var item in fromTable)
             {
@@ -214,6 +215,7 @@ public class ToolListEditorController : Controller
                 {
                     partNumberSet.Add(item.Name);
                     partNumberToProjectCode[item.Name] = item.ProjectCode;
+                    partNumberToDescription[item.Name] = item.Description;
                 }
             }
         }
@@ -233,15 +235,22 @@ public class ToolListEditorController : Controller
             if (!string.IsNullOrWhiteSpace(name))
             {
                 partNumberSet.Add(name);
-                // Only set project code from settings if not already set (header-only part numbers have no project code mapping)
                 if (!partNumberToProjectCode.ContainsKey(name))
                     partNumberToProjectCode[name] = null;
+                if (!partNumberToDescription.ContainsKey(name))
+                    partNumberToDescription[name] = null;
             }
         }
         
         var result = partNumberSet
             .OrderBy(s => s)
-            .Select(name => new { value = name, text = name, projectCode = partNumberToProjectCode.TryGetValue(name, out var pc) ? pc : (string?)null })
+            .Select(name => new
+            {
+                value = name,
+                text = name,
+                projectCode = partNumberToProjectCode.TryGetValue(name, out var pc) ? pc : (string?)null,
+                description = partNumberToDescription.TryGetValue(name, out var desc) ? desc : (string?)null
+            })
             .ToList();
         
         return Json(result);
