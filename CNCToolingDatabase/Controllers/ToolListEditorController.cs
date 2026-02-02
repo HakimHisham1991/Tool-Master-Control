@@ -6,6 +6,9 @@ using CNCToolingDatabase.Data;
 using System.Text;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace CNCToolingDatabase.Controllers;
 
@@ -482,6 +485,164 @@ public class ToolListEditorController : Controller
             var fileName = $"{viewModel.ToolListName}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             var fileBytes = package.GetAsByteArray();
             return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+        
+        // Handle PDF format
+        if (formatLower == "pdf")
+        {
+            var details = viewModel.Details
+                .Where(d => !string.IsNullOrWhiteSpace(d.ToolNumber) || !string.IsNullOrWhiteSpace(d.ConsumableCode))
+                .ToList();
+            // Fetch stamp images and display names for the three approval sections
+            byte[]? stamp1 = null;
+            byte[]? stamp2 = null;
+            byte[]? stamp3 = null;
+            if (viewModel.ApprovedByUserId.HasValue)
+            {
+                var u1 = await _context.Users.FindAsync(viewModel.ApprovedByUserId.Value);
+                stamp1 = u1?.Stamp;
+            }
+            if (viewModel.CamLeaderApprovedByUserId.HasValue)
+            {
+                var u2 = await _context.Users.FindAsync(viewModel.CamLeaderApprovedByUserId.Value);
+                stamp2 = u2?.Stamp;
+            }
+            if (viewModel.ToolRegisterByUserId.HasValue)
+            {
+                var u3 = await _context.Users.FindAsync(viewModel.ToolRegisterByUserId.Value);
+                stamp3 = u3?.Stamp;
+            }
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4.Landscape());
+                    page.Margin(1.5f, Unit.Centimetre);
+                    page.DefaultTextStyle(x => x.FontSize(9));
+                    page.Header().Column(column =>
+                    {
+                        column.Item().Text(viewModel.ToolListName).Bold().FontSize(14);
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text($"Part Number: {viewModel.PartNumber}");
+                            row.RelativeItem().Text($"Operation: {viewModel.Operation}");
+                            row.RelativeItem().Text($"Revision: {viewModel.Revision}");
+                        });
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text($"Machine: {viewModel.MachineName}");
+                            row.RelativeItem().Text($"Workcenter: {viewModel.MachineWorkcenter}");
+                            row.RelativeItem().Text($"Project Code: {viewModel.ProjectCode}");
+                        });
+                    });
+                    page.Content().PaddingTop(0.5f, Unit.Centimetre).Column(content =>
+                    {
+                        // Table with exact headers from Create/Edit Tool List page
+                        content.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.ConstantColumn(25);  // #
+                                columns.ConstantColumn(45);  // Tool No.
+                                columns.RelativeColumn(2);   // Tool Name
+                                columns.RelativeColumn(2);   // Consumable Tool Description
+                                columns.RelativeColumn(1.2f);// Tool Supplier
+                                columns.RelativeColumn(1.2f);// Tool Holder
+                                columns.ConstantColumn(40);  // Tool Diameter (D1)
+                                columns.ConstantColumn(40);  // Flute Length (L1)
+                                columns.ConstantColumn(40);  // Tool Ext. Length (L2)
+                                columns.ConstantColumn(45);  // Tool Corner Radius
+                                columns.RelativeColumn(2);   // Arbor Description
+                                columns.ConstantColumn(55);  // Tool Path Time in Minutes
+                                columns.RelativeColumn();    // Remarks
+                            });
+                            var headers = new[]
+                            {
+                                "#", "Tool No.", "Tool Name", "Consumable Tool Description", "Tool Supplier", "Tool Holder",
+                                "Tool Diameter (D1)", "Flute Length (L1)", "Tool Ext. Length (L2)", "Tool Corner Radius",
+                                "Arbor Description (or equivalent specs)", "Tool Path Time in Minutes", "Remarks"
+                            };
+                            table.Header(header =>
+                            {
+                                foreach (var h in headers)
+                                    header.Cell().Background(Colors.Cyan.Lighten3).Padding(4).Text(h).Bold().FontSize(7);
+                            });
+                            var rowNum = 1;
+                            foreach (var d in details)
+                            {
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(rowNum.ToString());
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.ToolNumber ?? "");
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.ToolDescription ?? "");
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.ConsumableCode ?? "");
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.Supplier ?? "");
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.HolderExtensionCode ?? "");
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text((d.Diameter ?? 0).ToString("0.##"));
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text((d.FluteLength ?? 0).ToString("0.##"));
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text((d.ProtrusionLength ?? 0).ToString("0.##"));
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text((d.CornerRadius ?? 0).ToString("0.##"));
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.ArborCode ?? "");
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text((d.ToolPathTimeMinutes ?? 0).ToString("0.##"));
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(d.Remarks ?? "");
+                                rowNum++;
+                            }
+                        });
+                        // Stamp section (as per original Create/Edit Tool List page)
+                        content.Item().PaddingTop(1f, Unit.Centimetre).BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                            .PaddingTop(0.5f, Unit.Centimetre).Row(stampRow =>
+                            {
+                                // CAM Programmer
+                                stampRow.ConstantItem(140).Column(c =>
+                                {
+                                    c.Item().Text("CAM Programmer:").Bold().FontSize(9);
+                                    c.Item().PaddingTop(4).Width(110).Height(70).Background(Colors.Grey.Lighten4)
+                                        .AlignCenter().AlignMiddle().Element(e =>
+                                        {
+                                            if (stamp1 != null && stamp1.Length > 0)
+                                                e.Image(stamp1).FitArea();
+                                        });
+                                    if (viewModel.ApprovedDate.HasValue)
+                                        c.Item().PaddingTop(2).Text(viewModel.ApprovedDate.Value.ToString("dd/MM/yyyy")).FontSize(8);
+                                });
+                                stampRow.ConstantItem(20);
+                                // Approved by
+                                stampRow.ConstantItem(140).Column(c =>
+                                {
+                                    c.Item().Text("Approved by:").Bold().FontSize(9);
+                                    c.Item().PaddingTop(4).Width(110).Height(70).Background(Colors.Grey.Lighten4)
+                                        .AlignCenter().AlignMiddle().Element(e =>
+                                        {
+                                            if (stamp2 != null && stamp2.Length > 0)
+                                                e.Image(stamp2).FitArea();
+                                        });
+                                    if (viewModel.CamLeaderApprovedDate.HasValue)
+                                        c.Item().PaddingTop(2).Text(viewModel.CamLeaderApprovedDate.Value.ToString("dd/MM/yyyy")).FontSize(8);
+                                });
+                                stampRow.ConstantItem(20);
+                                // Tool Register By
+                                stampRow.ConstantItem(140).Column(c =>
+                                {
+                                    c.Item().Text("Tool Register By:").Bold().FontSize(9);
+                                    c.Item().PaddingTop(4).Width(110).Height(70).Background(Colors.Grey.Lighten4)
+                                        .AlignCenter().AlignMiddle().Element(e =>
+                                        {
+                                            if (stamp3 != null && stamp3.Length > 0)
+                                                e.Image(stamp3).FitArea();
+                                        });
+                                    if (viewModel.ToolRegisterByDate.HasValue)
+                                        c.Item().PaddingTop(2).Text(viewModel.ToolRegisterByDate.Value.ToString("dd/MM/yyyy")).FontSize(8);
+                                });
+                            });
+                    });
+                    page.Footer().AlignCenter().Text(x =>
+                    {
+                        x.Span("Page ");
+                        x.CurrentPageNumber();
+                    });
+                });
+            });
+            var pdfBytes = document.GeneratePdf();
+            var pdfFileName = $"{viewModel.ToolListName}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+            return File(pdfBytes, "application/pdf", pdfFileName);
         }
         
         // Handle CSV and TXT formats
