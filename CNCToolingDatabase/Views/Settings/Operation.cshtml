@@ -63,6 +63,7 @@
                             <line x1="9" y1="15" x2="15" y2="15"></line>
                         </svg>
                         <p>No operations found</p>
+                        <p style="font-size: 0.9rem; color: #666;">Add data or click Reset to load from MASTER - OPERATION.xlsx</p>
                     </td>
                 </tr>
             }
@@ -187,7 +188,7 @@
             .catch(e => alert('Error: ' + e.message));
     }
     function resetFromSeed() {
-        if (!confirm('This will delete all current operation data and restore seed data only. This action cannot be undone.\n\nDo you want to continue?')) return;
+        if (!confirm('This will delete all current operation data and restore from MASTER - OPERATION.xlsx only. This action cannot be undone.\n\nDo you want to continue?')) return;
         fetch('/Settings/ResetOperation', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
             .then(r => r.json())
             .then(data => { if (data.success) location.reload(); else alert('Error: ' + data.message); })
