@@ -524,6 +524,19 @@ public class ToolListEditorController : Controller
             }
             var arialNarrow = "Arial Narrow";
             var logoPath = Path.Combine(AppContext.BaseDirectory, "Data", "LOGO", "ZENIX.png");
+            var baseDir = AppContext.BaseDirectory;
+            var partImageDir = Path.Combine(baseDir, "Data", "PART_IMAGE");
+            var partNumber = viewModel.PartNumber ?? "";
+            var partImagePath = (string?)null;
+            if (!string.IsNullOrWhiteSpace(partNumber))
+            {
+                foreach (var ext in new[] { ".png", ".jpg", ".jpeg", ".gif" })
+                {
+                    var p = Path.Combine(partImageDir, partNumber + ext);
+                    if (System.IO.File.Exists(p)) { partImagePath = p; break; }
+                }
+            }
+            var toolSpecsPath = Path.Combine(baseDir, "Data", "PDF_EXPORT", "TOOL_SPECS.png");
             var document = Document.Create(container =>
             {
                 container.Page(page =>
@@ -557,27 +570,58 @@ public class ToolListEditorController : Controller
                             Hc("Unit:"); Hc("MM"); Hc("Work Centre:"); Hc(viewModel.MachineWorkcenter ?? ""); Hc("Machine Model:"); Hc(viewModel.MachineModel ?? "");
                         });
                         content.Item().Height(6);
-                        // Table with exact headers from Create/Edit Tool List page
+                        var headerColor = "#CCFFFF";
+                        var borderThin = 0.5f;
+                        var borderColor = Colors.Black;
+                        // Image row table - ABOVE header, height 3x normal (~60pt)
+                        content.Item().Table(imgTable =>
+                        {
+                            imgTable.ColumnsDefinition(columns =>
+                            {
+                                columns.ConstantColumn(45);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(1.2f);
+                                columns.RelativeColumn(1.2f);
+                                columns.ConstantColumn(40);
+                                columns.ConstantColumn(40);
+                                columns.ConstantColumn(40);
+                                columns.ConstantColumn(45);
+                                columns.RelativeColumn(2);
+                                columns.ConstantColumn(55);
+                                columns.RelativeColumn();
+                            });
+                            imgTable.Cell().ColumnSpan(11).Border(borderThin).BorderColor(borderColor).Padding(2)
+                                .MinHeight(60).AlignCenter().AlignMiddle().Element(e =>
+                                {
+                                    if (partImagePath != null && System.IO.File.Exists(partImagePath))
+                                        e.Image(partImagePath).FitArea();
+                                });
+                            imgTable.Cell().Border(borderThin).BorderColor(borderColor).Padding(2)
+                                .MinHeight(60).AlignCenter().AlignMiddle().Element(e =>
+                                {
+                                    if (System.IO.File.Exists(toolSpecsPath))
+                                        e.Image(toolSpecsPath).FitArea();
+                                });
+                        });
+                        // Main table with headers and data
                         content.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
                             {
-                                columns.ConstantColumn(45);  // Tool No.
-                                columns.RelativeColumn(2);   // Tool Name
-                                columns.RelativeColumn(2);   // Consumable Tool Description
-                                columns.RelativeColumn(1.2f);// Tool Supplier
-                                columns.RelativeColumn(1.2f);// Tool Holder
-                                columns.ConstantColumn(40);  // Tool Diameter (D1)
-                                columns.ConstantColumn(40);  // Flute Length (L1)
-                                columns.ConstantColumn(40);  // Tool Ext. Length (L2)
-                                columns.ConstantColumn(45);  // Tool Corner Radius
-                                columns.RelativeColumn(2);   // Arbor Description
-                                columns.ConstantColumn(55);  // Tool Path Time in Minutes
-                                columns.RelativeColumn();    // Remarks
+                                columns.ConstantColumn(45);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(1.2f);
+                                columns.RelativeColumn(1.2f);
+                                columns.ConstantColumn(40);
+                                columns.ConstantColumn(40);
+                                columns.ConstantColumn(40);
+                                columns.ConstantColumn(45);
+                                columns.RelativeColumn(2);
+                                columns.ConstantColumn(55);
+                                columns.RelativeColumn();
                             });
-                            var headerColor = "#CCFFFF";
-                            var borderThin = 0.5f;
-                            var borderColor = Colors.Black;
                             var headers = new[]
                             {
                                 "Tool No.", "Tool Name", "Consumable Tool Description", "Tool Supplier", "Tool Holder",
