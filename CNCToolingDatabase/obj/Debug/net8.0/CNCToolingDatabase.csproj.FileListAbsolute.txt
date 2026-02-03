@@ -310,3 +310,7 @@ C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\win-x64\native\QuestPdfSkia.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\win-x86\native\QuestPdfSkia.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Data\LOGO\ZENIX.png
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Data\PART_IMAGE\AA000-279.png
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Data\PDF_EXPORT\TOOL_SPECS.png
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Data\PART_IMAGE\D5313364420002.gif
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Data\PART_IMAGE\D575-56065-200.jpg
