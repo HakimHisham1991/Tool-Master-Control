@@ -26,6 +26,10 @@ public class ToolListService : IToolListService
         string? operationFilter,
         string? revisionFilter,
         string? numberOfToolingFilter,
+        string? projectCodeFilter,
+        string? machineNameFilter,
+        string? machineWorkcenterFilter,
+        string? machineModelFilter,
         string? sortColumn,
         string? sortDirection,
         int page,
@@ -60,6 +64,14 @@ public class ToolListService : IToolListService
             var countsForFilter = await _toolListRepository.GetToolCountsByHeaderIdsAsync(headerIds);
             headers = headers.Where(h => countsForFilter.GetValueOrDefault(h.Id, 0) == nt).ToList();
         }
+        if (!string.IsNullOrWhiteSpace(projectCodeFilter))
+            headers = headers.Where(h => (h.ProjectCode ?? "") == projectCodeFilter).ToList();
+        if (!string.IsNullOrWhiteSpace(machineNameFilter))
+            headers = headers.Where(h => (h.MachineName ?? "") == machineNameFilter).ToList();
+        if (!string.IsNullOrWhiteSpace(machineWorkcenterFilter))
+            headers = headers.Where(h => (h.MachineWorkcenter ?? "") == machineWorkcenterFilter).ToList();
+        if (!string.IsNullOrWhiteSpace(machineModelFilter))
+            headers = headers.Where(h => (h.MachineModel ?? "") == machineModelFilter).ToList();
 
         headers = await ApplySortAsync(headers, sortColumn, sortDirection);
         
@@ -79,6 +91,10 @@ public class ToolListService : IToolListService
                 Operation = h.Operation,
                 Revision = h.Revision,
                 NumberOfTooling = toolCounts.GetValueOrDefault(h.Id, 0),
+                ProjectCode = h.ProjectCode ?? "",
+                MachineName = h.MachineName ?? "",
+                MachineWorkcenter = h.MachineWorkcenter ?? "",
+                MachineModel = h.MachineModel ?? "",
                 CreatedBy = h.CreatedBy,
                 CreatedDate = h.CreatedDate,
                 LastModifiedDate = h.LastModifiedDate,
@@ -116,6 +132,14 @@ public class ToolListService : IToolListService
                 hdrs = hdrs.Where(h => h.Revision == revisionFilter).ToList();
             if (skip != "numberOfTooling" && !string.IsNullOrWhiteSpace(numberOfToolingFilter) && int.TryParse(numberOfToolingFilter, out var nt))
                 hdrs = hdrs.Where(h => allCounts.GetValueOrDefault(h.Id, 0) == nt).ToList();
+            if (skip != "projectCode" && !string.IsNullOrWhiteSpace(projectCodeFilter))
+                hdrs = hdrs.Where(h => (h.ProjectCode ?? "") == projectCodeFilter).ToList();
+            if (skip != "machineName" && !string.IsNullOrWhiteSpace(machineNameFilter))
+                hdrs = hdrs.Where(h => (h.MachineName ?? "") == machineNameFilter).ToList();
+            if (skip != "machineWorkcenter" && !string.IsNullOrWhiteSpace(machineWorkcenterFilter))
+                hdrs = hdrs.Where(h => (h.MachineWorkcenter ?? "") == machineWorkcenterFilter).ToList();
+            if (skip != "machineModel" && !string.IsNullOrWhiteSpace(machineModelFilter))
+                hdrs = hdrs.Where(h => (h.MachineModel ?? "") == machineModelFilter).ToList();
             return hdrs;
         }
 
@@ -129,6 +153,14 @@ public class ToolListService : IToolListService
             .Select(h => h.Revision).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
         var availableNumberOfToolings = ApplyFiltersExcept(baseHeaders.ToList(), "numberOfTooling")
             .Select(h => allCounts.GetValueOrDefault(h.Id, 0)).Distinct().OrderBy(x => x).Select(x => x.ToString()).ToList();
+        var availableProjectCodes = ApplyFiltersExcept(baseHeaders.ToList(), "projectCode")
+            .Select(h => h.ProjectCode ?? "").Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
+        var availableMachineNames = ApplyFiltersExcept(baseHeaders.ToList(), "machineName")
+            .Select(h => h.MachineName ?? "").Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
+        var availableMachineWorkcenters = ApplyFiltersExcept(baseHeaders.ToList(), "machineWorkcenter")
+            .Select(h => h.MachineWorkcenter ?? "").Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
+        var availableMachineModels = ApplyFiltersExcept(baseHeaders.ToList(), "machineModel")
+            .Select(h => h.MachineModel ?? "").Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
 
         return new ToolListDatabaseViewModel
         {
@@ -139,6 +171,10 @@ public class ToolListService : IToolListService
             OperationFilter = operationFilter,
             RevisionFilter = revisionFilter,
             NumberOfToolingFilter = numberOfToolingFilter,
+            ProjectCodeFilter = projectCodeFilter,
+            MachineNameFilter = machineNameFilter,
+            MachineWorkcenterFilter = machineWorkcenterFilter,
+            MachineModelFilter = machineModelFilter,
             SortColumn = sortColumn,
             SortDirection = sortDirection,
             CurrentPage = page,
@@ -149,7 +185,11 @@ public class ToolListService : IToolListService
             AvailablePartNumbers = availablePartNumbers,
             AvailableOperations = availableOperations,
             AvailableRevisions = availableRevisions,
-            AvailableNumberOfToolings = availableNumberOfToolings
+            AvailableNumberOfToolings = availableNumberOfToolings,
+            AvailableProjectCodes = availableProjectCodes,
+            AvailableMachineNames = availableMachineNames,
+            AvailableMachineWorkcenters = availableMachineWorkcenters,
+            AvailableMachineModels = availableMachineModels
         };
     }
     
@@ -433,6 +473,18 @@ public class ToolListService : IToolListService
             "revision" => isDescending
                 ? headers.OrderByDescending(h => h.Revision).ToList()
                 : headers.OrderBy(h => h.Revision).ToList(),
+            "projectcode" => isDescending
+                ? headers.OrderByDescending(h => h.ProjectCode ?? "").ToList()
+                : headers.OrderBy(h => h.ProjectCode ?? "").ToList(),
+            "machinename" => isDescending
+                ? headers.OrderByDescending(h => h.MachineName ?? "").ToList()
+                : headers.OrderBy(h => h.MachineName ?? "").ToList(),
+            "machineworkcenter" => isDescending
+                ? headers.OrderByDescending(h => h.MachineWorkcenter ?? "").ToList()
+                : headers.OrderBy(h => h.MachineWorkcenter ?? "").ToList(),
+            "machinemodel" => isDescending
+                ? headers.OrderByDescending(h => h.MachineModel ?? "").ToList()
+                : headers.OrderBy(h => h.MachineModel ?? "").ToList(),
             "createdby" => isDescending
                 ? headers.OrderByDescending(h => h.CreatedBy).ToList()
                 : headers.OrderBy(h => h.CreatedBy).ToList(),

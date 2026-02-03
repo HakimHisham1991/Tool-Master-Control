@@ -25,6 +25,10 @@ public class ToolListController : Controller
         string? operation,
         string? revision,
         string? numberOfTooling,
+        string? projectCode,
+        string? machineName,
+        string? machineWorkcenter,
+        string? machineModel,
         string? sortColumn,
         string? sortDirection,
         int page = 1,
@@ -33,17 +37,21 @@ public class ToolListController : Controller
         pageSize = Math.Clamp(pageSize, 10, 250);
         var username = HttpContext.Session.GetString("Username") ?? "";
         var viewModel = await _toolListService.GetToolListsAsync(
-            search, toolListName, partNumber, operation, revision, numberOfTooling, sortColumn, sortDirection, page, pageSize, username);
+            search, toolListName, partNumber, operation, revision, numberOfTooling,
+            projectCode, machineName, machineWorkcenter, machineModel,
+            sortColumn, sortDirection, page, pageSize, username);
         
         return View(viewModel);
     }
     
     [HttpGet]
-    public async Task<IActionResult> Export(string format, string? search, string? toolListName, string? partNumber, string? operation, string? revision, string? numberOfTooling)
+    public async Task<IActionResult> Export(string format, string? search, string? toolListName, string? partNumber, string? operation, string? revision, string? numberOfTooling, string? projectCode, string? machineName, string? machineWorkcenter, string? machineModel)
     {
         var username = HttpContext.Session.GetString("Username") ?? "";
         var viewModel = await _toolListService.GetToolListsAsync(
-            search, toolListName, partNumber, operation, revision, numberOfTooling, null, null, 1, int.MaxValue, username);
+            search, toolListName, partNumber, operation, revision, numberOfTooling,
+            projectCode, machineName, machineWorkcenter, machineModel,
+            null, null, 1, int.MaxValue, username);
         
         var formatLower = format.ToLower();
         
@@ -58,6 +66,7 @@ public class ToolListController : Controller
             var headers = new[]
             {
                 "Tool List Name", "Part Number", "Operation", "Revision", "No. of Tooling",
+                "Project Code", "Machine Name", "Machine Workcenter", "Machine Model",
                 "Created By", "Created Date", "Status", "Last Modified Date"
             };
             
@@ -81,12 +90,16 @@ public class ToolListController : Controller
                 worksheet.Cells[row, 3].Value = item.Operation;
                 worksheet.Cells[row, 4].Value = item.Revision;
                 worksheet.Cells[row, 5].Value = item.NumberOfTooling;
-                worksheet.Cells[row, 6].Value = item.CreatedBy;
-                worksheet.Cells[row, 7].Value = item.CreatedDate;
-                worksheet.Cells[row, 7].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
-                worksheet.Cells[row, 8].Value = item.Status;
-                worksheet.Cells[row, 9].Value = item.LastModifiedDate;
-                worksheet.Cells[row, 9].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
+                worksheet.Cells[row, 6].Value = item.ProjectCode;
+                worksheet.Cells[row, 7].Value = item.MachineName;
+                worksheet.Cells[row, 8].Value = item.MachineWorkcenter;
+                worksheet.Cells[row, 9].Value = item.MachineModel;
+                worksheet.Cells[row, 10].Value = item.CreatedBy;
+                worksheet.Cells[row, 11].Value = item.CreatedDate;
+                worksheet.Cells[row, 11].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
+                worksheet.Cells[row, 12].Value = item.Status;
+                worksheet.Cells[row, 13].Value = item.LastModifiedDate;
+                worksheet.Cells[row, 13].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
                 row++;
             }
             
@@ -117,6 +130,7 @@ public class ToolListController : Controller
         content.AppendLine(string.Join(separator, new[]
         {
             "Tool List Name", "Part Number", "Operation", "Revision", "No. of Tooling",
+            "Project Code", "Machine Name", "Machine Workcenter", "Machine Model",
             "Created By", "Created Date", "Status", "Last Modified Date"
         }));
         
@@ -129,6 +143,10 @@ public class ToolListController : Controller
                 EscapeField(item.Operation, separator),
                 EscapeField(item.Revision, separator),
                 item.NumberOfTooling.ToString(),
+                EscapeField(item.ProjectCode, separator),
+                EscapeField(item.MachineName, separator),
+                EscapeField(item.MachineWorkcenter, separator),
+                EscapeField(item.MachineModel, separator),
                 EscapeField(item.CreatedBy, separator),
                 item.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
                 EscapeField(item.Status, separator),

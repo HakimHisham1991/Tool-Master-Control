@@ -10,7 +10,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             Reset
         </button>
-        @{ var toolListExportQ = new List<string> { "format=excel" }; if (!string.IsNullOrEmpty(Model.SearchTerm)) toolListExportQ.Add("search=" + Uri.EscapeDataString(Model.SearchTerm)); if (!string.IsNullOrEmpty(Model.ToolListNameFilter)) toolListExportQ.Add("toolListName=" + Uri.EscapeDataString(Model.ToolListNameFilter)); if (!string.IsNullOrEmpty(Model.PartNumberFilter)) toolListExportQ.Add("partNumber=" + Uri.EscapeDataString(Model.PartNumberFilter)); if (!string.IsNullOrEmpty(Model.OperationFilter)) toolListExportQ.Add("operation=" + Uri.EscapeDataString(Model.OperationFilter)); if (!string.IsNullOrEmpty(Model.RevisionFilter)) toolListExportQ.Add("revision=" + Uri.EscapeDataString(Model.RevisionFilter)); if (!string.IsNullOrEmpty(Model.NumberOfToolingFilter)) toolListExportQ.Add("numberOfTooling=" + Uri.EscapeDataString(Model.NumberOfToolingFilter)); var toolListExportQuery = "?" + string.Join("&", toolListExportQ); }
+        @{ var toolListExportQ = new List<string> { "format=excel" }; if (!string.IsNullOrEmpty(Model.SearchTerm)) toolListExportQ.Add("search=" + Uri.EscapeDataString(Model.SearchTerm)); if (!string.IsNullOrEmpty(Model.ToolListNameFilter)) toolListExportQ.Add("toolListName=" + Uri.EscapeDataString(Model.ToolListNameFilter)); if (!string.IsNullOrEmpty(Model.PartNumberFilter)) toolListExportQ.Add("partNumber=" + Uri.EscapeDataString(Model.PartNumberFilter)); if (!string.IsNullOrEmpty(Model.OperationFilter)) toolListExportQ.Add("operation=" + Uri.EscapeDataString(Model.OperationFilter)); if (!string.IsNullOrEmpty(Model.RevisionFilter)) toolListExportQ.Add("revision=" + Uri.EscapeDataString(Model.RevisionFilter)); if (!string.IsNullOrEmpty(Model.NumberOfToolingFilter)) toolListExportQ.Add("numberOfTooling=" + Uri.EscapeDataString(Model.NumberOfToolingFilter)); if (!string.IsNullOrEmpty(Model.ProjectCodeFilter)) toolListExportQ.Add("projectCode=" + Uri.EscapeDataString(Model.ProjectCodeFilter)); if (!string.IsNullOrEmpty(Model.MachineNameFilter)) toolListExportQ.Add("machineName=" + Uri.EscapeDataString(Model.MachineNameFilter)); if (!string.IsNullOrEmpty(Model.MachineWorkcenterFilter)) toolListExportQ.Add("machineWorkcenter=" + Uri.EscapeDataString(Model.MachineWorkcenterFilter)); if (!string.IsNullOrEmpty(Model.MachineModelFilter)) toolListExportQ.Add("machineModel=" + Uri.EscapeDataString(Model.MachineModelFilter)); var toolListExportQuery = "?" + string.Join("&", toolListExportQ); }
         <a href="/ToolList/Export@(toolListExportQuery)" class="btn btn-secondary btn-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Excel
@@ -71,6 +71,30 @@
                         @foreach (var v in Model.AvailableNumberOfToolings) { if (Model.NumberOfToolingFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
                     </select>
                 </th>
+                <th>
+                    <select id="filterProjectCode" class="filter-cell-select" onchange="applyFilters();">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableProjectCodes) { if (Model.ProjectCodeFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterMachineName" class="filter-cell-select" onchange="applyFilters();">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableMachineNames) { if (Model.MachineNameFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterMachineWorkcenter" class="filter-cell-select" onchange="applyFilters();">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableMachineWorkcenters) { if (Model.MachineWorkcenterFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
+                    </select>
+                </th>
+                <th>
+                    <select id="filterMachineModel" class="filter-cell-select" onchange="applyFilters();">
+                        <option value="">All</option>
+                        @foreach (var v in Model.AvailableMachineModels) { if (Model.MachineModelFilter == v) { <option value="@v" selected>@v</option> } else { <option value="@v">@v</option> } }
+                    </select>
+                </th>
                 <th></th>
                 <th></th>
                 <th></th>
@@ -85,6 +109,10 @@
                 <th onclick="sortBy('operation')">Operation @Html.Raw(GetSortIcon("operation"))</th>
                 <th onclick="sortBy('revision')">Revision @Html.Raw(GetSortIcon("revision"))</th>
                 <th onclick="sortBy('numberOfTooling')">No. of Tooling @Html.Raw(GetSortIcon("numberOfTooling"))</th>
+                <th onclick="sortBy('projectCode')">Project Code @Html.Raw(GetSortIcon("projectCode"))</th>
+                <th onclick="sortBy('machineName')">Machine Name @Html.Raw(GetSortIcon("machineName"))</th>
+                <th onclick="sortBy('machineWorkcenter')">Machine Workcenter @Html.Raw(GetSortIcon("machineWorkcenter"))</th>
+                <th onclick="sortBy('machineModel')">Machine Model @Html.Raw(GetSortIcon("machineModel"))</th>
                 <th onclick="sortBy('createdBy')">Created By @Html.Raw(GetSortIcon("createdBy"))</th>
                 <th onclick="sortBy('createdDate')">Created Date @Html.Raw(GetSortIcon("createdDate"))</th>
                 <th onclick="sortBy('status')">Status @Html.Raw(GetSortIcon("status"))</th>
@@ -97,7 +125,7 @@
             @if (Model.ToolLists.Count == 0)
             {
                 <tr>
-                    <td colspan="12" class="empty-state">
+                    <td colspan="16" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
@@ -186,6 +214,10 @@
     if (!string.IsNullOrEmpty(Model.OperationFilter)) qb.Add("operation=" + Uri.EscapeDataString(Model.OperationFilter));
     if (!string.IsNullOrEmpty(Model.RevisionFilter)) qb.Add("revision=" + Uri.EscapeDataString(Model.RevisionFilter));
     if (!string.IsNullOrEmpty(Model.NumberOfToolingFilter)) qb.Add("numberOfTooling=" + Uri.EscapeDataString(Model.NumberOfToolingFilter));
+    if (!string.IsNullOrEmpty(Model.ProjectCodeFilter)) qb.Add("projectCode=" + Uri.EscapeDataString(Model.ProjectCodeFilter));
+    if (!string.IsNullOrEmpty(Model.MachineNameFilter)) qb.Add("machineName=" + Uri.EscapeDataString(Model.MachineNameFilter));
+    if (!string.IsNullOrEmpty(Model.MachineWorkcenterFilter)) qb.Add("machineWorkcenter=" + Uri.EscapeDataString(Model.MachineWorkcenterFilter));
+    if (!string.IsNullOrEmpty(Model.MachineModelFilter)) qb.Add("machineModel=" + Uri.EscapeDataString(Model.MachineModelFilter));
     if (!string.IsNullOrEmpty(Model.SortColumn)) qb.Add("sortColumn=" + Uri.EscapeDataString(Model.SortColumn));
     if (!string.IsNullOrEmpty(Model.SortDirection)) qb.Add("sortDirection=" + Uri.EscapeDataString(Model.SortDirection));
     @await Html.PartialAsync("_Pagination", new PaginationViewModel
@@ -209,12 +241,20 @@
         const operation = document.getElementById('filterOperation').value;
         const revision = document.getElementById('filterRevision').value;
         const numberOfTooling = document.getElementById('filterNumberOfTooling').value;
+        const projectCode = document.getElementById('filterProjectCode').value;
+        const machineName = document.getElementById('filterMachineName').value;
+        const machineWorkcenter = document.getElementById('filterMachineWorkcenter').value;
+        const machineModel = document.getElementById('filterMachineModel').value;
         if (search) params.set('search', search);
         if (toolListName) params.set('toolListName', toolListName);
         if (partNumber) params.set('partNumber', partNumber);
         if (operation) params.set('operation', operation);
         if (revision) params.set('revision', revision);
         if (numberOfTooling) params.set('numberOfTooling', numberOfTooling);
+        if (projectCode) params.set('projectCode', projectCode);
+        if (machineName) params.set('machineName', machineName);
+        if (machineWorkcenter) params.set('machineWorkcenter', machineWorkcenter);
+        if (machineModel) params.set('machineModel', machineModel);
         window.location.href = '/ToolList?' + params.toString();
     }
     function clearFilters() { window.location.href = '/ToolList'; }
