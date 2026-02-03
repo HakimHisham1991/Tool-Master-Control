@@ -1573,8 +1573,8 @@ public class SettingsController : Controller
         (string Name, Action Reset)[] order =
         {
             ("User", () => { DbSeeder.ResetUsers(_context); }),
-            ("Part Number", () => { DbSeeder.ResetPartNumbers(_context); }),
             ("Project Code", () => { DbSeeder.ResetProjectCodes(_context); }),
+            ("Part Number", () => { DbSeeder.ResetPartNumbers(_context); }),
             ("Machine Name", () => { DbSeeder.ResetMachineNames(_context); }),
             ("Machine Workcenter", () => { DbSeeder.ResetMachineWorkcenters(_context); }),
             ("Machine Model", () => { DbSeeder.ResetMachineModels(_context); }),

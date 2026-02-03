@@ -487,14 +487,18 @@ public static class DbSeeder
         {
             if (context.PartNumbers != null && !context.PartNumbers.Any())
             {
-                var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
+                var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>())
+                    .GroupBy(p => p.Code.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
                 var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
-                var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
+                var matBySpec = materialSpecs.GroupBy(m => (m.Spec ?? "").Trim(), StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
                 foreach (var (name, desc, partRev, drawRev, pcCode, refDrawing, msSpec, sequence) in GetPartNumberSeedData())
                 {
                     if (string.IsNullOrWhiteSpace(name)) continue;
-                    var pcId = !string.IsNullOrEmpty(pcCode) && projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
-                    var msId = !string.IsNullOrEmpty(msSpec) && matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
+                    var pcTrim = pcCode?.Trim() ?? "";
+                    var pcId = !string.IsNullOrEmpty(pcTrim) && projectCodes.TryGetValue(pcTrim, out var pid) ? pid : (int?)null;
+                    var msTrim = msSpec?.Trim() ?? "";
+                    var msId = !string.IsNullOrEmpty(msTrim) && matBySpec.TryGetValue(msTrim, out var mid) ? mid : (int?)null;
                     context.PartNumbers.Add(new PartNumber
                     {
                         Name = name,
@@ -971,11 +975,30 @@ public static class DbSeeder
         }
     }
 
-    /// <summary>Load Part Number rows from MASTER - PART NUMBERS.xlsx. Columns: Part Number, Description, Part Revision, Drawing Revision, Project Code, Ref. Drawing, Material Spec., Material. Sequence is 1-based Excel row order.</summary>
+    /// <summary>Resolve path to MASTER - PART NUMBERS.xlsx: try output Data folder, then current directory, then project Data folder.</summary>
+    private static string ResolvePartNumberMasterPath()
+    {
+        const string fileName = "MASTER - PART NUMBERS.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+    }
+    
+    /// <summary>Load Part Number rows from MASTER - PART NUMBERS.xlsx. Columns: Part Number, Description, Part Revision, Drawing Revision, Project Code, Ref. Drawing, Material Spec., Material. Sequence is 1-based Excel row order. No hard-coded data.</summary>
     private static List<(string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec, int Sequence)> LoadPartNumberFromExcel(string path)
     {
         var result = new List<(string, string, string, string, string, string, string, int)>();
-        if (!File.Exists(path)) return result;
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return result;
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         using var package = new ExcelPackage(new FileInfo(path));
         var ws = package.Workbook.Worksheets.FirstOrDefault();
@@ -994,13 +1017,13 @@ public static class DbSeeder
             }
             return -1;
         }
-        int colPartNumber = GetCol(ws, cols, "Part Number", "Name");
+        int colPartNumber = GetCol(ws, cols, "Part Number", "Name", "PartNumber");
         int colDescription = GetCol(ws, cols, "Description");
-        int colPartRev = GetCol(ws, cols, "Part Revision", "Part Rev.");
-        int colDrawingRev = GetCol(ws, cols, "Drawing Revision", "Drawing Rev.");
-        int colProjectCode = GetCol(ws, cols, "Project Code");
-        int colRefDrawing = GetCol(ws, cols, "Ref. Drawing", "Ref Drawing");
-        int colMaterialSpec = GetCol(ws, cols, "Material Spec.", "Material Spec");
+        int colPartRev = GetCol(ws, cols, "Part Revision", "Part Rev.", "PartRev");
+        int colDrawingRev = GetCol(ws, cols, "Drawing Revision", "Drawing Rev.", "DrawingRev");
+        int colProjectCode = GetCol(ws, cols, "Project Code", "ProjectCode", "Project_Code");
+        int colRefDrawing = GetCol(ws, cols, "Ref. Drawing", "Ref Drawing", "RefDrawing", "Ref Drawing");
+        int colMaterialSpec = GetCol(ws, cols, "Material Spec.", "Material Spec", "MaterialSpec", "Material Spec.");
         if (colPartNumber < 1) return result;
         static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
         int sequence = 0;
@@ -1543,7 +1566,7 @@ public static class DbSeeder
 
     private static (string Name, string Description, string PartRev, string DrawingRev, string ProjectCode, string RefDrawing, string MaterialSpec, int Sequence)[] GetPartNumberSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - PART NUMBERS.xlsx");
+        var path = ResolvePartNumberMasterPath();
         return LoadPartNumberFromExcel(path).ToArray();
     }
 
@@ -1820,14 +1843,18 @@ public static class DbSeeder
         if (context.PartNumbers == null) return;
         context.PartNumbers.RemoveRange(context.PartNumbers.ToList());
         context.SaveChanges();
-        var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToDictionary(p => p.Code, p => p.Id);
+        var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>())
+            .GroupBy(p => p.Code.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
         var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
-        var matBySpec = materialSpecs.GroupBy(m => m.Spec).ToDictionary(g => g.Key, g => g.First().Id);
+        var matBySpec = materialSpecs.GroupBy(m => (m.Spec ?? "").Trim(), StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
         foreach (var (name, desc, partRev, drawRev, pcCode, refDrawing, msSpec, sequence) in GetPartNumberSeedData())
         {
             if (string.IsNullOrWhiteSpace(name)) continue;
-            var pcId = !string.IsNullOrEmpty(pcCode) && projectCodes.TryGetValue(pcCode, out var pid) ? pid : (int?)null;
-            var msId = !string.IsNullOrEmpty(msSpec) && matBySpec.TryGetValue(msSpec, out var mid) ? mid : (int?)null;
+            var pcTrim = pcCode?.Trim() ?? "";
+            var pcId = !string.IsNullOrEmpty(pcTrim) && projectCodes.TryGetValue(pcTrim, out var pid) ? pid : (int?)null;
+            var msTrim = msSpec?.Trim() ?? "";
+            var msId = !string.IsNullOrEmpty(msTrim) && matBySpec.TryGetValue(msTrim, out var mid) ? mid : (int?)null;
             context.PartNumbers.Add(new PartNumber { Name = name, Description = desc, ProjectCodeId = pcId, PartRev = partRev, DrawingRev = drawRev, MaterialSpecId = msId, RefDrawing = refDrawing ?? "", Sequence = sequence, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
         }
         context.SaveChanges();
