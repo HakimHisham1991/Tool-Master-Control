@@ -1091,7 +1091,57 @@ public class SettingsController : Controller
         }
         
         var isDesc = sortDirection?.ToLower() == "desc";
-        query = (sortColumn?.ToLower()) switch
+        var sortCol = sortColumn?.ToLower();
+        
+        if (sortCol == "picture")
+        {
+            query = query.OrderBy(p => p.Sequence);
+            var fullList = await query.ToListAsync();
+            var picTotalItems = fullList.Count;
+            var picTotalPages = (int)Math.Ceiling(picTotalItems / (double)pageSize);
+            var picBaseDir = Path.Combine(AppContext.BaseDirectory, "Data", "PART_IMAGE");
+            var picPartNumbersWithImage = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var pn in fullList.Select(p => p.Name))
+            {
+                foreach (var ext in new[] { ".png", ".jpg", ".jpeg", ".gif" })
+                {
+                    if (System.IO.File.Exists(Path.Combine(picBaseDir, pn + ext)))
+                    {
+                        picPartNumbersWithImage.Add(pn);
+                        break;
+                    }
+                }
+            }
+            var picList = (isDesc
+                ? fullList.OrderByDescending(p => picPartNumbersWithImage.Contains(p.Name)).ThenBy(p => p.Sequence)
+                : fullList.OrderBy(p => picPartNumbersWithImage.Contains(p.Name)).ThenBy(p => p.Sequence))
+                .Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            ViewBag.Search = search;
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = picTotalPages;
+            ViewBag.TotalItems = picTotalItems;
+            ViewBag.PageSize = pageSize;
+            ViewBag.SortColumn = sortColumn;
+            ViewBag.SortDirection = sortDirection;
+            ViewBag.PaginationQuery = BuildPaginationQuery(search, sortColumn, sortDirection);
+            var picProjectCodes = await _context.ProjectCodes
+                .Where(p => p.IsActive)
+                .OrderBy(p => p.Code)
+                .Select(p => new { id = p.Id, code = p.Code, project = p.Project ?? "", customer = p.Description ?? "" })
+                .ToListAsync();
+            var picMaterialSpecs = await _context.MaterialSpecs
+                .Where(m => m.IsActive)
+                .OrderBy(m => m.Spec)
+                .ThenBy(m => m.Material)
+                .Select(m => new { id = m.Id, spec = m.Spec, material = m.Material })
+                .ToListAsync();
+            ViewBag.ProjectCodesForPartNumber = picProjectCodes;
+            ViewBag.MaterialSpecsForPartNumber = picMaterialSpecs;
+            ViewBag.PartNumbersWithImage = picPartNumbersWithImage;
+            return View(picList);
+        }
+        
+        query = sortCol switch
         {
             "id" => isDesc ? query.OrderByDescending(p => p.Id) : query.OrderBy(p => p.Id),
             "sequence" => isDesc ? query.OrderByDescending(p => p.Sequence) : query.OrderBy(p => p.Sequence),
@@ -1134,6 +1184,21 @@ public class SettingsController : Controller
             .ToListAsync();
         ViewBag.ProjectCodesForPartNumber = projectCodes;
         ViewBag.MaterialSpecsForPartNumber = materialSpecs;
+        
+        var baseDir = Path.Combine(AppContext.BaseDirectory, "Data", "PART_IMAGE");
+        var partNumbersWithImage = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var pn in list.Select(p => p.Name))
+        {
+            foreach (var ext in new[] { ".png", ".jpg", ".jpeg", ".gif" })
+            {
+                if (System.IO.File.Exists(Path.Combine(baseDir, pn + ext)))
+                {
+                    partNumbersWithImage.Add(pn);
+                    break;
+                }
+            }
+        }
+        ViewBag.PartNumbersWithImage = partNumbersWithImage;
         
         return View(list);
     }

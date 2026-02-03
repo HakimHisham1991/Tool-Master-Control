@@ -228,58 +228,68 @@
     var stampHas2 = Model.CamLeaderApprovedByUserId.HasValue;
     var stampHas3 = Model.ToolRegisterByUserId.HasValue;
 }
-<div class="verified-by-section">
-    <label class="verified-by-label">CAM Programmer:</label>
-    <div class="verified-by-stamp-area">
-        <div class="verified-by-box">
-            <div id="verifiedByPlaceholder" class="verified-by-placeholder" style="@(Model.ApprovedByUserId.HasValue ? "display: none;" : "")"></div>
-            <img id="verifiedByStamp" class="verified-by-stamp" alt="Verifier stamp" src="@(Model.ApprovedByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.ApprovedByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.ApprovedByUserId.HasValue ? "" : "display: none;")" />
-        </div>
-        <div id="verifiedByDate" class="verified-by-date" style="@(Model.ApprovedByUserId.HasValue && Model.ApprovedDate.HasValue ? "" : "display: none;")">@(Model.ApprovedDate?.ToString("dd/MM/yyyy"))</div>
-    </div>
-    @if (Model.Id.HasValue)
-    {
-        <div class="verified-by-buttons">
-            <button type="button" class="btn btn-primary" id="approveBtn" @(Model.IsReadOnly || stampHas1 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (stampHas1 ? "Already approved" : "Paste your stamp"))">Approve</button>
-            <button type="button" class="btn btn-secondary" id="rejectBtn" @(Model.IsReadOnly || !stampHas1 || stampHas2 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (!stampHas1 ? "No stamp to reject" : (stampHas2 ? "Complete Stamp 2 first" : "Remove stamp")))">Reject</button>
-        </div>
-    }
-</div>
-
-<div class="verified-by-section">
-    <label class="verified-by-label">Approved by:</label>
-    <div class="verified-by-stamp-area">
-        <div class="verified-by-box">
-            <div id="camLeaderPlaceholder" class="verified-by-placeholder" style="@(Model.CamLeaderApprovedByUserId.HasValue ? "display: none;" : "")"></div>
-            <img id="camLeaderStamp" class="verified-by-stamp" alt="CAM Leader stamp" src="@(Model.CamLeaderApprovedByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.CamLeaderApprovedByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.CamLeaderApprovedByUserId.HasValue ? "" : "display: none;")" />
-        </div>
-        <div id="camLeaderDate" class="verified-by-date" style="@(Model.CamLeaderApprovedByUserId.HasValue && Model.CamLeaderApprovedDate.HasValue ? "" : "display: none;")">@(Model.CamLeaderApprovedDate?.ToString("dd/MM/yyyy"))</div>
-    </div>
-    @if (Model.Id.HasValue)
-    {
-        <div class="verified-by-buttons">
-            <button type="button" class="btn btn-primary" id="approveCamLeaderBtn" @(Model.IsReadOnly || !stampHas1 || stampHas2 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (stampHas2 ? "Already approved" : "Complete Stamp 1 first"))">Approve</button>
-            <button type="button" class="btn btn-secondary" id="rejectCamLeaderBtn" @(Model.IsReadOnly || !stampHas2 || stampHas3 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (!stampHas2 ? "No stamp to reject" : (stampHas3 ? "Reject Stamp 3 first" : "Remove stamp")))">Reject</button>
-        </div>
-    }
-</div>
-
-<div class="verified-by-section">
-    <label class="verified-by-label">Tool Register By:</label>
-    <div class="verified-by-stamp-area">
-        <div class="verified-by-box">
-            <div id="toolRegisterPlaceholder" class="verified-by-placeholder" style="@(Model.ToolRegisterByUserId.HasValue ? "display: none;" : "")"></div>
-            <img id="toolRegisterStamp" class="verified-by-stamp" alt="Tool Register stamp" src="@(Model.ToolRegisterByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.ToolRegisterByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.ToolRegisterByUserId.HasValue ? "" : "display: none;")" />
-        </div>
-        <div id="toolRegisterDate" class="verified-by-date" style="@(Model.ToolRegisterByUserId.HasValue && Model.ToolRegisterByDate.HasValue ? "" : "display: none;")">@(Model.ToolRegisterByDate?.ToString("dd/MM/yyyy"))</div>
-    </div>
-    @if (Model.Id.HasValue)
-    {
-        <div class="verified-by-buttons">
-            <button type="button" class="btn btn-primary" id="approveToolRegisterBtn" @(Model.IsReadOnly || !stampHas2 || stampHas3 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (stampHas3 ? "Already approved" : "Complete Stamp 2 first"))">Approve</button>
-            <button type="button" class="btn btn-secondary" id="rejectToolRegisterBtn" @(Model.IsReadOnly || !stampHas3 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : "Remove stamp")">Reject</button>
-        </div>
-    }
+<div class="verified-by-wrapper">
+    <table class="verified-by-table">
+        <tr>
+            <td class="verified-by-cell">
+                <div class="verified-by-section">
+                    <label class="verified-by-label">CAM Programmer:</label>
+                    <div class="verified-by-stamp-area">
+                        <div class="verified-by-box">
+                            <div id="verifiedByPlaceholder" class="verified-by-placeholder" style="@(Model.ApprovedByUserId.HasValue ? "display: none;" : "")"></div>
+                            <img id="verifiedByStamp" class="verified-by-stamp" alt="Verifier stamp" src="@(Model.ApprovedByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.ApprovedByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.ApprovedByUserId.HasValue ? "" : "display: none;")" />
+                        </div>
+                        <div id="verifiedByDate" class="verified-by-date" style="@(Model.ApprovedByUserId.HasValue && Model.ApprovedDate.HasValue ? "" : "display: none;")">@(Model.ApprovedDate?.ToString("dd/MM/yyyy"))</div>
+                    </div>
+                    @if (Model.Id.HasValue)
+                    {
+                        <div class="verified-by-buttons">
+                            <button type="button" class="btn btn-primary" id="approveBtn" @(Model.IsReadOnly || stampHas1 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (stampHas1 ? "Already approved" : "Paste your stamp"))">Approve</button>
+                            <button type="button" class="btn btn-secondary" id="rejectBtn" @(Model.IsReadOnly || !stampHas1 || stampHas2 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (!stampHas1 ? "No stamp to reject" : (stampHas2 ? "Complete Stamp 2 first" : "Remove stamp")))">Reject</button>
+                        </div>
+                    }
+                </div>
+            </td>
+            <td class="verified-by-cell">
+                <div class="verified-by-section">
+                    <label class="verified-by-label">Approved by:</label>
+                    <div class="verified-by-stamp-area">
+                        <div class="verified-by-box">
+                            <div id="camLeaderPlaceholder" class="verified-by-placeholder" style="@(Model.CamLeaderApprovedByUserId.HasValue ? "display: none;" : "")"></div>
+                            <img id="camLeaderStamp" class="verified-by-stamp" alt="CAM Leader stamp" src="@(Model.CamLeaderApprovedByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.CamLeaderApprovedByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.CamLeaderApprovedByUserId.HasValue ? "" : "display: none;")" />
+                        </div>
+                        <div id="camLeaderDate" class="verified-by-date" style="@(Model.CamLeaderApprovedByUserId.HasValue && Model.CamLeaderApprovedDate.HasValue ? "" : "display: none;")">@(Model.CamLeaderApprovedDate?.ToString("dd/MM/yyyy"))</div>
+                    </div>
+                    @if (Model.Id.HasValue)
+                    {
+                        <div class="verified-by-buttons">
+                            <button type="button" class="btn btn-primary" id="approveCamLeaderBtn" @(Model.IsReadOnly || !stampHas1 || stampHas2 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (stampHas2 ? "Already approved" : "Complete Stamp 1 first"))">Approve</button>
+                            <button type="button" class="btn btn-secondary" id="rejectCamLeaderBtn" @(Model.IsReadOnly || !stampHas2 || stampHas3 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (!stampHas2 ? "No stamp to reject" : (stampHas3 ? "Reject Stamp 3 first" : "Remove stamp")))">Reject</button>
+                        </div>
+                    }
+                </div>
+            </td>
+            <td class="verified-by-cell">
+                <div class="verified-by-section">
+                    <label class="verified-by-label">Tool Register By:</label>
+                    <div class="verified-by-stamp-area">
+                        <div class="verified-by-box">
+                            <div id="toolRegisterPlaceholder" class="verified-by-placeholder" style="@(Model.ToolRegisterByUserId.HasValue ? "display: none;" : "")"></div>
+                            <img id="toolRegisterStamp" class="verified-by-stamp" alt="Tool Register stamp" src="@(Model.ToolRegisterByUserId.HasValue ? "/Settings/UserStamp?id=" + Model.ToolRegisterByUserId.Value + "&t=" + DateTime.UtcNow.Ticks : "")" style="@(Model.ToolRegisterByUserId.HasValue ? "" : "display: none;")" />
+                        </div>
+                        <div id="toolRegisterDate" class="verified-by-date" style="@(Model.ToolRegisterByUserId.HasValue && Model.ToolRegisterByDate.HasValue ? "" : "display: none;")">@(Model.ToolRegisterByDate?.ToString("dd/MM/yyyy"))</div>
+                    </div>
+                    @if (Model.Id.HasValue)
+                    {
+                        <div class="verified-by-buttons">
+                            <button type="button" class="btn btn-primary" id="approveToolRegisterBtn" @(Model.IsReadOnly || !stampHas2 || stampHas3 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : (stampHas3 ? "Already approved" : "Complete Stamp 2 first"))">Approve</button>
+                            <button type="button" class="btn btn-secondary" id="rejectToolRegisterBtn" @(Model.IsReadOnly || !stampHas3 ? "disabled" : "") title="@(Model.IsReadOnly ? "Locked by another user" : "Remove stamp")">Reject</button>
+                        </div>
+                    }
+                </div>
+            </td>
+        </tr>
+    </table>
 </div>
 
 <div class="modal" id="openModal">
@@ -312,20 +322,34 @@
 <input type="hidden" id="isReadOnly" value="@Model.IsReadOnly.ToString().ToLower()" />
 
 <style>
-.verified-by-section {
+.verified-by-wrapper {
     margin-top: 2rem;
     padding: 1rem 0;
     border-top: 1px solid #e0e0e0;
     display: flex;
+    justify-content: center;
+    width: 100%;
+}
+.verified-by-table {
+    border: none;
+    border-collapse: collapse;
+}
+.verified-by-table td {
+    border: none;
+    vertical-align: top;
+    padding: 0 1rem;
+}
+.verified-by-section {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 .verified-by-label {
     font-weight: 600;
     color: #333;
     margin: 0;
-    min-width: 140px;
+    text-align: center;
 }
 .verified-by-box {
     width: 160px;
@@ -350,7 +374,7 @@
 .verified-by-stamp-area {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 0.25rem;
     width: 160px;
 }
@@ -362,6 +386,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    align-items: center;
 }
 .verified-by-buttons .btn:disabled {
     opacity: 0.6;

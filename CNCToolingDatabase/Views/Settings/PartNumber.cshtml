@@ -54,6 +54,7 @@
                 <th onclick="sortBy('drawingrev')">Drawing Rev. @Html.Raw(GetSortIcon("drawingrev", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('projectcode')">Project Code @Html.Raw(GetSortIcon("projectcode", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('refdrawing')">Ref. Drawing @Html.Raw(GetSortIcon("refdrawing", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
+                <th onclick="sortBy('picture')">Picture @Html.Raw(GetSortIcon("picture", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('createdby')">Created By @Html.Raw(GetSortIcon("createdby", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('createddate')">Created Date @Html.Raw(GetSortIcon("createddate", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
                 <th onclick="sortBy('isactive')">Status @Html.Raw(GetSortIcon("isactive", ViewBag.SortColumn as string, ViewBag.SortDirection as string))</th>
@@ -64,7 +65,7 @@
             @if (Model.Count == 0)
             {
                 <tr>
-                    <td colspan="11" class="empty-state">
+                    <td colspan="12" class="empty-state">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
@@ -75,10 +76,12 @@
             }
             else
             {
+                var partNumbersWithImage = ViewBag.PartNumbersWithImage as HashSet<string> ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 @for (int i = 0; i < Model.Count; i++)
                 {
                     var item = Model[i];
                     var no = item.Sequence > 0 ? item.Sequence : ((int)(ViewBag.CurrentPage ?? 1) - 1) * (int)(ViewBag.PageSize ?? 250) + i + 1;
+                    var hasPicture = partNumbersWithImage.Contains(item.Name);
                     <tr data-edit="@Html.Raw(System.Net.WebUtility.HtmlEncode(JsonSerializer.Serialize(new { id = item.Id, name = item.Name, description = item.Description ?? "", project = item.ProjectCode?.Project ?? "", customer = item.ProjectCode?.Description ?? "", projectCodeId = item.ProjectCodeId ?? 0, partRev = item.PartRev ?? "", drawingRev = item.DrawingRev ?? "", materialSpecId = item.MaterialSpecId ?? 0, material = item.MaterialSpec?.Material ?? "", refDrawing = item.RefDrawing ?? "", isActive = item.IsActive })))">
                         <td>@no</td>
                         <td>@item.Name</td>
@@ -87,6 +90,16 @@
                         <td>@(item.DrawingRev ?? "-")</td>
                         <td>@(item.ProjectCode?.Code ?? "-")</td>
                         <td>@(item.RefDrawing ?? "-")</td>
+                        <td>
+                            @if (hasPicture)
+                            {
+                                <span class="status-badge status-available">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge status-locked">No</span>
+                            }
+                        </td>
                         <td>@item.CreatedBy</td>
                         <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>

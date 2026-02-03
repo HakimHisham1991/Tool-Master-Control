@@ -650,9 +650,10 @@ public class ToolListEditorController : Controller
                                 table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.Remarks ?? "").FontFamily(arialNarrow).FontSize(6);
                             }
                         });
-                        // Stamp section (all 3 stamps with dates when not blank)
+                        // Stamp section (all 3 stamps with dates when not blank) - centered
                         content.Item().PaddingTop(1f, Unit.Centimetre).Row(stampRow =>
                         {
+                            stampRow.RelativeItem(); // flexible space left
                             stampRow.ConstantItem(95).Column(c =>
                             {
                                 c.Spacing(4);
@@ -694,6 +695,7 @@ public class ToolListEditorController : Controller
                                 if (viewModel.ToolRegisterByDate.HasValue)
                                     c.Item().Text(viewModel.ToolRegisterByDate.Value.ToString("dd/MM/yyyy")).FontFamily(arialNarrow).FontSize(8);
                             });
+                            stampRow.RelativeItem(); // flexible space right - centers the 3 stamps
                         });
                     });
                     page.Footer().AlignCenter().Text(x =>
