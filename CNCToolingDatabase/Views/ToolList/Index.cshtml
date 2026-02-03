@@ -156,6 +156,10 @@
                         <td>@item.Operation</td>
                         <td>@item.Revision</td>
                         <td>@item.NumberOfTooling</td>
+                        <td>@(item.ProjectCode ?? "-")</td>
+                        <td>@(item.MachineName ?? "-")</td>
+                        <td>@(item.MachineWorkcenter ?? "-")</td>
+                        <td>@(item.MachineModel ?? "-")</td>
                         <td>@item.CreatedBy</td>
                         <td>@item.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>

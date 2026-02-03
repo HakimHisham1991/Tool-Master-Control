@@ -41,6 +41,14 @@ public class ToolListService : IToolListService
         
         var headers = await _toolListRepository.GetAllHeadersAsync();
         
+        // Project Code: resolve from Part Number Management (Settings > Part Number Management) when available
+        var partNumberToProjectCode = await _context.PartNumbers
+            .Include(p => p.ProjectCode)
+            .Where(p => p.ProjectCode != null)
+            .ToDictionaryAsync(p => p.Name.Trim(), p => p.ProjectCode!.Code, StringComparer.OrdinalIgnoreCase);
+        string GetProjectCode(ToolListHeader h) =>
+            !string.IsNullOrEmpty(h.PartNumber) && partNumberToProjectCode.TryGetValue(h.PartNumber.Trim(), out var pc) ? pc : (h.ProjectCode ?? "");
+        
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             var term = searchTerm.ToLower();
@@ -65,7 +73,7 @@ public class ToolListService : IToolListService
             headers = headers.Where(h => countsForFilter.GetValueOrDefault(h.Id, 0) == nt).ToList();
         }
         if (!string.IsNullOrWhiteSpace(projectCodeFilter))
-            headers = headers.Where(h => (h.ProjectCode ?? "") == projectCodeFilter).ToList();
+            headers = headers.Where(h => GetProjectCode(h) == projectCodeFilter).ToList();
         if (!string.IsNullOrWhiteSpace(machineNameFilter))
             headers = headers.Where(h => (h.MachineName ?? "") == machineNameFilter).ToList();
         if (!string.IsNullOrWhiteSpace(machineWorkcenterFilter))
@@ -91,7 +99,7 @@ public class ToolListService : IToolListService
                 Operation = h.Operation,
                 Revision = h.Revision,
                 NumberOfTooling = toolCounts.GetValueOrDefault(h.Id, 0),
-                ProjectCode = h.ProjectCode ?? "",
+                ProjectCode = GetProjectCode(h),
                 MachineName = h.MachineName ?? "",
                 MachineWorkcenter = h.MachineWorkcenter ?? "",
                 MachineModel = h.MachineModel ?? "",
@@ -133,7 +141,7 @@ public class ToolListService : IToolListService
             if (skip != "numberOfTooling" && !string.IsNullOrWhiteSpace(numberOfToolingFilter) && int.TryParse(numberOfToolingFilter, out var nt))
                 hdrs = hdrs.Where(h => allCounts.GetValueOrDefault(h.Id, 0) == nt).ToList();
             if (skip != "projectCode" && !string.IsNullOrWhiteSpace(projectCodeFilter))
-                hdrs = hdrs.Where(h => (h.ProjectCode ?? "") == projectCodeFilter).ToList();
+                hdrs = hdrs.Where(h => GetProjectCode(h) == projectCodeFilter).ToList();
             if (skip != "machineName" && !string.IsNullOrWhiteSpace(machineNameFilter))
                 hdrs = hdrs.Where(h => (h.MachineName ?? "") == machineNameFilter).ToList();
             if (skip != "machineWorkcenter" && !string.IsNullOrWhiteSpace(machineWorkcenterFilter))
@@ -154,7 +162,7 @@ public class ToolListService : IToolListService
         var availableNumberOfToolings = ApplyFiltersExcept(baseHeaders.ToList(), "numberOfTooling")
             .Select(h => allCounts.GetValueOrDefault(h.Id, 0)).Distinct().OrderBy(x => x).Select(x => x.ToString()).ToList();
         var availableProjectCodes = ApplyFiltersExcept(baseHeaders.ToList(), "projectCode")
-            .Select(h => h.ProjectCode ?? "").Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
+            .Select(h => GetProjectCode(h)).Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
         var availableMachineNames = ApplyFiltersExcept(baseHeaders.ToList(), "machineName")
             .Select(h => h.MachineName ?? "").Where(x => !string.IsNullOrEmpty(x)).Distinct().OrderBy(x => x).ToList();
         var availableMachineWorkcenters = ApplyFiltersExcept(baseHeaders.ToList(), "machineWorkcenter")
