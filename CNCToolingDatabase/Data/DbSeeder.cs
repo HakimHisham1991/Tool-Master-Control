@@ -290,11 +290,20 @@ public static class DbSeeder
             {
                 context.MachineNames.RemoveRange(context.MachineNames.ToList());
                 context.SaveChanges();
-                var modelToId = (context.MachineModels ?? Enumerable.Empty<MachineModel>())
-                    .ToDictionary(m => m.Model, m => m.Id, StringComparer.OrdinalIgnoreCase);
+                var models = (context.MachineModels ?? Enumerable.Empty<MachineModel>()).ToList();
+                var modelToId = models.GroupBy(m => NormalizeModelKey(m.Model), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+                var workcenterToModel = GetMachineWorkcenterSeedData()
+                    .Where(x => !string.IsNullOrWhiteSpace(x.MachineModel))
+                    .ToDictionary(x => x.Workcenter.Trim(), x => x.MachineModel.Trim(), StringComparer.OrdinalIgnoreCase);
                 foreach (var (name, serial, workcenter, machineModel, isActive) in GetMachineNameSeedData())
                 {
-                    var machineModelId = !string.IsNullOrWhiteSpace(machineModel) && modelToId.TryGetValue(machineModel.Trim(), out var id) ? id : (int?)null;
+                    var modelStr = machineModel;
+                    if (string.IsNullOrWhiteSpace(modelStr) && !string.IsNullOrWhiteSpace(workcenter) && workcenterToModel.TryGetValue(workcenter.Trim(), out var fallback))
+                        modelStr = fallback;
+                    int? machineModelId = null;
+                    if (!string.IsNullOrWhiteSpace(modelStr) && modelToId.TryGetValue(NormalizeModelKey(modelStr), out var mid))
+                        machineModelId = mid;
                     context.MachineNames.Add(new MachineName
                     {
                         Name = name,
@@ -315,7 +324,7 @@ public static class DbSeeder
         {
             if (context.MachineWorkcenters != null && !context.MachineWorkcenters.Any())
             {
-                foreach (var (workcenter, axis, isActive) in GetMachineWorkcenterSeedData())
+                foreach (var (workcenter, axis, _, isActive) in GetMachineWorkcenterSeedData())
                 {
                     context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = workcenter, Axis = axis, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
                 }
@@ -531,6 +540,12 @@ public static class DbSeeder
         }
     }
 
+    private static string NormalizeModelKey(string? s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "";
+        return string.Join(" ", s.Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+    }
+    
     /// <summary>Load Machine Name rows from MASTER - MACHINE NAME.xlsx. Columns: Machine Name, Serial Number, Machine Workcenter, Machine Model, Status.</summary>
     private static List<(string Name, string Serial, string Workcenter, string MachineModel, bool IsActive)> LoadMachineNameFromExcel(string path)
     {
@@ -557,7 +572,7 @@ public static class DbSeeder
         int colName = GetCol(ws, cols, "Machine Name", "Name");
         int colSerial = GetCol(ws, cols, "Serial Number", "Serial");
         int colWorkcenter = GetCol(ws, cols, "Machine Workcenter", "Workcenter");
-        int colModel = GetCol(ws, cols, "Machine Model", "Model");
+        int colModel = GetCol(ws, cols, "Machine Model", "Model", "Machine Type", "MachineModel");
         int colStatus = GetCol(ws, cols, "Status", "IsActive");
         if (colName < 1) return result;
         static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
@@ -694,10 +709,10 @@ public static class DbSeeder
         return LoadProjectCodeFromExcel(path).ToArray();
     }
 
-    /// <summary>Load Machine Workcenter rows from MASTER - MACHINE WORKCENTER.xlsx. Columns: Workcenter, Axis, Status (ACTIVE/INACTIVE).</summary>
-    private static List<(string Workcenter, string Axis, bool IsActive)> LoadMachineWorkcenterFromExcel(string path)
+    /// <summary>Load Machine Workcenter rows from MASTER - MACHINE WORKCENTER.xlsx. Columns: Workcenter, Axis, Machine Model (optional), Status (ACTIVE/INACTIVE).</summary>
+    private static List<(string Workcenter, string Axis, string MachineModel, bool IsActive)> LoadMachineWorkcenterFromExcel(string path)
     {
-        var result = new List<(string, string, bool)>();
+        var result = new List<(string, string, string, bool)>();
         if (!File.Exists(path)) return result;
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         using var package = new ExcelPackage(new FileInfo(path));
@@ -719,6 +734,7 @@ public static class DbSeeder
         }
         int colWorkcenter = GetCol(ws, cols, "Workcenter", "Machine Workcenter");
         int colAxis = GetCol(ws, cols, "Axis");
+        int colModel = GetCol(ws, cols, "Machine Model", "Model");
         int colStatus = GetCol(ws, cols, "Status", "IsActive");
         if (colWorkcenter < 1) return result;
         static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
@@ -727,6 +743,7 @@ public static class DbSeeder
             var workcenter = GetStr(ws, r, colWorkcenter);
             if (string.IsNullOrWhiteSpace(workcenter)) continue;
             var axis = GetStr(ws, r, colAxis);
+            var machineModel = colModel >= 1 ? GetStr(ws, r, colModel) : "";
             var statusVal = GetStr(ws, r, colStatus);
             var isActive = string.IsNullOrWhiteSpace(statusVal) ||
                 string.Equals(statusVal, "ACTIVE", StringComparison.OrdinalIgnoreCase) ||
@@ -734,12 +751,12 @@ public static class DbSeeder
                 string.Equals(statusVal, "Yes", StringComparison.OrdinalIgnoreCase);
             if (string.Equals(statusVal, "INACTIVE", StringComparison.OrdinalIgnoreCase) || string.Equals(statusVal, "0", StringComparison.Ordinal) || string.Equals(statusVal, "No", StringComparison.OrdinalIgnoreCase))
                 isActive = false;
-            result.Add((workcenter, axis ?? "", isActive));
+            result.Add((workcenter, axis ?? "", machineModel ?? "", isActive));
         }
         return result;
     }
 
-    private static (string Workcenter, string Axis, bool IsActive)[] GetMachineWorkcenterSeedData()
+    private static (string Workcenter, string Axis, string MachineModel, bool IsActive)[] GetMachineWorkcenterSeedData()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - MACHINE WORKCENTER.xlsx");
         return LoadMachineWorkcenterFromExcel(path).ToArray();
@@ -1611,11 +1628,20 @@ public static class DbSeeder
         if (context.MachineNames == null) return;
         context.MachineNames.RemoveRange(context.MachineNames.ToList());
         context.SaveChanges();
-        var modelToId = (context.MachineModels ?? Enumerable.Empty<MachineModel>())
-            .ToDictionary(m => m.Model, m => m.Id, StringComparer.OrdinalIgnoreCase);
+        var models = (context.MachineModels ?? Enumerable.Empty<MachineModel>()).ToList();
+        var modelToId = models.GroupBy(m => NormalizeModelKey(m.Model), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+        var workcenterToModel = GetMachineWorkcenterSeedData()
+            .Where(x => !string.IsNullOrWhiteSpace(x.MachineModel))
+            .ToDictionary(x => x.Workcenter.Trim(), x => x.MachineModel.Trim(), StringComparer.OrdinalIgnoreCase);
         foreach (var (name, serial, workcenter, machineModel, isActive) in GetMachineNameSeedData())
         {
-            var machineModelId = !string.IsNullOrWhiteSpace(machineModel) && modelToId.TryGetValue(machineModel.Trim(), out var id) ? id : (int?)null;
+            var modelStr = machineModel;
+            if (string.IsNullOrWhiteSpace(modelStr) && !string.IsNullOrWhiteSpace(workcenter) && workcenterToModel.TryGetValue(workcenter.Trim(), out var fallback))
+                modelStr = fallback;
+            int? machineModelId = null;
+            if (!string.IsNullOrWhiteSpace(modelStr) && modelToId.TryGetValue(NormalizeModelKey(modelStr), out var mid))
+                machineModelId = mid;
             context.MachineNames.Add(new MachineName { Name = name, Description = serial, Workcenter = workcenter ?? "", MachineModelId = machineModelId, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
         }
         context.SaveChanges();
@@ -1626,7 +1652,7 @@ public static class DbSeeder
         if (context.MachineWorkcenters == null) return;
         context.MachineWorkcenters.RemoveRange(context.MachineWorkcenters.ToList());
         context.SaveChanges();
-        foreach (var (workcenter, axis, isActive) in GetMachineWorkcenterSeedData())
+        foreach (var (workcenter, axis, _, isActive) in GetMachineWorkcenterSeedData())
         {
             context.MachineWorkcenters.Add(new MachineWorkcenter { Workcenter = workcenter, Axis = axis, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = isActive });
         }
