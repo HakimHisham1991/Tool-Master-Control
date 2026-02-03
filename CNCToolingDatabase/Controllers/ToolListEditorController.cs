@@ -650,11 +650,10 @@ public class ToolListEditorController : Controller
                                 table.Cell().Border(borderThin).BorderColor(borderColor).Padding(3).AlignCenter().AlignMiddle().Text(d.Remarks ?? "").FontFamily(arialNarrow).FontSize(6);
                             }
                         });
-                        // Stamp section (all 3 stamps with dates when not blank) - centered
+                        // Stamp section: 1st leftmost, 2nd center, 3rd rightmost
                         content.Item().PaddingTop(1f, Unit.Centimetre).Row(stampRow =>
                         {
-                            stampRow.RelativeItem(); // flexible space left
-                            stampRow.ConstantItem(95).Column(c =>
+                            stampRow.RelativeItem(1).AlignLeft().Column(c =>
                             {
                                 c.Spacing(4);
                                 c.Item().Text("CAM Programmer:").Bold().FontFamily(arialNarrow).FontSize(9);
@@ -667,8 +666,7 @@ public class ToolListEditorController : Controller
                                 if (viewModel.ApprovedDate.HasValue)
                                     c.Item().Text(viewModel.ApprovedDate.Value.ToString("dd/MM/yyyy")).FontFamily(arialNarrow).FontSize(8);
                             });
-                            stampRow.ConstantItem(20);
-                            stampRow.ConstantItem(95).Column(c =>
+                            stampRow.RelativeItem(1).AlignCenter().Column(c =>
                             {
                                 c.Spacing(4);
                                 c.Item().Text("Approved by:").Bold().FontFamily(arialNarrow).FontSize(9);
@@ -681,8 +679,7 @@ public class ToolListEditorController : Controller
                                 if (viewModel.CamLeaderApprovedDate.HasValue)
                                     c.Item().Text(viewModel.CamLeaderApprovedDate.Value.ToString("dd/MM/yyyy")).FontFamily(arialNarrow).FontSize(8);
                             });
-                            stampRow.ConstantItem(20);
-                            stampRow.ConstantItem(95).Column(c =>
+                            stampRow.RelativeItem(1).AlignRight().Column(c =>
                             {
                                 c.Spacing(4);
                                 c.Item().Text("Tool Register By:").Bold().FontFamily(arialNarrow).FontSize(9);
@@ -695,7 +692,6 @@ public class ToolListEditorController : Controller
                                 if (viewModel.ToolRegisterByDate.HasValue)
                                     c.Item().Text(viewModel.ToolRegisterByDate.Value.ToString("dd/MM/yyyy")).FontFamily(arialNarrow).FontSize(8);
                             });
-                            stampRow.RelativeItem(); // flexible space right - centers the 3 stamps
                         });
                     });
                     page.Footer().AlignCenter().Text(x =>

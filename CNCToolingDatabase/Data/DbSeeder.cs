@@ -1805,6 +1805,36 @@ public static class DbSeeder
             context.PartNumbers.Add(new PartNumber { Name = name, Description = desc, ProjectCodeId = pcId, PartRev = partRev, DrawingRev = drawRev, MaterialSpecId = msId, RefDrawing = refDrawing ?? "", Sequence = sequence, CreatedDate = DateTime.UtcNow, CreatedBy = "system", IsActive = true });
         }
         context.SaveChanges();
+        ResetPartImages();
+    }
+    
+    /// <summary>Clears all part images and reloads from Data\PART_IMAGE_SEED\. Call on Part Number or Reset All Settings.</summary>
+    public static void ResetPartImages()
+    {
+        var baseDir = AppContext.BaseDirectory;
+        var partImageDir = Path.Combine(baseDir, "Data", "PART_IMAGE");
+        var seedDir = Path.Combine(baseDir, "Data", "PART_IMAGE_SEED");
+        if (!Directory.Exists(partImageDir))
+            Directory.CreateDirectory(partImageDir);
+        foreach (var ext in new[] { "*.png", "*.jpg", "*.jpeg", "*.gif" })
+        {
+            foreach (var f in Directory.EnumerateFiles(partImageDir, ext))
+            {
+                try { File.Delete(f); } catch { }
+            }
+        }
+        if (Directory.Exists(seedDir))
+        {
+            foreach (var f in Directory.EnumerateFiles(seedDir))
+            {
+                try
+                {
+                    var dest = Path.Combine(partImageDir, Path.GetFileName(f));
+                    File.Copy(f, dest, overwrite: true);
+                }
+                catch { }
+            }
+        }
     }
 
     /// <summary>Load Master Tool Code rows from MASTER - TOOL CODE.xlsx. Columns: System Tool Name, Tool Description, Procurement channel, Tool Ø (DC), Flute / Cutting edge length (APMXS) cutting width (CW), Corner rad.</summary>
