@@ -487,8 +487,9 @@ public static class DbSeeder
         {
             if (context.PartNumbers != null && !context.PartNumbers.Any())
             {
-                var projectCodes = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>())
-                    .GroupBy(p => p.Code.Trim(), StringComparer.OrdinalIgnoreCase)
+                var projectCodesList = (context.ProjectCodes ?? Enumerable.Empty<ProjectCode>()).ToList();
+                var projectCodes = projectCodesList
+                    .GroupBy(p => (p.Code ?? "").Trim(), StringComparer.OrdinalIgnoreCase)
                     .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
                 var materialSpecs = (context.MaterialSpecs ?? Enumerable.Empty<MaterialSpec>()).ToList();
                 var matBySpec = materialSpecs.GroupBy(m => (m.Spec ?? "").Trim(), StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
@@ -519,6 +520,8 @@ public static class DbSeeder
         }
         catch { }
         
+        try { RepairPartNumberProjectCodes(context); } catch { }
+        
         if (!context.ToolListHeaders.Any())
             LoadAndSeedToolLists(context);
         
@@ -542,6 +545,32 @@ public static class DbSeeder
             }
             context.SaveChanges();
         }
+    }
+
+    /// <summary>Repair PartNumbers with null ProjectCodeId by looking up Project Code from MASTER - PART NUMBERS.xlsx. Runs on startup to fix first-run or migrated DBs.</summary>
+    private static void RepairPartNumberProjectCodes(ApplicationDbContext context)
+    {
+        if (context.PartNumbers == null || context.ProjectCodes == null) return;
+        var toRepair = context.PartNumbers.Where(p => p.ProjectCodeId == null).ToList();
+        if (toRepair.Count == 0) return;
+        var partData = GetPartNumberSeedData()
+            .Where(x => !string.IsNullOrWhiteSpace(x.Name) && !string.IsNullOrWhiteSpace(x.ProjectCode))
+            .GroupBy(x => x.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().ProjectCode.Trim(), StringComparer.OrdinalIgnoreCase);
+        var projectCodes = context.ProjectCodes
+            .ToList()
+            .GroupBy(p => (p.Code ?? "").Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+        var repaired = 0;
+        foreach (var pn in toRepair)
+        {
+            var name = pn.Name?.Trim() ?? "";
+            if (string.IsNullOrEmpty(name) || !partData.TryGetValue(name, out var pcCode)) continue;
+            if (string.IsNullOrEmpty(pcCode) || !projectCodes.TryGetValue(pcCode, out var pcId)) continue;
+            pn.ProjectCodeId = pcId;
+            repaired++;
+        }
+        if (repaired > 0) context.SaveChanges();
     }
 
     private static string NormalizeModelKey(string? s)
@@ -707,9 +736,28 @@ public static class DbSeeder
         return result;
     }
 
+    /// <summary>Resolve path to MASTER - PROJECT CODE.xlsx: try output Data folder, then current directory, then project Data folder.</summary>
+    private static string ResolveProjectCodeMasterPath()
+    {
+        const string fileName = "MASTER - PROJECT CODE.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+    }
+
     private static (string Code, string Description, string Project, bool IsActive)[] GetProjectCodeSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - PROJECT CODE.xlsx");
+        var path = ResolveProjectCodeMasterPath();
         return LoadProjectCodeFromExcel(path).ToArray();
     }
 
