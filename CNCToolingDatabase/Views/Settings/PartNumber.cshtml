@@ -182,6 +182,19 @@
                     <label for="refDrawing">Ref. Drawing</label>
                     <input type="text" id="refDrawing" class="form-control" placeholder="e.g. V12345, 351-2261, D123456" />
                 </div>
+                <div class="form-group" id="partImageGroup" style="display: none;">
+                    <label>Part Image</label>
+                    <div class="part-image-container">
+                        <div class="part-image-box">
+                            <img id="partImagePreview" src="" alt="Part image" style="display: none; width: 100%; height: 100%; object-fit: contain;" />
+                            <p id="partImageNoImage" style="margin: 0; color: #666; font-size: 0.9rem;">No part image</p>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            <input type="file" id="partImageFile" accept=".jpg,.jpeg,.png,.gif,image/jpeg,image/png,image/gif" class="form-control" style="margin-bottom: 0.5rem;" />
+                            <button type="button" class="btn btn-primary btn-sm" id="savePartImageBtn">Save Part Image</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group" id="isActiveGroup" style="display: none;">
                     <label>
                         <input type="checkbox" id="isActive" /> Active
@@ -273,6 +286,7 @@
         fillProjectCodeOptions(0);
         fillMaterialSpecOptions(0);
         document.getElementById('isActiveGroup').style.display = 'none';
+        document.getElementById('partImageGroup').style.display = 'none';
         document.getElementById('itemModal').classList.add('active');
     }
     
@@ -297,6 +311,15 @@
         fillProjectCodeOptions(d.projectCodeId);
         fillMaterialSpecOptions(d.materialSpecId);
         document.getElementById('isActiveGroup').style.display = 'block';
+        document.getElementById('partImageGroup').style.display = 'block';
+        document.getElementById('partImageFile').value = '';
+        var partImg = document.getElementById('partImagePreview');
+        var partNoImg = document.getElementById('partImageNoImage');
+        partImg.style.display = 'none';
+        partNoImg.style.display = 'block';
+        partImg.onerror = function() { partImg.style.display = 'none'; partNoImg.style.display = 'block'; };
+        partImg.onload = function() { partImg.style.display = ''; partNoImg.style.display = 'none'; };
+        partImg.src = '/Settings/PartImage?partNumber=' + encodeURIComponent(d.name) + '&t=' + Date.now();
         document.getElementById('itemModal').classList.add('active');
     }
     
@@ -330,6 +353,46 @@
         document.getElementById('itemModal').classList.remove('active');
         document.getElementById('nameValue').disabled = false;
     }
+    
+    document.getElementById('partImageFile').addEventListener('change', function() {
+        var file = this.files && this.files[0];
+        var img = document.getElementById('partImagePreview');
+        var noImg = document.getElementById('partImageNoImage');
+        if (!file || !file.type.startsWith('image/')) {
+            img.style.display = 'none';
+            noImg.style.display = 'block';
+            return;
+        }
+        var r = new FileReader();
+        r.onload = function() { img.src = r.result; img.style.display = ''; noImg.style.display = 'none'; };
+        r.readAsDataURL(file);
+    });
+    
+    document.getElementById('savePartImageBtn').addEventListener('click', function() {
+        var nameVal = document.getElementById('nameValue').value;
+        var fileInput = document.getElementById('partImageFile');
+        if (!nameVal) { alert('Part number is required.'); return; }
+        var file = fileInput.files && fileInput.files[0];
+        if (!file) { alert('Please select an image file (jpg, jpeg, png, gif) first.'); return; }
+        var fd = new FormData();
+        fd.append('partNumber', nameVal);
+        fd.append('partImage', file);
+        var btn = this;
+        btn.disabled = true;
+        fetch('/Settings/UpdatePartImage', { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                btn.disabled = false;
+                if (data.success) {
+                    alert(data.message);
+                    document.getElementById('partImagePreview').src = '/Settings/PartImage?partNumber=' + encodeURIComponent(nameVal) + '&t=' + Date.now();
+                    fileInput.value = '';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(function(e) { btn.disabled = false; alert('Error: ' + e.message); });
+    });
     
     document.getElementById('itemForm').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -367,6 +430,23 @@
     });
 </script>
 }
+
+<style>
+.part-image-container { width: 100%; }
+.part-image-box {
+    width: 100%;
+    aspect-ratio: 1;
+    max-width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.part-image-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+</style>
 
 @functions {
     string GetSortIcon(string column, string? sortColumn, string? sortDirection)

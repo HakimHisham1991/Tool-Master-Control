@@ -1196,6 +1196,54 @@ public class SettingsController : Controller
         return Json(new { success = true, message = "Part number deleted successfully" });
     }
     
+    [HttpGet]
+    public IActionResult PartImage(string partNumber)
+    {
+        if (string.IsNullOrWhiteSpace(partNumber))
+            return NotFound();
+        var baseDir = Path.Combine(AppContext.BaseDirectory, "Data", "PART_IMAGE");
+        foreach (var ext in new[] { ".png", ".jpg", ".jpeg", ".gif" })
+        {
+            var p = Path.Combine(baseDir, partNumber + ext);
+            if (System.IO.File.Exists(p))
+                return PhysicalFile(Path.GetFullPath(p), ext switch { ".png" => "image/png", ".jpg" or ".jpeg" => "image/jpeg", ".gif" => "image/gif", _ => "image/png" });
+        }
+        return NotFound();
+    }
+    
+    private static readonly HashSet<string> AllowedPartImageContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg", "image/jpg", "image/png", "image/gif"
+    };
+    
+    [HttpPost]
+    public async Task<IActionResult> UpdatePartImage(string partNumber, IFormFile? partImage)
+    {
+        if (string.IsNullOrWhiteSpace(partNumber))
+            return Json(new { success = false, message = "Part number is required" });
+        if (partImage == null || partImage.Length == 0)
+            return Json(new { success = false, message = "Please select an image file (jpg, jpeg, png, gif)." });
+        var contentType = partImage.ContentType ?? "";
+        if (!AllowedPartImageContentTypes.Contains(contentType))
+            return Json(new { success = false, message = "Invalid file type. Allowed: jpg, jpeg, png, gif." });
+        const int maxBytes = 5 * 1024 * 1024;
+        if (partImage.Length > maxBytes)
+            return Json(new { success = false, message = "Image must be 5 MB or smaller." });
+        var baseDir = Path.Combine(AppContext.BaseDirectory, "Data", "PART_IMAGE");
+        Directory.CreateDirectory(baseDir);
+        var ext = contentType.Contains("jpeg", StringComparison.OrdinalIgnoreCase) ? ".jpg" : contentType.Contains("png") ? ".png" : contentType.Contains("gif") ? ".gif" : ".jpg";
+        foreach (var oldExt in new[] { ".png", ".jpg", ".jpeg", ".gif" })
+        {
+            var oldPath = Path.Combine(baseDir, partNumber + oldExt);
+            if (System.IO.File.Exists(oldPath))
+                try { System.IO.File.Delete(oldPath); } catch { }
+        }
+        var newPath = Path.Combine(baseDir, partNumber + ext);
+        using (var fs = new FileStream(newPath, FileMode.Create))
+            await partImage.CopyToAsync(fs);
+        return Json(new { success = true, message = "Part image saved successfully." });
+    }
+    
     [HttpPost]
     public IActionResult ResetPartNumber()
     {
