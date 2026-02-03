@@ -320,6 +320,8 @@ public static class DbSeeder
         }
         catch { }
         
+        try { RepairMachineNameMachineModels(context); } catch { }
+        
         try
         {
             if (context.MachineWorkcenters != null && !context.MachineWorkcenters.Any())
@@ -573,6 +575,38 @@ public static class DbSeeder
         if (repaired > 0) context.SaveChanges();
     }
 
+    /// <summary>Repair MachineNames with null MachineModelId by looking up from MASTER - MACHINE NAME.xlsx and workcenter fallback. Runs on startup to fix first-run or migrated DBs.</summary>
+    private static void RepairMachineNameMachineModels(ApplicationDbContext context)
+    {
+        if (context.MachineNames == null || context.MachineModels == null) return;
+        var toRepair = context.MachineNames.Where(m => m.MachineModelId == null).ToList();
+        if (toRepair.Count == 0) return;
+        var nameData = GetMachineNameSeedData()
+            .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+            .GroupBy(x => x.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => (g.First().MachineModel?.Trim() ?? "", g.First().Workcenter?.Trim() ?? ""), StringComparer.OrdinalIgnoreCase);
+        var workcenterToModel = GetMachineWorkcenterSeedData()
+            .Where(x => !string.IsNullOrWhiteSpace(x.MachineModel))
+            .ToDictionary(x => x.Workcenter.Trim(), x => x.MachineModel.Trim(), StringComparer.OrdinalIgnoreCase);
+        var modelToId = context.MachineModels
+            .ToList()
+            .GroupBy(m => NormalizeModelKey(m.Model), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+        var repaired = 0;
+        foreach (var mn in toRepair)
+        {
+            var name = mn.Name?.Trim() ?? "";
+            if (string.IsNullOrEmpty(name) || !nameData.TryGetValue(name, out var modelWorkcenter)) continue;
+            var (modelStr, workcenter) = modelWorkcenter;
+            if (string.IsNullOrWhiteSpace(modelStr) && !string.IsNullOrWhiteSpace(workcenter) && workcenterToModel.TryGetValue(workcenter, out var fallback))
+                modelStr = fallback;
+            if (string.IsNullOrWhiteSpace(modelStr) || !modelToId.TryGetValue(NormalizeModelKey(modelStr), out var mid)) continue;
+            mn.MachineModelId = mid;
+            repaired++;
+        }
+        if (repaired > 0) context.SaveChanges();
+    }
+
     private static string NormalizeModelKey(string? s)
     {
         if (string.IsNullOrWhiteSpace(s)) return "";
@@ -630,8 +664,27 @@ public static class DbSeeder
 
     private static (string Name, string Serial, string Workcenter, string MachineModel, bool IsActive)[] GetMachineNameSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - MACHINE NAME.xlsx");
+        var path = ResolveMachineNameMasterPath();
         return LoadMachineNameFromExcel(path).ToArray();
+    }
+
+    /// <summary>Resolve path to MASTER - MACHINE NAME.xlsx.</summary>
+    private static string ResolveMachineNameMasterPath()
+    {
+        const string fileName = "MASTER - MACHINE NAME.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return Path.Combine(AppContext.BaseDirectory, "Data", fileName);
     }
 
     /// <summary>Load Machine Model rows from MASTER - MACHINE MODEL.xlsx. Columns: Model, Description (or Machine Builder), Type, Controller, Status (ACTIVE/INACTIVE).</summary>
@@ -685,8 +738,27 @@ public static class DbSeeder
 
     private static (string Model, string Description, string Type, string Controller, bool IsActive)[] GetMachineModelSeedData()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - MACHINE MODEL.xlsx");
+        var path = ResolveMachineModelMasterPath();
         return LoadMachineModelFromExcel(path).ToArray();
+    }
+
+    /// <summary>Resolve path to MASTER - MACHINE MODEL.xlsx.</summary>
+    private static string ResolveMachineModelMasterPath()
+    {
+        const string fileName = "MASTER - MACHINE MODEL.xlsx";
+        var baseData = Path.Combine(AppContext.BaseDirectory, "Data", fileName);
+        if (File.Exists(baseData)) return baseData;
+        var currentData = Path.Combine(Directory.GetCurrentDirectory(), "Data", fileName);
+        if (File.Exists(currentData)) return currentData;
+        var dir = AppContext.BaseDirectory;
+        for (int i = 0; i < 6 && !string.IsNullOrEmpty(dir); i++)
+        {
+            var candidate = Path.Combine(dir, "Data", fileName);
+            if (File.Exists(candidate)) return candidate;
+            var parent = Directory.GetParent(dir);
+            dir = parent?.FullName;
+        }
+        return Path.Combine(AppContext.BaseDirectory, "Data", fileName);
     }
 
     /// <summary>Load Project Code rows from MASTER - PROJECT CODE.xlsx. Columns: Code, Description (or Customer), Project, Status (ACTIVE/INACTIVE).</summary>
