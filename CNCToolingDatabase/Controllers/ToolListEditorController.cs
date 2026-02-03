@@ -573,7 +573,8 @@ public class ToolListEditorController : Controller
                         var headerColor = "#CCFFFF";
                         var borderThin = 0.5f;
                         var borderColor = Colors.Black;
-                        // Image row table - ABOVE header, height 3x normal (~60pt)
+                        // Image row table - fixed height, images fit within cell (aspect ratio preserved)
+                        const float imageRowHeight = 45f;
                         content.Item().Table(imgTable =>
                         {
                             imgTable.ColumnsDefinition(columns =>
@@ -592,13 +593,13 @@ public class ToolListEditorController : Controller
                                 columns.RelativeColumn();
                             });
                             imgTable.Cell().ColumnSpan(11).Border(borderThin).BorderColor(borderColor).Padding(2)
-                                .MinHeight(60).AlignCenter().AlignMiddle().Element(e =>
+                                .Height(imageRowHeight).AlignCenter().AlignMiddle().Element(e =>
                                 {
                                     if (partImagePath != null && System.IO.File.Exists(partImagePath))
                                         e.Image(partImagePath).FitArea();
                                 });
                             imgTable.Cell().Border(borderThin).BorderColor(borderColor).Padding(2)
-                                .MinHeight(60).AlignCenter().AlignMiddle().Element(e =>
+                                .Height(imageRowHeight).AlignCenter().AlignMiddle().Element(e =>
                                 {
                                     if (System.IO.File.Exists(toolSpecsPath))
                                         e.Image(toolSpecsPath).FitArea();
