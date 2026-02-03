@@ -572,7 +572,9 @@
             const modelsResponse = await fetch('/ToolListEditor/GetMachineModels');
             const models = await modelsResponse.json();
             const modelSelect = document.getElementById('machineModel');
+            const modelValues = new Set();
             models.forEach(m => {
+                modelValues.add(m.value);
                 const option = document.createElement('option');
                 option.value = m.value;
                 option.textContent = m.text;
@@ -581,6 +583,15 @@
                 }
                 modelSelect.appendChild(option);
             });
+            // If current value exists (e.g. from Excel import) but not in MachineModels settings, add it so it displays correctly
+            if (currentMachineModel && !modelValues.has(currentMachineModel)) {
+                const opt = document.createElement('option');
+                opt.value = currentMachineModel;
+                opt.textContent = currentMachineModel;
+                opt.selected = true;
+                modelSelect.appendChild(opt);
+            }
+            modelSelect.value = currentMachineModel || '';
         } catch (error) {
             console.error('Error loading machine models:', error);
         }
