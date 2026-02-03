@@ -439,9 +439,9 @@
     const currentPartNumber = '@((Model.PartNumber ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentPartDescription = '@((Model.PartDescription ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentProjectCode = '@Model.ProjectCode';
-    const currentMachineName = '@Model.MachineName';
-    const currentMachineWorkcenter = '@Model.MachineWorkcenter';
-    const currentMachineModel = '@((Model.MachineModel ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
+    const currentMachineName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MachineName ?? ""));
+    const currentMachineWorkcenter = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MachineWorkcenter ?? ""));
+    const currentMachineModel = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MachineModel ?? ""));
     const currentApprovedBy = '@((Model.ApprovedBy ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentCamProgrammer = '@((Model.CamProgrammer ?? "").Replace("\\", "\\\\").Replace("'", "\\'"))';
     const currentMaterialSpecId = '@(Model.MaterialSpecId?.ToString() ?? "")';
