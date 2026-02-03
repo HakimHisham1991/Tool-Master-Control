@@ -142,6 +142,13 @@
     </div>
 </div>
 
+<div class="part-image-box-container" id="partImageBoxContainer">
+    <div class="part-image-box" id="partImageBox">
+        <img id="partImageImg" alt="Part image" style="display: none; width: 100%; height: 100%; object-fit: contain;" />
+        <span id="partImagePlaceholder" class="part-image-placeholder">No part image (select Part Number and add image in Settings &gt; Part Number Management)</span>
+    </div>
+</div>
+
 <div class="table-container editable-table">
     <table class="data-table" id="detailsTable">
         <thead>
@@ -322,6 +329,33 @@
 <input type="hidden" id="isReadOnly" value="@Model.IsReadOnly.ToString().ToLower()" />
 
 <style>
+.part-image-box-container {
+    width: 100%;
+    margin-bottom: 0.75rem;
+}
+.part-image-box {
+    width: 100%;
+    height: 126px; /* 3x typical table row (~42px) */
+    min-height: 120px;
+    border: 1px solid var(--border, #e0e0e0);
+    border-radius: 8px;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.part-image-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.part-image-placeholder {
+    color: #888;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 0.5rem;
+}
 .verified-by-wrapper {
     margin-top: 2rem;
     padding: 1rem 0;
@@ -619,6 +653,30 @@
         } catch (error) {
             console.error('Error loading consumable tool descriptions:', error);
         }
+        
+        refreshPartImage();
+    }
+    
+    function refreshPartImage() {
+        const partNumber = document.getElementById('partNumber').value;
+        const img = document.getElementById('partImageImg');
+        const placeholder = document.getElementById('partImagePlaceholder');
+        if (!partNumber) {
+            img.style.display = 'none';
+            img.src = '';
+            placeholder.style.display = 'inline';
+            return;
+        }
+        const url = '/Settings/PartImage?partNumber=' + encodeURIComponent(partNumber) + '&t=' + Date.now();
+        img.onload = function() {
+            img.style.display = '';
+            placeholder.style.display = 'none';
+        };
+        img.onerror = function() {
+            img.style.display = 'none';
+            placeholder.style.display = 'inline';
+        };
+        img.src = url;
     }
     
     let consumableOptions = [];
@@ -812,6 +870,7 @@
         } else if (partDescriptionInput) {
             partDescriptionInput.value = '';
         }
+        refreshPartImage();
     });
     
     function updateToolListName() {
