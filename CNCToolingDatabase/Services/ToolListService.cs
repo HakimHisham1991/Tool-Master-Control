@@ -42,10 +42,13 @@ public class ToolListService : IToolListService
         var headers = await _toolListRepository.GetAllHeadersAsync();
         
         // Project Code: resolve from Part Number Management (Settings > Part Number Management) when available
-        var partNumberToProjectCode = await _context.PartNumbers
-            .Include(p => p.ProjectCode)
-            .Where(p => p.ProjectCode != null)
-            .ToDictionaryAsync(p => p.Name.Trim(), p => p.ProjectCode!.Code, StringComparer.OrdinalIgnoreCase);
+        var partNumberList = _context.PartNumbers != null
+            ? await _context.PartNumbers.Include(p => p.ProjectCode).Where(p => p.ProjectCode != null).ToListAsync()
+            : new List<PartNumber>();
+        var partNumberToProjectCode = partNumberList
+            .GroupBy(p => (p.Name ?? "").Trim(), StringComparer.OrdinalIgnoreCase)
+            .Where(g => !string.IsNullOrEmpty(g.Key))
+            .ToDictionary(g => g.Key, g => g.First().ProjectCode!.Code, StringComparer.OrdinalIgnoreCase);
         string GetProjectCode(ToolListHeader h) =>
             !string.IsNullOrEmpty(h.PartNumber) && partNumberToProjectCode.TryGetValue(h.PartNumber.Trim(), out var pc) ? pc : (h.ProjectCode ?? "");
         
