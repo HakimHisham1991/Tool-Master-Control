@@ -1,11 +1,11 @@
 using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
-using QuestPDF.Infrastructure;
 using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Repositories;
 using CNCToolingDatabase.Services;
 using CNCToolingDatabase.Middleware;
+using CNCToolingDatabase.Helpers;
 using Microsoft.Extensions.FileProviders;
 
 static bool ColumnExists(DbConnection conn, string table, string column)
@@ -27,7 +27,8 @@ static void EnsureColumn(DbConnection conn, string table, string column, string 
     cmd.ExecuteNonQuery();
 }
 
-QuestPDF.Settings.License = LicenseType.Community;
+
+PdfFontBootstrap.EnsureInitialized();
 
 var builder = WebApplication.CreateBuilder(args);
 

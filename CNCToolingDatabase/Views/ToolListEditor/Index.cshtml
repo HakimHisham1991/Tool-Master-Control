@@ -56,13 +56,13 @@
             Close
         </button>
     </div>
-    <div class="toolbar-right">
+    <div class="toolbar-right" id="exportToolbar">
         @if (Model.Id.HasValue)
         {
-            <a href="/ToolListEditor/Export?id=@Model.Id&format=excel" class="btn btn-secondary btn-sm">Excel</a>
-            <a href="/ToolListEditor/Export?id=@Model.Id&format=pdf" class="btn btn-secondary btn-sm">PDF</a>
-            <a href="/ToolListEditor/Export?id=@Model.Id&format=csv" class="btn btn-secondary btn-sm">CSV</a>
-            <a href="/ToolListEditor/Export?id=@Model.Id&format=txt" class="btn btn-secondary btn-sm">TXT</a>
+            <a href="@Url.Action("Export", "ToolListEditor", new { id = Model.Id, format = "excel" })" class="btn btn-secondary btn-sm" data-export-format="excel">Excel</a>
+            <a href="@Url.Action("Export", "ToolListEditor", new { id = Model.Id, format = "pdf" })" class="btn btn-secondary btn-sm" data-export-format="pdf">PDF</a>
+            <a href="@Url.Action("Export", "ToolListEditor", new { id = Model.Id, format = "csv" })" class="btn btn-secondary btn-sm" data-export-format="csv">CSV</a>
+            <a href="@Url.Action("Export", "ToolListEditor", new { id = Model.Id, format = "txt" })" class="btn btn-secondary btn-sm" data-export-format="txt">TXT</a>
         }
     </div>
 </div>
@@ -451,6 +451,23 @@
     let hasUnsavedChanges = false;
     let lockReleased = false;
     let heartbeatInterval = null;
+
+    function refreshExportToolbar() {
+        const id = document.getElementById('toolListId')?.value;
+        const toolbar = document.getElementById('exportToolbar');
+        if (!toolbar || !id) return;
+        const formats = [
+            { format: 'excel', label: 'Excel' },
+            { format: 'pdf', label: 'PDF' },
+            { format: 'csv', label: 'CSV' },
+            { format: 'txt', label: 'TXT' }
+        ];
+        toolbar.innerHTML = formats.map(item => {
+            const url = '/ToolListEditor/Export?id=' + encodeURIComponent(id) + '&format=' + encodeURIComponent(item.format);
+            return '<a href="' + url + '" class="btn btn-secondary btn-sm" data-export-format="' + item.format + '">' + item.label + '</a>';
+        }).join('');
+    }
+    refreshExportToolbar();
     
     // Populate dropdowns on page load
     async function populateDropdowns() {
