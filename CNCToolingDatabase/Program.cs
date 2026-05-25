@@ -54,6 +54,13 @@ builder.Services.AddScoped<IToolCodeService, ToolCodeService>();
 builder.Services.AddScoped<IToolCodeUniqueService, ToolCodeUniqueService>();
 builder.Services.AddScoped<IToolListService, ToolListService>();
 
+// Standalone/local binding only — shared hosts (e.g. MonsterASP) preconfigure ASPNETCORE_URLS.
+if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -109,8 +116,5 @@ app.UseCustomAuthentication();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
