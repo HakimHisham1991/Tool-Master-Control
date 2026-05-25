@@ -381,6 +381,24 @@ public class ToolListEditorController : Controller
             .ToList();
         return Json(distinct);
     }
+
+    /// <summary>Assembly Holder tool descriptions from Master Tool Code Database. Used for Tool Holder and Arbor Description dropdowns in Create/Edit Tool List.</summary>
+    [HttpGet]
+    public async Task<IActionResult> GetAssemblyHolderDescriptions()
+    {
+        var rows = await _context.ToolCodeUniques
+            .AsNoTracking()
+            .Where(t => t.ItemCategory == "Assembly Holder")
+            .OrderBy(t => t.ConsumableCode)
+            .Select(t => new { value = t.ConsumableCode, text = t.ConsumableCode })
+            .ToListAsync();
+        var distinct = rows
+            .GroupBy(x => x.value, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new { value = g.Key, text = g.Key })
+            .OrderBy(x => x.value)
+            .ToList();
+        return Json(distinct);
+    }
     
     [HttpGet]
     public async Task<IActionResult> Export(int id, string format)

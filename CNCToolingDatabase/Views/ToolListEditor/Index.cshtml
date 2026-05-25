@@ -191,12 +191,30 @@
                         }
                     </td>
                     <td><input type="text" class="cell-input" data-field="supplier" value="@detail.Supplier" readonly /></td>
-                    <td><input type="text" class="cell-input" data-field="holderExtensionCode" value="@detail.HolderExtensionCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td class="assembly-holder-cell">
+                        @if (Model.IsReadOnly)
+                        {
+                            <input type="text" class="cell-input" data-field="holderExtensionCode" value="@detail.HolderExtensionCode" readonly />
+                        }
+                        else
+                        {
+                            <select class="cell-input cell-select" data-field="holderExtensionCode" data-current="@detail.HolderExtensionCode"></select>
+                        }
+                    </td>
                     <td><input type="number" step="0.01" class="cell-input" data-field="diameter" value="@(detail.Diameter?.ToString("0.##") ?? "")" readonly /></td>
                     <td><input type="number" step="0.01" class="cell-input" data-field="fluteLength" value="@(detail.FluteLength?.ToString("0.##") ?? "")" readonly /></td>
                     <td><input type="number" step="0.01" class="cell-input" data-field="protrusionLength" value="@(detail.ProtrusionLength?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" value="@(detail.CornerRadius?.ToString("0.##") ?? "")" readonly /></td>
-                    <td><input type="text" class="cell-input" data-field="arborCode" value="@detail.ArborCode" @(Model.IsReadOnly ? "readonly" : "") /></td>
+                    <td class="assembly-holder-cell">
+                        @if (Model.IsReadOnly)
+                        {
+                            <input type="text" class="cell-input" data-field="arborCode" value="@detail.ArborCode" readonly />
+                        }
+                        else
+                        {
+                            <select class="cell-input cell-select" data-field="arborCode" data-current="@detail.ArborCode"></select>
+                        }
+                    </td>
                     <td><input type="number" step="0.01" class="cell-input" data-field="toolPathTimeMinutes" value="@(detail.ToolPathTimeMinutes?.ToString("0.##") ?? "")" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     <td><input type="text" class="cell-input" data-field="remarks" value="@(detail.Remarks ?? string.Empty)" @(Model.IsReadOnly ? "readonly" : "") /></td>
                     @if (!Model.IsReadOnly)
@@ -681,6 +699,17 @@
         } catch (error) {
             console.error('Error loading consumable tool descriptions:', error);
         }
+
+        // Tool Holder and Arbor Description (Assembly Holder items from Master Tool Code Database)
+        try {
+            const r = await fetch('/ToolListEditor/GetAssemblyHolderDescriptions');
+            assemblyHolderOptions = await r.json();
+            document.querySelectorAll('#detailsBody select[data-field="holderExtensionCode"], #detailsBody select[data-field="arborCode"]').forEach(sel => {
+                fillAssemblyHolderSelect(sel, sel.dataset.current || '');
+            });
+        } catch (error) {
+            console.error('Error loading assembly holder descriptions:', error);
+        }
         
         refreshPartImage();
     }
@@ -708,6 +737,31 @@
     }
     
     let consumableOptions = [];
+    let assemblyHolderOptions = [];
+    
+    function fillAssemblyHolderSelect(sel, currentVal) {
+        sel.innerHTML = '';
+        const opt0 = document.createElement('option');
+        opt0.value = '';
+        opt0.textContent = '-- Select --';
+        sel.appendChild(opt0);
+        const values = new Set();
+        assemblyHolderOptions.forEach(o => {
+            if (values.has(o.value)) return;
+            values.add(o.value);
+            const opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.text;
+            sel.appendChild(opt);
+        });
+        if (currentVal && !values.has(currentVal)) {
+            const opt = document.createElement('option');
+            opt.value = currentVal;
+            opt.textContent = currentVal;
+            sel.appendChild(opt);
+        }
+        sel.value = currentVal || '';
+    }
     
     function fillConsumableSelect(sel, currentVal) {
         sel.innerHTML = '';
@@ -921,18 +975,20 @@
             <td><input type="text" class="cell-input" data-field="toolDescription" /></td>
             <td class="consumable-cell"><select class="cell-input cell-select" data-field="consumableCode"></select></td>
             <td><input type="text" class="cell-input" data-field="supplier" readonly /></td>
-            <td><input type="text" class="cell-input" data-field="holderExtensionCode" /></td>
+            <td class="assembly-holder-cell"><select class="cell-input cell-select" data-field="holderExtensionCode"></select></td>
             <td><input type="number" step="0.01" class="cell-input" data-field="diameter" readonly /></td>
             <td><input type="number" step="0.01" class="cell-input" data-field="fluteLength" readonly /></td>
             <td><input type="number" step="0.01" class="cell-input" data-field="protrusionLength" /></td>
             <td><input type="number" step="0.01" class="cell-input" data-field="cornerRadius" readonly /></td>
-            <td><input type="text" class="cell-input" data-field="arborCode" /></td>
+            <td class="assembly-holder-cell"><select class="cell-input cell-select" data-field="arborCode"></select></td>
             <td><input type="number" step="0.01" class="cell-input" data-field="toolPathTimeMinutes" /></td>
             <td><input type="text" class="cell-input" data-field="remarks" /></td>
             <td><button type="button" class="btn-icon" onclick="removeRow(this)" title="Remove row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></td>
         `;
         tbody.appendChild(row);
         fillConsumableSelect(row.querySelector('[data-field="consumableCode"]'), null);
+        fillAssemblyHolderSelect(row.querySelector('[data-field="holderExtensionCode"]'), null);
+        fillAssemblyHolderSelect(row.querySelector('[data-field="arborCode"]'), null);
         hasUnsavedChanges = true;
         row.querySelectorAll('.cell-input').forEach(input => {
             input.addEventListener('change', () => hasUnsavedChanges = true);

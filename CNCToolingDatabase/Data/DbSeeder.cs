@@ -140,6 +140,7 @@ public static class DbSeeder
                         Diameter REAL NOT NULL,
                         FluteLength REAL NOT NULL,
                         CornerRadius REAL NOT NULL,
+                        ItemCategory TEXT NOT NULL DEFAULT '',
                         CreatedDate TEXT NOT NULL,
                         LastModifiedDate TEXT NOT NULL
                     );
@@ -532,7 +533,7 @@ public static class DbSeeder
         {
             var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - TOOL CODE.xlsx");
             var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            foreach (var (systemName, consumable, supplier, dia, flute, radius) in LoadToolCodeUniqueFromExcel(excelPath))
+            foreach (var (systemName, consumable, supplier, dia, flute, radius, itemCategory) in LoadToolCodeUniqueFromExcel(excelPath))
             {
                 context.ToolCodeUniques.Add(new ToolCodeUnique
                 {
@@ -542,12 +543,15 @@ public static class DbSeeder
                     Diameter = dia,
                     FluteLength = flute,
                     CornerRadius = radius,
+                    ItemCategory = itemCategory,
                     CreatedDate = baseTime,
                     LastModifiedDate = baseTime
                 });
             }
             context.SaveChanges();
         }
+
+        try { BackfillToolCodeUniqueItemCategories(context); } catch { }
     }
 
     /// <summary>Repair PartNumbers with null ProjectCodeId by looking up Project Code from MASTER - PART NUMBERS.xlsx. Runs on startup to fix first-run or migrated DBs.</summary>
@@ -1791,10 +1795,10 @@ public static class DbSeeder
         }
     }
 
-    /// <summary>Load Master Tool Code rows from MASTER - TOOL CODE.xlsx. Columns: System Tool Name, Tool Description, Procurement channel, Tool Ø (DC), Flute / Cutting edge length (APMXS) cutting width (CW), Corner rad.</summary>
-    private static List<(string SystemToolName, string ConsumableCode, string Supplier, decimal Diameter, decimal FluteLength, decimal CornerRadius)> LoadToolCodeUniqueFromExcel(string path)
+    /// <summary>Load Master Tool Code rows from MASTER - TOOL CODE.xlsx. Columns: System Tool Name, Tool Description, Item Category, Procurement channel, Tool Ø (DC), Flute / Cutting edge length (APMXS) cutting width (CW), Corner rad.</summary>
+    private static List<(string SystemToolName, string ConsumableCode, string Supplier, decimal Diameter, decimal FluteLength, decimal CornerRadius, string ItemCategory)> LoadToolCodeUniqueFromExcel(string path)
     {
-        var result = new List<(string, string, string, decimal, decimal, decimal)>();
+        var result = new List<(string, string, string, decimal, decimal, decimal, string)>();
         if (!File.Exists(path)) return result;
         using var workbook = new XLWorkbook(path);
         var ws = workbook.Worksheets.FirstOrDefault();
@@ -1804,6 +1808,7 @@ public static class DbSeeder
         if (rows < 2) return result;
         int colSystemToolName = ExcelHelper.GetColumn(ws, cols, "System Tool Name");
         int colToolDescription = ExcelHelper.GetColumn(ws, cols, "Tool Description");
+        int colItemCategory = ExcelHelper.GetColumn(ws, cols, "Item Category");
         int colProcurementChannel = ExcelHelper.GetColumn(ws, cols, "Procurement channel");
         int colToolDiameter = ExcelHelper.GetColumn(ws, cols, "Tool Ø (DC)");
         int colFluteLength = ExcelHelper.GetColumn(ws, cols, "Flute / Cutting edge length (APMXS) cutting width (CW)");
@@ -1813,14 +1818,40 @@ public static class DbSeeder
         {
             var systemName = ExcelHelper.GetString(ws, r, colSystemToolName);
             var consumable = ExcelHelper.GetString(ws, r, colToolDescription);
+            var itemCategory = ExcelHelper.GetString(ws, r, colItemCategory);
             var supplier = ExcelHelper.GetString(ws, r, colProcurementChannel);
             var diameter = ExcelHelper.ParseDecimal(ws, r, colToolDiameter);
             var flute = ExcelHelper.ParseDecimal(ws, r, colFluteLength);
             var radius = ExcelHelper.ParseDecimal(ws, r, colCornerRad);
             if (string.IsNullOrWhiteSpace(systemName) && string.IsNullOrWhiteSpace(consumable)) continue;
-            result.Add((systemName ?? "", consumable ?? "", supplier ?? "", diameter, flute, radius));
+            result.Add((systemName ?? "", consumable ?? "", supplier ?? "", diameter, flute, radius, itemCategory ?? ""));
         }
         return result;
+    }
+
+    /// <summary>Sync Item Category from MASTER - TOOL CODE.xlsx for existing ToolCodeUniques rows.</summary>
+    public static void BackfillToolCodeUniqueItemCategories(ApplicationDbContext context)
+    {
+        if (context.ToolCodeUniques == null) return;
+        var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - TOOL CODE.xlsx");
+        var excelRows = LoadToolCodeUniqueFromExcel(excelPath);
+        if (excelRows.Count == 0) return;
+
+        var lookup = excelRows
+            .Where(r => !string.IsNullOrWhiteSpace(r.ConsumableCode))
+            .GroupBy(r => r.ConsumableCode, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().ItemCategory ?? "", StringComparer.OrdinalIgnoreCase);
+
+        var entities = context.ToolCodeUniques.ToList();
+        var changed = false;
+        foreach (var entity in entities)
+        {
+            if (!lookup.TryGetValue(entity.ConsumableCode, out var category)) continue;
+            if (string.Equals(entity.ItemCategory, category, StringComparison.Ordinal)) continue;
+            entity.ItemCategory = category;
+            changed = true;
+        }
+        if (changed) context.SaveChanges();
     }
 
     public static void ResetToolCodeUniques(ApplicationDbContext context)
@@ -1843,12 +1874,12 @@ public static class DbSeeder
                 seqCmd.CommandText = "DELETE FROM sqlite_sequence WHERE name='ToolCodeUniques'";
                 seqCmd.ExecuteNonQuery();
             }
-            const string insertSql = @"INSERT INTO ToolCodeUniques (SystemToolName, ConsumableCode, Supplier, Diameter, FluteLength, CornerRadius, CreatedDate, LastModifiedDate)
-                VALUES (@sn, @cc, @su, @di, @fl, @cr, @cd, @lm)";
+            const string insertSql = @"INSERT INTO ToolCodeUniques (SystemToolName, ConsumableCode, Supplier, Diameter, FluteLength, CornerRadius, ItemCategory, CreatedDate, LastModifiedDate)
+                VALUES (@sn, @cc, @su, @di, @fl, @cr, @ic, @cd, @lm)";
             var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             var excelPath = Path.Combine(AppContext.BaseDirectory, "Data", "MASTER - TOOL CODE.xlsx");
             var rowsToInsert = LoadToolCodeUniqueFromExcel(excelPath);
-            foreach (var (systemName, consumable, supplier, dia, flute, radius) in rowsToInsert)
+            foreach (var (systemName, consumable, supplier, dia, flute, radius, itemCategory) in rowsToInsert)
             {
                 using var insCmd = conn.CreateCommand();
                 insCmd.Transaction = dbTrans;
@@ -1859,6 +1890,7 @@ public static class DbSeeder
                 AddParam(insCmd, "@di", dia);
                 AddParam(insCmd, "@fl", flute);
                 AddParam(insCmd, "@cr", radius);
+                AddParam(insCmd, "@ic", itemCategory);
                 AddParam(insCmd, "@cd", baseTime.ToString("o", CultureInfo.InvariantCulture));
                 AddParam(insCmd, "@lm", baseTime.ToString("o", CultureInfo.InvariantCulture));
                 insCmd.ExecuteNonQuery();

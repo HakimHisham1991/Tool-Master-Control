@@ -13,6 +13,7 @@ public class ToolCodeUnique
     public decimal Diameter { get; set; }
     public decimal FluteLength { get; set; }
     public decimal CornerRadius { get; set; }
+    public string ItemCategory { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public DateTime LastModifiedDate { get; set; } = DateTime.UtcNow;
 }
