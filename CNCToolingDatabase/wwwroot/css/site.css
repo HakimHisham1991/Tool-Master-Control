@@ -985,9 +985,12 @@ select.form-control {
     margin-bottom: 32px;
 }
 
-.login-icon {
-    color: var(--primary);
-    margin-bottom: 16px;
+.login-logo {
+    display: block;
+    max-width: 240px;
+    width: 100%;
+    height: auto;
+    margin: 0 auto 16px;
 }
 
 .login-header h1 {

@@ -6,6 +6,7 @@ using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Repositories;
 using CNCToolingDatabase.Services;
 using CNCToolingDatabase.Middleware;
+using Microsoft.Extensions.FileProviders;
 
 static bool ColumnExists(DbConnection conn, string table, string column)
 {
@@ -88,6 +89,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
+
+var logoDir = Path.Combine(AppContext.BaseDirectory, "Data", "LOGO");
+if (Directory.Exists(logoDir))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(logoDir),
+        RequestPath = "/Data/LOGO"
+    });
+}
+
 app.UseRouting();
 app.UseSession();
 app.UseCustomAuthentication();
