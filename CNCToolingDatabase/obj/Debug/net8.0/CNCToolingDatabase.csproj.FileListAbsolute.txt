@@ -134,9 +134,6 @@ C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\CNCToolingDatabase.runtimeconfig.json
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\CNCToolingDatabase.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\CNCToolingDatabase.pdb
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\EPPlus.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\EPPlus.Interfaces.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\EPPlus.System.Drawing.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Humanizer.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.CodeAnalysis.dll
@@ -149,11 +146,7 @@ C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Design.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Relational.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Sqlite.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.Extensions.Configuration.FileExtensions.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Json.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.Extensions.DependencyModel.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.IO.RecyclableMemoryStream.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Mono.TextTemplating.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\SQLitePCLRaw.batteries_v2.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\SQLitePCLRaw.core.dll
@@ -164,8 +157,6 @@ C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\System.Composition.Hosting.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\System.Composition.Runtime.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\System.Composition.TypedParts.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\System.Drawing.Common.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\System.Security.Cryptography.Pkcs.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\cs\Microsoft.CodeAnalysis.resources.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\de\Microsoft.CodeAnalysis.resources.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\es\Microsoft.CodeAnalysis.resources.dll
@@ -218,7 +209,6 @@ C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\tr\Microsoft.CodeAnalysis.Workspaces.resources.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.resources.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\win\lib\net8.0\Microsoft.Win32.SystemEvents.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\browser-wasm\nativeassets\net8.0\e_sqlite3.a
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\linux-arm\native\libe_sqlite3.so
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\linux-arm64\native\libe_sqlite3.so
@@ -239,7 +229,6 @@ C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\win-arm64\native\e_sqlite3.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\win-x86\native\e_sqlite3.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Security.Cryptography.Pkcs.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net8.0\CNCToolingDatabase.csproj.AssemblyReference.cache
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net8.0\rpswa.dswa.cache.json
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net8.0\CNCToolingDatabase.GeneratedMSBuildEditorConfig.editorconfig
@@ -318,3 +307,11 @@ C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Data\PART_IMAGE_SEED\D5313364420002.gif
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Data\PART_IMAGE_SEED\D575-56065-200.jpg
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\Data\STAMP\nik.faiszal.PNG
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\ClosedXML.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\ClosedXML.Parser.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\DocumentFormat.OpenXml.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\DocumentFormat.OpenXml.Framework.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\ExcelNumberFormat.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\RBush.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\SixLabors.Fonts.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net8.0\System.IO.Packaging.dll

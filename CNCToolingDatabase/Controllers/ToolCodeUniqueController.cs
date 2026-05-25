@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Services;
 using System.Text;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
+using CNCToolingDatabase.Helpers;
+using ClosedXML.Excel;
 
 namespace CNCToolingDatabase.Controllers;
 
@@ -63,50 +63,32 @@ public class ToolCodeUniqueController : Controller
 
         if (formatLower == "excel")
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            using var package = new ExcelPackage();
-            var ws = package.Workbook.Worksheets.Add("Tool Code Unique");
+            using var workbook = new XLWorkbook();
+            var ws = workbook.Worksheets.Add("Tool Code Unique");
 
             int row = 1, colCount = headers.Length;
-            for (int c = 1; c <= colCount; c++)
-            {
-                var cell = ws.Cells[row, c];
-                cell.Value = headers[c - 1];
-                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(204, 255, 255));
-                cell.Style.Font.Bold = true;
-            }
+            ExcelExportHelper.WriteHeaderRow(ws, row, headers);
             row++;
             foreach (var t in viewModel.Tools)
             {
-                ws.Cells[row, 1].Value = t.No;
-                ws.Cells[row, 2].Value = t.SystemToolName;
-                ws.Cells[row, 3].Value = t.ConsumableCode;
-                ws.Cells[row, 4].Value = t.Supplier;
-                ws.Cells[row, 5].Value = t.Diameter;
-                ws.Cells[row, 6].Value = t.FluteLength;
-                ws.Cells[row, 7].Value = t.CornerRadius;
-                ws.Cells[row, 8].Value = t.CreatedDate;
-                ws.Cells[row, 8].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
-                ws.Cells[row, 9].Value = t.LastModifiedDate;
-                ws.Cells[row, 9].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
+                ws.Cell(row, 1).Value = t.No;
+                ws.Cell(row, 2).Value = t.SystemToolName;
+                ws.Cell(row, 3).Value = t.ConsumableCode;
+                ws.Cell(row, 4).Value = t.Supplier;
+                ws.Cell(row, 5).Value = t.Diameter;
+                ws.Cell(row, 6).Value = t.FluteLength;
+                ws.Cell(row, 7).Value = t.CornerRadius;
+                ws.Cell(row, 8).Value = t.CreatedDate;
+                ws.Cell(row, 8).Style.DateFormat.Format = "yyyy-mm-dd hh:mm";
+                ws.Cell(row, 9).Value = t.LastModifiedDate;
+                ws.Cell(row, 9).Style.DateFormat.Format = "yyyy-mm-dd hh:mm";
                 row++;
             }
-            int endRow = row - 1;
-            for (int r = 1; r <= endRow; r++)
-                for (int c = 1; c <= colCount; c++)
-                {
-                    var cell = ws.Cells[r, c];
-                    cell.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                }
-            if (ws.Dimension != null)
-                ws.Cells[ws.Dimension.Address].AutoFitColumns();
+            ExcelExportHelper.ApplyTableBorders(ws, 1, row - 1, colCount);
+            ExcelExportHelper.AutoFitColumns(ws);
 
             var fileName = $"ToolCodeUnique_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-            return File(package.GetAsByteArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return File(ExcelExportHelper.SaveToBytes(workbook), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
         var sep = formatLower == "csv" ? "," : "\t";

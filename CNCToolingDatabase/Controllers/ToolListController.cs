@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Services;
 using System.Text;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
+using CNCToolingDatabase.Helpers;
+using ClosedXML.Excel;
 
 namespace CNCToolingDatabase.Controllers;
 
@@ -55,14 +55,12 @@ public class ToolListController : Controller
         
         var formatLower = format.ToLower();
         
-        // Handle Excel format with EPPlus
+        // Handle Excel format with ClosedXML
         if (formatLower == "excel")
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            using var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("Tool Lists");
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Tool Lists");
             
-            // Add column headers with color
             var headers = new[]
             {
                 "Tool List Name", "Part Number", "Operation", "Revision", "No. of Tooling",
@@ -72,55 +70,34 @@ public class ToolListController : Controller
             
             int row = 1;
             int colCount = headers.Length;
-            for (int col = 1; col <= colCount; col++)
-            {
-                var cell = worksheet.Cells[row, col];
-                cell.Value = headers[col - 1];
-                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(204, 255, 255)); // RGB(204,255,255) = #CCFFFF
-                cell.Style.Font.Bold = true;
-            }
+            ExcelExportHelper.WriteHeaderRow(worksheet, row, headers);
             row++;
             
-            // Add data rows
             foreach (var item in viewModel.ToolLists)
             {
-                worksheet.Cells[row, 1].Value = item.ToolListName;
-                worksheet.Cells[row, 2].Value = item.PartNumber;
-                worksheet.Cells[row, 3].Value = item.Operation;
-                worksheet.Cells[row, 4].Value = item.Revision;
-                worksheet.Cells[row, 5].Value = item.NumberOfTooling;
-                worksheet.Cells[row, 6].Value = item.ProjectCode;
-                worksheet.Cells[row, 7].Value = item.MachineName;
-                worksheet.Cells[row, 8].Value = item.MachineWorkcenter;
-                worksheet.Cells[row, 9].Value = item.MachineModel;
-                worksheet.Cells[row, 10].Value = item.CreatedBy;
-                worksheet.Cells[row, 11].Value = item.CreatedDate;
-                worksheet.Cells[row, 11].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
-                worksheet.Cells[row, 12].Value = item.Status;
-                worksheet.Cells[row, 13].Value = item.LastModifiedDate;
-                worksheet.Cells[row, 13].Style.Numberformat.Format = "yyyy-mm-dd hh:mm";
+                worksheet.Cell(row, 1).Value = item.ToolListName;
+                worksheet.Cell(row, 2).Value = item.PartNumber;
+                worksheet.Cell(row, 3).Value = item.Operation;
+                worksheet.Cell(row, 4).Value = item.Revision;
+                worksheet.Cell(row, 5).Value = item.NumberOfTooling;
+                worksheet.Cell(row, 6).Value = item.ProjectCode;
+                worksheet.Cell(row, 7).Value = item.MachineName;
+                worksheet.Cell(row, 8).Value = item.MachineWorkcenter;
+                worksheet.Cell(row, 9).Value = item.MachineModel;
+                worksheet.Cell(row, 10).Value = item.CreatedBy;
+                worksheet.Cell(row, 11).Value = item.CreatedDate;
+                worksheet.Cell(row, 11).Style.DateFormat.Format = "yyyy-mm-dd hh:mm";
+                worksheet.Cell(row, 12).Value = item.Status;
+                worksheet.Cell(row, 13).Value = item.LastModifiedDate;
+                worksheet.Cell(row, 13).Style.DateFormat.Format = "yyyy-mm-dd hh:mm";
                 row++;
             }
             
-            int tableEndRow = row - 1;
-            // All borders on table (headers + data)
-            for (int r = 1; r <= tableEndRow; r++)
-                for (int c = 1; c <= colCount; c++)
-                {
-                    var cell = worksheet.Cells[r, c];
-                    cell.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                }
-            
-            // Auto-fit columns
-            worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+            ExcelExportHelper.ApplyTableBorders(worksheet, 1, row - 1, colCount);
+            ExcelExportHelper.AutoFitColumns(worksheet);
             
             var fileName = $"ToolLists_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-            var fileBytes = package.GetAsByteArray();
-            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return File(ExcelExportHelper.SaveToBytes(workbook), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
         
         // Handle CSV and TXT formats

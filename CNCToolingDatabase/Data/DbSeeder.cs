@@ -5,7 +5,8 @@ using System.IO;
 using System.Linq;
 using CNCToolingDatabase.Models;
 using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml;
+using ClosedXML.Excel;
+using CNCToolingDatabase.Helpers;
 
 namespace CNCToolingDatabase.Data;
 
@@ -618,39 +619,26 @@ public static class DbSeeder
     {
         var result = new List<(string, string, string, string, bool)>();
         if (!File.Exists(path)) return result;
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using var package = new ExcelPackage(new FileInfo(path));
-        var ws = package.Workbook.Worksheets.FirstOrDefault();
-        if (ws?.Dimension == null) return result;
-        int cols = ws.Dimension.End.Column;
-        int rows = ws.Dimension.End.Row;
+        using var workbook = new XLWorkbook(path);
+        var ws = workbook.Worksheets.FirstOrDefault();
+        if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+        int cols = ExcelHelper.GetUsedColumnCount(ws);
+        int rows = ExcelHelper.GetUsedRowCount(ws);
         if (rows < 2) return result;
-        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-        {
-            for (int c = 1; c <= totalCols; c++)
-            {
-                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                if (string.IsNullOrEmpty(v)) continue;
-                foreach (var h in headerNames)
-                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-            }
-            return -1;
-        }
-        int colName = GetCol(ws, cols, "Machine Name", "Name");
-        int colSerial = GetCol(ws, cols, "Serial Number", "Serial");
-        int colWorkcenter = GetCol(ws, cols, "Machine Workcenter", "Workcenter");
-        int colModel = GetCol(ws, cols, "Machine Model", "Model", "Machine Type", "MachineModel");
-        int colStatus = GetCol(ws, cols, "Status", "IsActive");
+        int colName = ExcelHelper.GetColumn(ws, cols, "Machine Name", "Name");
+        int colSerial = ExcelHelper.GetColumn(ws, cols, "Serial Number", "Serial");
+        int colWorkcenter = ExcelHelper.GetColumn(ws, cols, "Machine Workcenter", "Workcenter");
+        int colModel = ExcelHelper.GetColumn(ws, cols, "Machine Model", "Model", "Machine Type", "MachineModel");
+        int colStatus = ExcelHelper.GetColumn(ws, cols, "Status", "IsActive");
         if (colName < 1) return result;
-        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
         for (int r = 2; r <= rows; r++)
         {
-            var name = GetStr(ws, r, colName);
+            var name = ExcelHelper.GetString(ws, r, colName);
             if (string.IsNullOrWhiteSpace(name)) continue;
-            var serial = GetStr(ws, r, colSerial);
-            var workcenter = GetStr(ws, r, colWorkcenter);
-            var machineModel = GetStr(ws, r, colModel);
-            var statusVal = GetStr(ws, r, colStatus);
+            var serial = ExcelHelper.GetString(ws, r, colSerial);
+            var workcenter = ExcelHelper.GetString(ws, r, colWorkcenter);
+            var machineModel = ExcelHelper.GetString(ws, r, colModel);
+            var statusVal = ExcelHelper.GetString(ws, r, colStatus);
             var isActive = string.IsNullOrWhiteSpace(statusVal) ||
                 string.Equals(statusVal, "ACTIVE", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(statusVal, "1", StringComparison.Ordinal) ||
@@ -692,39 +680,26 @@ public static class DbSeeder
     {
         var result = new List<(string, string, string, string, bool)>();
         if (!File.Exists(path)) return result;
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using var package = new ExcelPackage(new FileInfo(path));
-        var ws = package.Workbook.Worksheets.FirstOrDefault();
-        if (ws?.Dimension == null) return result;
-        int cols = ws.Dimension.End.Column;
-        int rows = ws.Dimension.End.Row;
+        using var workbook = new XLWorkbook(path);
+        var ws = workbook.Worksheets.FirstOrDefault();
+        if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+        int cols = ExcelHelper.GetUsedColumnCount(ws);
+        int rows = ExcelHelper.GetUsedRowCount(ws);
         if (rows < 2) return result;
-        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-        {
-            for (int c = 1; c <= totalCols; c++)
-            {
-                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                if (string.IsNullOrEmpty(v)) continue;
-                foreach (var h in headerNames)
-                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-            }
-            return -1;
-        }
-        int colModel = GetCol(ws, cols, "Model", "Machine Model");
-        int colDescription = GetCol(ws, cols, "Description", "Machine Builder");
-        int colType = GetCol(ws, cols, "Type");
-        int colController = GetCol(ws, cols, "Controller");
-        int colStatus = GetCol(ws, cols, "Status", "IsActive");
+        int colModel = ExcelHelper.GetColumn(ws, cols, "Model", "Machine Model");
+        int colDescription = ExcelHelper.GetColumn(ws, cols, "Description", "Machine Builder");
+        int colType = ExcelHelper.GetColumn(ws, cols, "Type");
+        int colController = ExcelHelper.GetColumn(ws, cols, "Controller");
+        int colStatus = ExcelHelper.GetColumn(ws, cols, "Status", "IsActive");
         if (colModel < 1) return result;
-        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
         for (int r = 2; r <= rows; r++)
         {
-            var model = GetStr(ws, r, colModel);
+            var model = ExcelHelper.GetString(ws, r, colModel);
             if (string.IsNullOrWhiteSpace(model)) continue;
-            var description = GetStr(ws, r, colDescription);
-            var type = GetStr(ws, r, colType);
-            var controller = GetStr(ws, r, colController);
-            var statusVal = GetStr(ws, r, colStatus);
+            var description = ExcelHelper.GetString(ws, r, colDescription);
+            var type = ExcelHelper.GetString(ws, r, colType);
+            var controller = ExcelHelper.GetString(ws, r, colController);
+            var statusVal = ExcelHelper.GetString(ws, r, colStatus);
             var isActive = string.IsNullOrWhiteSpace(statusVal) ||
                 string.Equals(statusVal, "ACTIVE", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(statusVal, "1", StringComparison.Ordinal) ||
@@ -766,37 +741,24 @@ public static class DbSeeder
     {
         var result = new List<(string, string, string, bool)>();
         if (!File.Exists(path)) return result;
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using var package = new ExcelPackage(new FileInfo(path));
-        var ws = package.Workbook.Worksheets.FirstOrDefault();
-        if (ws?.Dimension == null) return result;
-        int cols = ws.Dimension.End.Column;
-        int rows = ws.Dimension.End.Row;
+        using var workbook = new XLWorkbook(path);
+        var ws = workbook.Worksheets.FirstOrDefault();
+        if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+        int cols = ExcelHelper.GetUsedColumnCount(ws);
+        int rows = ExcelHelper.GetUsedRowCount(ws);
         if (rows < 2) return result;
-        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-        {
-            for (int c = 1; c <= totalCols; c++)
-            {
-                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                if (string.IsNullOrEmpty(v)) continue;
-                foreach (var h in headerNames)
-                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-            }
-            return -1;
-        }
-        int colCode = GetCol(ws, cols, "Code", "Project Code");
-        int colDescription = GetCol(ws, cols, "Description", "Customer");
-        int colProject = GetCol(ws, cols, "Project");
-        int colStatus = GetCol(ws, cols, "Status", "IsActive");
+        int colCode = ExcelHelper.GetColumn(ws, cols, "Code", "Project Code");
+        int colDescription = ExcelHelper.GetColumn(ws, cols, "Description", "Customer");
+        int colProject = ExcelHelper.GetColumn(ws, cols, "Project");
+        int colStatus = ExcelHelper.GetColumn(ws, cols, "Status", "IsActive");
         if (colCode < 1) return result;
-        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
         for (int r = 2; r <= rows; r++)
         {
-            var code = GetStr(ws, r, colCode);
+            var code = ExcelHelper.GetString(ws, r, colCode);
             if (string.IsNullOrWhiteSpace(code)) continue;
-            var description = GetStr(ws, r, colDescription);
-            var project = GetStr(ws, r, colProject);
-            var statusVal = GetStr(ws, r, colStatus);
+            var description = ExcelHelper.GetString(ws, r, colDescription);
+            var project = ExcelHelper.GetString(ws, r, colProject);
+            var statusVal = ExcelHelper.GetString(ws, r, colStatus);
             var isActive = string.IsNullOrWhiteSpace(statusVal) ||
                 string.Equals(statusVal, "ACTIVE", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(statusVal, "1", StringComparison.Ordinal) ||
@@ -838,37 +800,24 @@ public static class DbSeeder
     {
         var result = new List<(string, string, string, bool)>();
         if (!File.Exists(path)) return result;
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using var package = new ExcelPackage(new FileInfo(path));
-        var ws = package.Workbook.Worksheets.FirstOrDefault();
-        if (ws?.Dimension == null) return result;
-        int cols = ws.Dimension.End.Column;
-        int rows = ws.Dimension.End.Row;
+        using var workbook = new XLWorkbook(path);
+        var ws = workbook.Worksheets.FirstOrDefault();
+        if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+        int cols = ExcelHelper.GetUsedColumnCount(ws);
+        int rows = ExcelHelper.GetUsedRowCount(ws);
         if (rows < 2) return result;
-        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-        {
-            for (int c = 1; c <= totalCols; c++)
-            {
-                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                if (string.IsNullOrEmpty(v)) continue;
-                foreach (var h in headerNames)
-                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-            }
-            return -1;
-        }
-        int colWorkcenter = GetCol(ws, cols, "Workcenter", "Machine Workcenter");
-        int colAxis = GetCol(ws, cols, "Axis");
-        int colModel = GetCol(ws, cols, "Machine Model", "Model");
-        int colStatus = GetCol(ws, cols, "Status", "IsActive");
+        int colWorkcenter = ExcelHelper.GetColumn(ws, cols, "Workcenter", "Machine Workcenter");
+        int colAxis = ExcelHelper.GetColumn(ws, cols, "Axis");
+        int colModel = ExcelHelper.GetColumn(ws, cols, "Machine Model", "Model");
+        int colStatus = ExcelHelper.GetColumn(ws, cols, "Status", "IsActive");
         if (colWorkcenter < 1) return result;
-        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
         for (int r = 2; r <= rows; r++)
         {
-            var workcenter = GetStr(ws, r, colWorkcenter);
+            var workcenter = ExcelHelper.GetString(ws, r, colWorkcenter);
             if (string.IsNullOrWhiteSpace(workcenter)) continue;
-            var axis = GetStr(ws, r, colAxis);
-            var machineModel = colModel >= 1 ? GetStr(ws, r, colModel) : "";
-            var statusVal = GetStr(ws, r, colStatus);
+            var axis = ExcelHelper.GetString(ws, r, colAxis);
+            var machineModel = colModel >= 1 ? ExcelHelper.GetString(ws, r, colModel) : "";
+            var statusVal = ExcelHelper.GetString(ws, r, colStatus);
             var isActive = string.IsNullOrWhiteSpace(statusVal) ||
                 string.Equals(statusVal, "ACTIVE", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(statusVal, "1", StringComparison.Ordinal) ||
@@ -911,47 +860,25 @@ public static class DbSeeder
         var path = ResolveToolListMasterPath();
         if (string.IsNullOrEmpty(path) || !File.Exists(path))
             throw new InvalidOperationException("Missing file: MASTER - TOOL LIST.xlsx not found. Place the file in the Data folder.");
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using var package = new ExcelPackage(new FileInfo(path));
-        var worksheets = package.Workbook.Worksheets.ToList();
+        using var workbook = new XLWorkbook(path);
+        var worksheets = workbook.Worksheets.ToList();
         if (worksheets.Count == 0)
             throw new InvalidOperationException("MASTER - TOOL LIST.xlsx has no worksheets.");
-        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-        {
-            for (int c = 1; c <= totalCols; c++)
-            {
-                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                if (string.IsNullOrEmpty(v)) continue;
-                foreach (var h in headerNames)
-                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-            }
-            return -1;
-        }
-        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
-        static decimal ParseDecimal(ExcelWorksheet sheet, int row, int col)
-        {
-            if (col < 1) return 0;
-            var v = sheet.Cells[row, col].Value;
-            if (v == null) return 0;
-            if (v is double d) return (decimal)d;
-            if (decimal.TryParse(v?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var dec)) return dec;
-            return 0;
-        }
         var ws1 = worksheets[0];
-        if (ws1.Dimension == null)
+        if (ExcelHelper.GetUsedRowCount(ws1) == 0)
             throw new InvalidOperationException("MASTER - TOOL LIST.xlsx Sheet 1 is empty.");
-        int cols1 = ws1.Dimension.End.Column;
-        int rows1 = ws1.Dimension.End.Row;
+        int cols1 = ExcelHelper.GetUsedColumnCount(ws1);
+        int rows1 = ExcelHelper.GetUsedRowCount(ws1);
         // Scan at least 25 columns for headers so we don't miss columns when Dimension is trimmed by empty data
         int headerCols = Math.Max(cols1, 25);
-        int colPartNumber = GetCol(ws1, headerCols, "Part Number");
-        int colOperation = GetCol(ws1, headerCols, "Operation");
-        int colRevision = GetCol(ws1, headerCols, "Revision");
-        int colProjectCode = GetCol(ws1, headerCols, "Project Code");
-        int colMachineName = GetCol(ws1, headerCols, "Machine Name");
-        int colMachineWorkcenter = GetCol(ws1, headerCols, "Machine Workcenter");
-        int colMachineModel = GetCol(ws1, headerCols, "Machine Model");
-        int colCreatedBy = GetCol(ws1, headerCols, "Created By");
+        int colPartNumber = ExcelHelper.GetColumn(ws1, headerCols, "Part Number");
+        int colOperation = ExcelHelper.GetColumn(ws1, headerCols, "Operation");
+        int colRevision = ExcelHelper.GetColumn(ws1, headerCols, "Revision");
+        int colProjectCode = ExcelHelper.GetColumn(ws1, headerCols, "Project Code");
+        int colMachineName = ExcelHelper.GetColumn(ws1, headerCols, "Machine Name");
+        int colMachineWorkcenter = ExcelHelper.GetColumn(ws1, headerCols, "Machine Workcenter");
+        int colMachineModel = ExcelHelper.GetColumn(ws1, headerCols, "Machine Model");
+        int colCreatedBy = ExcelHelper.GetColumn(ws1, headerCols, "Created By");
         if (colPartNumber < 1 || colOperation < 1)
             throw new InvalidOperationException("MASTER - TOOL LIST.xlsx Sheet 1 must have columns: Part Number, Operation. Found headers in row 1.");
         var partNumberToProjectCode = context.PartNumbers
@@ -969,22 +896,22 @@ public static class DbSeeder
         var headersByToolListName = new Dictionary<string, ToolListHeader>(StringComparer.OrdinalIgnoreCase);
         for (int r = 2; r <= rows1; r++)
         {
-            var partNumber = GetStr(ws1, r, colPartNumber);
-            var operation = GetStr(ws1, r, colOperation);
-            var revision = GetStr(ws1, r, colRevision);
+            var partNumber = ExcelHelper.GetString(ws1, r, colPartNumber);
+            var operation = ExcelHelper.GetString(ws1, r, colOperation);
+            var revision = ExcelHelper.GetString(ws1, r, colRevision);
             if (string.IsNullOrWhiteSpace(partNumber) || string.IsNullOrWhiteSpace(operation)) continue;
-            var projectCode = GetStr(ws1, r, colProjectCode);
+            var projectCode = ExcelHelper.GetString(ws1, r, colProjectCode);
             if (string.IsNullOrWhiteSpace(projectCode) && partNumberToProjectCode.TryGetValue(partNumber, out var pc))
                 projectCode = pc;
-            var machineName = GetStr(ws1, r, colMachineName);
-            var workcenter = GetStr(ws1, r, colMachineWorkcenter);
-            var machineModel = GetStr(ws1, r, colMachineModel);
+            var machineName = ExcelHelper.GetString(ws1, r, colMachineName);
+            var workcenter = ExcelHelper.GetString(ws1, r, colMachineWorkcenter);
+            var machineModel = ExcelHelper.GetString(ws1, r, colMachineModel);
             if (!string.IsNullOrWhiteSpace(machineName) && machineNameToWorkcenterModel.TryGetValue(machineName, out var wm))
             {
                 if (string.IsNullOrWhiteSpace(workcenter)) workcenter = wm.Workcenter;
                 if (string.IsNullOrWhiteSpace(machineModel)) machineModel = wm.Model;
             }
-            var createdBy = GetStr(ws1, r, colCreatedBy);
+            var createdBy = ExcelHelper.GetString(ws1, r, colCreatedBy);
             if (string.IsNullOrWhiteSpace(revision)) revision = "REV00";
             var header = new ToolListHeader
             {
@@ -1018,40 +945,40 @@ public static class DbSeeder
             var sheetName = ws.Name?.Trim() ?? "";
             if (string.IsNullOrEmpty(sheetName) || !headersByToolListName.TryGetValue(sheetName, out var header))
                 continue;
-            if (ws.Dimension == null) continue;
-            int cols = ws.Dimension.End.Column;
-            int rows = ws.Dimension.End.Row;
-            int colToolNo = GetCol(ws, cols, "Tool No.");
-            int colToolName = GetCol(ws, cols, "Tool Name");
-            int colConsumable = GetCol(ws, cols, "Consumable Tool Description");
-            int colSupplier = GetCol(ws, cols, "Tool Supplier");
-            int colHolder = GetCol(ws, cols, "Tool Holder");
-            int colDiameter = GetCol(ws, cols, "Tool Diameter (D1)", "Diameter");
-            int colFluteLength = GetCol(ws, cols, "Flute Length (L1)");
-            int colExtLength = GetCol(ws, cols, "Tool Ext. Length (L2)");
-            int colCornerRadius = GetCol(ws, cols, "Tool Corner Radius");
-            int colArbor = GetCol(ws, cols, "Arbor Description (or equivalent specs)", "Arbor Description");
-            int colToolPathTime = GetCol(ws, cols, "Tool Path Time in Minutes");
-            int colRemarks = GetCol(ws, cols, "Remarks");
+            if (ExcelHelper.GetUsedRowCount(ws) == 0) continue;
+            int cols = ExcelHelper.GetUsedColumnCount(ws);
+            int rows = ExcelHelper.GetUsedRowCount(ws);
+            int colToolNo = ExcelHelper.GetColumn(ws, cols, "Tool No.");
+            int colToolName = ExcelHelper.GetColumn(ws, cols, "Tool Name");
+            int colConsumable = ExcelHelper.GetColumn(ws, cols, "Consumable Tool Description");
+            int colSupplier = ExcelHelper.GetColumn(ws, cols, "Tool Supplier");
+            int colHolder = ExcelHelper.GetColumn(ws, cols, "Tool Holder");
+            int colDiameter = ExcelHelper.GetColumn(ws, cols, "Tool Diameter (D1)", "Diameter");
+            int colFluteLength = ExcelHelper.GetColumn(ws, cols, "Flute Length (L1)");
+            int colExtLength = ExcelHelper.GetColumn(ws, cols, "Tool Ext. Length (L2)");
+            int colCornerRadius = ExcelHelper.GetColumn(ws, cols, "Tool Corner Radius");
+            int colArbor = ExcelHelper.GetColumn(ws, cols, "Arbor Description (or equivalent specs)", "Arbor Description");
+            int colToolPathTime = ExcelHelper.GetColumn(ws, cols, "Tool Path Time in Minutes");
+            int colRemarks = ExcelHelper.GetColumn(ws, cols, "Remarks");
             if (colConsumable < 1 && colToolName < 1) continue;
             int rowIndex = 0;
             for (int r = 2; r <= rows; r++)
             {
-                var consumableCode = GetStr(ws, r, colConsumable);
-                var toolName = GetStr(ws, r, colToolName);
+                var consumableCode = ExcelHelper.GetString(ws, r, colConsumable);
+                var toolName = ExcelHelper.GetString(ws, r, colToolName);
                 if (string.IsNullOrWhiteSpace(consumableCode) && string.IsNullOrWhiteSpace(toolName)) continue;
                 rowIndex++;
-                var toolNumber = GetStr(ws, r, colToolNo);
+                var toolNumber = ExcelHelper.GetString(ws, r, colToolNo);
                 if (string.IsNullOrWhiteSpace(toolNumber)) toolNumber = "T" + rowIndex.ToString("D2", CultureInfo.InvariantCulture);
-                var supplier = GetStr(ws, r, colSupplier);
-                var holder = GetStr(ws, r, colHolder);
-                var diameter = ParseDecimal(ws, r, colDiameter);
-                var fluteLength = ParseDecimal(ws, r, colFluteLength);
-                var protrusionLength = ParseDecimal(ws, r, colExtLength);
-                var cornerRadius = ParseDecimal(ws, r, colCornerRadius);
-                var arborCode = GetStr(ws, r, colArbor);
-                var toolPathTime = ParseDecimal(ws, r, colToolPathTime);
-                var remarks = GetStr(ws, r, colRemarks);
+                var supplier = ExcelHelper.GetString(ws, r, colSupplier);
+                var holder = ExcelHelper.GetString(ws, r, colHolder);
+                var diameter = ExcelHelper.ParseDecimal(ws, r, colDiameter);
+                var fluteLength = ExcelHelper.ParseDecimal(ws, r, colFluteLength);
+                var protrusionLength = ExcelHelper.ParseDecimal(ws, r, colExtLength);
+                var cornerRadius = ExcelHelper.ParseDecimal(ws, r, colCornerRadius);
+                var arborCode = ExcelHelper.GetString(ws, r, colArbor);
+                var toolPathTime = ExcelHelper.ParseDecimal(ws, r, colToolPathTime);
+                var remarks = ExcelHelper.GetString(ws, r, colRemarks);
                 if (!string.IsNullOrWhiteSpace(consumableCode) && toolCodeLookup.TryGetValue(consumableCode, out var master))
                 {
                     if (string.IsNullOrWhiteSpace(supplier)) supplier = master.Supplier ?? "";
@@ -1119,45 +1046,32 @@ public static class DbSeeder
     {
         var result = new List<(string, string, string, string, string, string, string, int)>();
         if (string.IsNullOrEmpty(path) || !File.Exists(path)) return result;
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using var package = new ExcelPackage(new FileInfo(path));
-        var ws = package.Workbook.Worksheets.FirstOrDefault();
-        if (ws?.Dimension == null) return result;
-        int cols = ws.Dimension.End.Column;
-        int rows = ws.Dimension.End.Row;
+        using var workbook = new XLWorkbook(path);
+        var ws = workbook.Worksheets.FirstOrDefault();
+        if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+        int cols = ExcelHelper.GetUsedColumnCount(ws);
+        int rows = ExcelHelper.GetUsedRowCount(ws);
         if (rows < 2) return result;
-        static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-        {
-            for (int c = 1; c <= totalCols; c++)
-            {
-                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                if (string.IsNullOrEmpty(v)) continue;
-                foreach (var h in headerNames)
-                    if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-            }
-            return -1;
-        }
-        int colPartNumber = GetCol(ws, cols, "Part Number", "Name", "PartNumber");
-        int colDescription = GetCol(ws, cols, "Description");
-        int colPartRev = GetCol(ws, cols, "Part Revision", "Part Rev.", "PartRev");
-        int colDrawingRev = GetCol(ws, cols, "Drawing Revision", "Drawing Rev.", "DrawingRev");
-        int colProjectCode = GetCol(ws, cols, "Project Code", "ProjectCode", "Project_Code");
-        int colRefDrawing = GetCol(ws, cols, "Ref. Drawing", "Ref Drawing", "RefDrawing", "Ref Drawing");
-        int colMaterialSpec = GetCol(ws, cols, "Material Spec.", "Material Spec", "MaterialSpec", "Material Spec.");
+        int colPartNumber = ExcelHelper.GetColumn(ws, cols, "Part Number", "Name", "PartNumber");
+        int colDescription = ExcelHelper.GetColumn(ws, cols, "Description");
+        int colPartRev = ExcelHelper.GetColumn(ws, cols, "Part Revision", "Part Rev.", "PartRev");
+        int colDrawingRev = ExcelHelper.GetColumn(ws, cols, "Drawing Revision", "Drawing Rev.", "DrawingRev");
+        int colProjectCode = ExcelHelper.GetColumn(ws, cols, "Project Code", "ProjectCode", "Project_Code");
+        int colRefDrawing = ExcelHelper.GetColumn(ws, cols, "Ref. Drawing", "Ref Drawing", "RefDrawing", "Ref Drawing");
+        int colMaterialSpec = ExcelHelper.GetColumn(ws, cols, "Material Spec.", "Material Spec", "MaterialSpec", "Material Spec.");
         if (colPartNumber < 1) return result;
-        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
         int sequence = 0;
         for (int r = 2; r <= rows; r++)
         {
-            var name = GetStr(ws, r, colPartNumber);
+            var name = ExcelHelper.GetString(ws, r, colPartNumber);
             if (string.IsNullOrWhiteSpace(name)) continue;
             sequence++;
-            var desc = GetStr(ws, r, colDescription);
-            var partRev = GetStr(ws, r, colPartRev);
-            var drawRev = GetStr(ws, r, colDrawingRev);
-            var pcCode = GetStr(ws, r, colProjectCode);
-            var refDrawing = GetStr(ws, r, colRefDrawing);
-            var msSpec = GetStr(ws, r, colMaterialSpec);
+            var desc = ExcelHelper.GetString(ws, r, colDescription);
+            var partRev = ExcelHelper.GetString(ws, r, colPartRev);
+            var drawRev = ExcelHelper.GetString(ws, r, colDrawingRev);
+            var pcCode = ExcelHelper.GetString(ws, r, colProjectCode);
+            var refDrawing = ExcelHelper.GetString(ws, r, colRefDrawing);
+            var msSpec = ExcelHelper.GetString(ws, r, colMaterialSpec);
             result.Add((name, desc ?? "", partRev ?? "", drawRev ?? "", pcCode ?? "", refDrawing ?? "", msSpec ?? "", sequence));
         }
         return result;
@@ -1190,60 +1104,28 @@ public static class DbSeeder
             return result;
         if (!File.Exists(path))
             throw new InvalidOperationException("Missing file: MASTER - USER.xlsx not found at " + path + ". Place the file in the Data folder.");
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
-            using var package = new ExcelPackage(new FileInfo(path));
-            var ws = package.Workbook.Worksheets.FirstOrDefault();
-            if (ws?.Dimension == null) return result;
-            int cols = ws.Dimension.End.Column;
-            int rows = ws.Dimension.End.Row;
+            using var workbook = new XLWorkbook(path);
+            var ws = workbook.Worksheets.FirstOrDefault();
+            if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+            int cols = ExcelHelper.GetUsedColumnCount(ws);
+            int rows = ExcelHelper.GetUsedRowCount(ws);
             if (rows < 2) return result;
-            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-            {
-                for (int c = 1; c <= totalCols; c++)
-                {
-                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                    if (string.IsNullOrEmpty(v)) continue;
-                    foreach (var h in headerNames)
-                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-                }
-                return -1;
-            }
-            int colUsername = GetCol(ws, cols, "Username", "User Name");
-            int colPassword = GetCol(ws, cols, "Password");
-            int colDisplayName = GetCol(ws, cols, "Display Name", "DisplayName");
-            int colStampImage = GetCol(ws, cols, "Stamp Image");
-            int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
+            int colUsername = ExcelHelper.GetColumn(ws, cols, "Username", "User Name");
+            int colPassword = ExcelHelper.GetColumn(ws, cols, "Password");
+            int colDisplayName = ExcelHelper.GetColumn(ws, cols, "Display Name", "DisplayName");
+            int colStampImage = ExcelHelper.GetColumn(ws, cols, "Stamp Image");
+            int colStatus = ExcelHelper.GetColumn(ws, cols, "Status", "Active", "IsActive");
             if (colUsername < 1 || colPassword < 1) return result;
-            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
-            static string GetPasswordStr(ExcelWorksheet sheet, int row, int col)
-            {
-                if (col < 1) return "";
-                var v = sheet.Cells[row, col].Value;
-                if (v == null) return "";
-                if (v is double d) return d == Math.Floor(d) ? ((long)d).ToString() : d.ToString(CultureInfo.InvariantCulture);
-                if (v is float f) return f == Math.Floor(f) ? ((long)f).ToString() : f.ToString(CultureInfo.InvariantCulture);
-                if (v is long or int) return v.ToString() ?? "";
-                return v.ToString()?.Trim() ?? "";
-            }
-            static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
-            {
-                var val = GetStr(sheet, row, col);
-                if (string.IsNullOrWhiteSpace(val)) return true;
-                if (string.Equals(val, "INACTIVE", StringComparison.OrdinalIgnoreCase)) return false;
-                if (string.Equals(val, "NO", StringComparison.OrdinalIgnoreCase)) return false;
-                if (string.Equals(val, "0", StringComparison.OrdinalIgnoreCase)) return false;
-                return true;
-            }
             for (int r = 2; r <= rows; r++)
             {
-                var username = GetStr(ws, r, colUsername);
+                var username = ExcelHelper.GetString(ws, r, colUsername);
                 if (string.IsNullOrWhiteSpace(username)) continue;
-                var password = GetPasswordStr(ws, r, colPassword);
-                var displayName = GetStr(ws, r, colDisplayName);
-                var stampImagePath = colStampImage >= 1 ? GetStr(ws, r, colStampImage) : "";
-                var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
+                var password = ExcelHelper.GetPasswordString(ws, r, colPassword);
+                var displayName = ExcelHelper.GetString(ws, r, colDisplayName);
+                var stampImagePath = colStampImage >= 1 ? ExcelHelper.GetString(ws, r, colStampImage) : "";
+                var isActive = colStatus >= 1 ? ExcelHelper.ParseStatusActive(ws, r, colStatus) : true;
                 result.Add((username, password ?? "", displayName ?? username, isActive, stampImagePath ?? ""));
             }
             return result;
@@ -1321,46 +1203,24 @@ public static class DbSeeder
             return result;
         if (!File.Exists(path))
             throw new InvalidOperationException("Missing file: MASTER - CAM PROGRAMMER.xlsx not found at " + path + ". Place the file in the Data folder.");
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
-            using var package = new ExcelPackage(new FileInfo(path));
-            var ws = package.Workbook.Worksheets.FirstOrDefault();
-            if (ws?.Dimension == null) return result;
-            int cols = ws.Dimension.End.Column;
-            int rows = ws.Dimension.End.Row;
+            using var workbook = new XLWorkbook(path);
+            var ws = workbook.Worksheets.FirstOrDefault();
+            if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+            int cols = ExcelHelper.GetUsedColumnCount(ws);
+            int rows = ExcelHelper.GetUsedRowCount(ws);
             if (rows < 2) return result;
-            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-            {
-                for (int c = 1; c <= totalCols; c++)
-                {
-                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                    if (string.IsNullOrEmpty(v)) continue;
-                    foreach (var h in headerNames)
-                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-                }
-                return -1;
-            }
-            int colName = GetCol(ws, cols, "Name");
-            int colLocation = GetCol(ws, cols, "Location");
-            int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
+            int colName = ExcelHelper.GetColumn(ws, cols, "Name");
+            int colLocation = ExcelHelper.GetColumn(ws, cols, "Location");
+            int colStatus = ExcelHelper.GetColumn(ws, cols, "Status", "Active", "IsActive");
             if (colName < 1) return result;
-            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
-            static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
-            {
-                var val = GetStr(sheet, row, col);
-                if (string.IsNullOrWhiteSpace(val)) return true;
-                if (string.Equals(val, "INACTIVE", StringComparison.OrdinalIgnoreCase)) return false;
-                if (string.Equals(val, "NO", StringComparison.OrdinalIgnoreCase)) return false;
-                if (string.Equals(val, "0", StringComparison.OrdinalIgnoreCase)) return false;
-                return true;
-            }
             for (int r = 2; r <= rows; r++)
             {
-                var name = GetStr(ws, r, colName);
+                var name = ExcelHelper.GetString(ws, r, colName);
                 if (string.IsNullOrWhiteSpace(name)) continue;
-                var location = colLocation >= 1 ? GetStr(ws, r, colLocation) : null;
-                var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
+                var location = colLocation >= 1 ? ExcelHelper.GetString(ws, r, colLocation) : null;
+                var isActive = colStatus >= 1 ? ExcelHelper.ParseStatusActive(ws, r, colStatus) : true;
                 result.Add((name, string.IsNullOrWhiteSpace(location) ? null : location, isActive));
             }
             return result;
@@ -1402,46 +1262,24 @@ public static class DbSeeder
             return result;
         if (!File.Exists(path))
             throw new InvalidOperationException("Missing file: MASTER - CAM LEADER.xlsx not found at " + path + ". Place the file in the Data folder.");
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
-            using var package = new ExcelPackage(new FileInfo(path));
-            var ws = package.Workbook.Worksheets.FirstOrDefault();
-            if (ws?.Dimension == null) return result;
-            int cols = ws.Dimension.End.Column;
-            int rows = ws.Dimension.End.Row;
+            using var workbook = new XLWorkbook(path);
+            var ws = workbook.Worksheets.FirstOrDefault();
+            if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+            int cols = ExcelHelper.GetUsedColumnCount(ws);
+            int rows = ExcelHelper.GetUsedRowCount(ws);
             if (rows < 2) return result;
-            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-            {
-                for (int c = 1; c <= totalCols; c++)
-                {
-                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                    if (string.IsNullOrEmpty(v)) continue;
-                    foreach (var h in headerNames)
-                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-                }
-                return -1;
-            }
-            int colName = GetCol(ws, cols, "Name");
-            int colPosition = GetCol(ws, cols, "Position");
-            int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
+            int colName = ExcelHelper.GetColumn(ws, cols, "Name");
+            int colPosition = ExcelHelper.GetColumn(ws, cols, "Position");
+            int colStatus = ExcelHelper.GetColumn(ws, cols, "Status", "Active", "IsActive");
             if (colName < 1) return result;
-            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
-            static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
-            {
-                var val = GetStr(sheet, row, col);
-                if (string.IsNullOrWhiteSpace(val)) return true;
-                if (string.Equals(val, "INACTIVE", StringComparison.OrdinalIgnoreCase)) return false;
-                if (string.Equals(val, "NO", StringComparison.OrdinalIgnoreCase)) return false;
-                if (string.Equals(val, "0", StringComparison.OrdinalIgnoreCase)) return false;
-                return true;
-            }
             for (int r = 2; r <= rows; r++)
             {
-                var name = GetStr(ws, r, colName);
+                var name = ExcelHelper.GetString(ws, r, colName);
                 if (string.IsNullOrWhiteSpace(name)) continue;
-                var position = colPosition >= 1 ? GetStr(ws, r, colPosition) : null;
-                var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
+                var position = colPosition >= 1 ? ExcelHelper.GetString(ws, r, colPosition) : null;
+                var isActive = colStatus >= 1 ? ExcelHelper.ParseStatusActive(ws, r, colStatus) : true;
                 result.Add((name, string.IsNullOrWhiteSpace(position) ? null : position, isActive));
             }
             return result;
@@ -1483,46 +1321,24 @@ public static class DbSeeder
             return result;
         if (!File.Exists(path))
             throw new InvalidOperationException("Missing file: MASTER - OPERATION.xlsx not found at " + path + ". Place the file in the Data folder.");
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
-            using var package = new ExcelPackage(new FileInfo(path));
-            var ws = package.Workbook.Worksheets.FirstOrDefault();
-            if (ws?.Dimension == null) return result;
-            int cols = ws.Dimension.End.Column;
-            int rows = ws.Dimension.End.Row;
+            using var workbook = new XLWorkbook(path);
+            var ws = workbook.Worksheets.FirstOrDefault();
+            if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+            int cols = ExcelHelper.GetUsedColumnCount(ws);
+            int rows = ExcelHelper.GetUsedRowCount(ws);
             if (rows < 2) return result;
-            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-            {
-                for (int c = 1; c <= totalCols; c++)
-                {
-                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                    if (string.IsNullOrEmpty(v)) continue;
-                    foreach (var h in headerNames)
-                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-                }
-                return -1;
-            }
-            int colName = GetCol(ws, cols, "Operation", "Name");
-            int colDescription = GetCol(ws, cols, "Description");
-            int colStatus = GetCol(ws, cols, "Status");
+            int colName = ExcelHelper.GetColumn(ws, cols, "Operation", "Name");
+            int colDescription = ExcelHelper.GetColumn(ws, cols, "Description");
+            int colStatus = ExcelHelper.GetColumn(ws, cols, "Status");
             if (colName < 1) return result;
-            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
-            static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
-            {
-                var val = GetStr(sheet, row, col);
-                if (string.IsNullOrWhiteSpace(val)) return true;
-                if (string.Equals(val, "INACTIVE", StringComparison.OrdinalIgnoreCase)) return false;
-                if (string.Equals(val, "NO", StringComparison.OrdinalIgnoreCase)) return false;
-                if (string.Equals(val, "0", StringComparison.OrdinalIgnoreCase)) return false;
-                return true;
-            }
             for (int r = 2; r <= rows; r++)
             {
-                var name = GetStr(ws, r, colName);
+                var name = ExcelHelper.GetString(ws, r, colName);
                 if (string.IsNullOrWhiteSpace(name)) continue;
-                var description = colDescription >= 1 ? GetStr(ws, r, colDescription) : null;
-                var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
+                var description = colDescription >= 1 ? ExcelHelper.GetString(ws, r, colDescription) : null;
+                var isActive = colStatus >= 1 ? ExcelHelper.ParseStatusActive(ws, r, colStatus) : true;
                 result.Add((name, string.IsNullOrWhiteSpace(description) ? null : description, isActive));
             }
             return result;
@@ -1558,36 +1374,23 @@ public static class DbSeeder
             return result;
         if (!File.Exists(path))
             throw new InvalidOperationException("Missing file: MASTER - TOOL SUPPLIER.xlsx not found at " + path + ". Place the file in the Data folder.");
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
-            using var package = new ExcelPackage(new FileInfo(path));
-            var ws = package.Workbook.Worksheets.FirstOrDefault();
-            if (ws?.Dimension == null) return result;
-            int cols = ws.Dimension.End.Column;
-            int rows = ws.Dimension.End.Row;
+            using var workbook = new XLWorkbook(path);
+            var ws = workbook.Worksheets.FirstOrDefault();
+            if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+            int cols = ExcelHelper.GetUsedColumnCount(ws);
+            int rows = ExcelHelper.GetUsedRowCount(ws);
             if (rows < 2) return result;
-            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-            {
-                for (int c = 1; c <= totalCols; c++)
-                {
-                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                    if (string.IsNullOrEmpty(v)) continue;
-                    foreach (var h in headerNames)
-                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-                }
-                return -1;
-            }
-            int colName = GetCol(ws, cols, "Supplier", "Tool Supplier", "Name");
-            int colWebsite = GetCol(ws, cols, "Website", "URL", "Link");
-            int colStatus = GetCol(ws, cols, "Status");
+            int colName = ExcelHelper.GetColumn(ws, cols, "Supplier", "Tool Supplier", "Name");
+            int colWebsite = ExcelHelper.GetColumn(ws, cols, "Website", "URL", "Link");
+            int colStatus = ExcelHelper.GetColumn(ws, cols, "Status");
             if (colName < 1) return result;
-            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
             for (int r = 2; r <= rows; r++)
             {
-                var name = GetStr(ws, r, colName);
-                var website = colWebsite >= 1 ? GetStr(ws, r, colWebsite) : null;
-                var status = colStatus >= 1 ? GetStr(ws, r, colStatus) : "";
+                var name = ExcelHelper.GetString(ws, r, colName);
+                var website = colWebsite >= 1 ? ExcelHelper.GetString(ws, r, colWebsite) : null;
+                var status = colStatus >= 1 ? ExcelHelper.GetString(ws, r, colStatus) : "";
                 if (string.IsNullOrWhiteSpace(name)) continue;
                 result.Add((name ?? "", string.IsNullOrWhiteSpace(website) ? null : website, status ?? ""));
             }
@@ -1624,51 +1427,29 @@ public static class DbSeeder
             return result;
         if (!File.Exists(path))
             throw new InvalidOperationException("Missing file: MASTER - MATERIAL SPEC.xlsx not found at " + path + ". Place the file in the Data folder.");
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         try
         {
-            using var package = new ExcelPackage(new FileInfo(path));
-            var ws = package.Workbook.Worksheets.FirstOrDefault();
-            if (ws?.Dimension == null) return result;
-            int cols = ws.Dimension.End.Column;
-            int rows = ws.Dimension.End.Row;
+            using var workbook = new XLWorkbook(path);
+            var ws = workbook.Worksheets.FirstOrDefault();
+            if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+            int cols = ExcelHelper.GetUsedColumnCount(ws);
+            int rows = ExcelHelper.GetUsedRowCount(ws);
             if (rows < 2) return result;
-            static int GetCol(ExcelWorksheet sheet, int totalCols, params string[] headerNames)
-            {
-                for (int c = 1; c <= totalCols; c++)
-                {
-                    var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                    if (string.IsNullOrEmpty(v)) continue;
-                    foreach (var h in headerNames)
-                        if (string.Equals(v, h, StringComparison.OrdinalIgnoreCase)) return c;
-                }
-                return -1;
-            }
-            int colSpec = GetCol(ws, cols, "Material Specification (On Drawing)", "Material Spec. (On Drawing)", "Material Spec.");
-            int colSpecPurchased = GetCol(ws, cols, "Material Specification (Purchased)", "Material Spec. (Purchased)");
-            int colMaterial = GetCol(ws, cols, "General Name", "Material");
-            int colSupplyCondition = GetCol(ws, cols, "Material Supply Condition (Purchased)", "Material Supply Condition");
-            int colMaterialType = GetCol(ws, cols, "Material Type");
-            int colStatus = GetCol(ws, cols, "Status", "Active", "IsActive");
+            int colSpec = ExcelHelper.GetColumn(ws, cols, "Material Specification (On Drawing)", "Material Spec. (On Drawing)", "Material Spec.");
+            int colSpecPurchased = ExcelHelper.GetColumn(ws, cols, "Material Specification (Purchased)", "Material Spec. (Purchased)");
+            int colMaterial = ExcelHelper.GetColumn(ws, cols, "General Name", "Material");
+            int colSupplyCondition = ExcelHelper.GetColumn(ws, cols, "Material Supply Condition (Purchased)", "Material Supply Condition");
+            int colMaterialType = ExcelHelper.GetColumn(ws, cols, "Material Type");
+            int colStatus = ExcelHelper.GetColumn(ws, cols, "Status", "Active", "IsActive");
             if (colSpec < 1 && colMaterial < 1) return result;
-            static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
-            static bool ParseStatusActive(ExcelWorksheet sheet, int row, int col)
-            {
-                var val = GetStr(sheet, row, col);
-                if (string.IsNullOrWhiteSpace(val)) return true;
-                if (string.Equals(val, "INACTIVE", StringComparison.OrdinalIgnoreCase)) return false;
-                if (string.Equals(val, "NO", StringComparison.OrdinalIgnoreCase)) return false;
-                if (string.Equals(val, "0", StringComparison.OrdinalIgnoreCase)) return false;
-                return true;
-            }
             for (int r = 2; r <= rows; r++)
             {
-                var spec = GetStr(ws, r, colSpec);
-                var specPurchased = GetStr(ws, r, colSpecPurchased);
-                var material = GetStr(ws, r, colMaterial);
-                var supplyCondition = GetStr(ws, r, colSupplyCondition);
-                var materialType = GetStr(ws, r, colMaterialType);
-                var isActive = colStatus >= 1 ? ParseStatusActive(ws, r, colStatus) : true;
+                var spec = ExcelHelper.GetString(ws, r, colSpec);
+                var specPurchased = ExcelHelper.GetString(ws, r, colSpecPurchased);
+                var material = ExcelHelper.GetString(ws, r, colMaterial);
+                var supplyCondition = ExcelHelper.GetString(ws, r, colSupplyCondition);
+                var materialType = ExcelHelper.GetString(ws, r, colMaterialType);
+                var isActive = colStatus >= 1 ? ExcelHelper.ParseStatusActive(ws, r, colStatus) : true;
                 if (string.IsNullOrWhiteSpace(spec) && string.IsNullOrWhiteSpace(material)) continue;
                 result.Add((spec ?? "", specPurchased ?? "", material ?? "", supplyCondition ?? "", materialType ?? "", isActive));
             }
@@ -2015,47 +1796,27 @@ public static class DbSeeder
     {
         var result = new List<(string, string, string, decimal, decimal, decimal)>();
         if (!File.Exists(path)) return result;
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using var package = new ExcelPackage(new FileInfo(path));
-        var ws = package.Workbook.Worksheets.FirstOrDefault();
-        if (ws?.Dimension == null) return result;
-        int cols = ws.Dimension.End.Column;
-        int rows = ws.Dimension.End.Row;
+        using var workbook = new XLWorkbook(path);
+        var ws = workbook.Worksheets.FirstOrDefault();
+        if (ws == null || ExcelHelper.GetUsedRowCount(ws) == 0) return result;
+        int cols = ExcelHelper.GetUsedColumnCount(ws);
+        int rows = ExcelHelper.GetUsedRowCount(ws);
         if (rows < 2) return result;
-        static int GetCol(ExcelWorksheet sheet, int totalCols, string headerName)
-        {
-            for (int c = 1; c <= totalCols; c++)
-            {
-                var v = sheet.Cells[1, c].Value?.ToString()?.Trim();
-                if (string.Equals(v, headerName, StringComparison.OrdinalIgnoreCase)) return c;
-            }
-            return -1;
-        }
-        int colSystemToolName = GetCol(ws, cols, "System Tool Name");
-        int colToolDescription = GetCol(ws, cols, "Tool Description");
-        int colProcurementChannel = GetCol(ws, cols, "Procurement channel");
-        int colToolDiameter = GetCol(ws, cols, "Tool Ø (DC)");
-        int colFluteLength = GetCol(ws, cols, "Flute / Cutting edge length (APMXS) cutting width (CW)");
-        int colCornerRad = GetCol(ws, cols, "Corner rad");
+        int colSystemToolName = ExcelHelper.GetColumn(ws, cols, "System Tool Name");
+        int colToolDescription = ExcelHelper.GetColumn(ws, cols, "Tool Description");
+        int colProcurementChannel = ExcelHelper.GetColumn(ws, cols, "Procurement channel");
+        int colToolDiameter = ExcelHelper.GetColumn(ws, cols, "Tool Ø (DC)");
+        int colFluteLength = ExcelHelper.GetColumn(ws, cols, "Flute / Cutting edge length (APMXS) cutting width (CW)");
+        int colCornerRad = ExcelHelper.GetColumn(ws, cols, "Corner rad");
         if (colSystemToolName < 0 && colToolDescription < 0) return result;
-        static decimal ParseDecimal(ExcelWorksheet sheet, int row, int col)
-        {
-            if (col < 1) return 0;
-            var v = sheet.Cells[row, col].Value;
-            if (v == null) return 0;
-            if (v is double d) return (decimal)d;
-            if (decimal.TryParse(v.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var dec)) return dec;
-            return 0;
-        }
-        static string GetStr(ExcelWorksheet sheet, int row, int col) => col >= 1 ? sheet.Cells[row, col].Value?.ToString()?.Trim() ?? "" : "";
         for (int r = 2; r <= rows; r++)
         {
-            var systemName = GetStr(ws, r, colSystemToolName);
-            var consumable = GetStr(ws, r, colToolDescription);
-            var supplier = GetStr(ws, r, colProcurementChannel);
-            var diameter = ParseDecimal(ws, r, colToolDiameter);
-            var flute = ParseDecimal(ws, r, colFluteLength);
-            var radius = ParseDecimal(ws, r, colCornerRad);
+            var systemName = ExcelHelper.GetString(ws, r, colSystemToolName);
+            var consumable = ExcelHelper.GetString(ws, r, colToolDescription);
+            var supplier = ExcelHelper.GetString(ws, r, colProcurementChannel);
+            var diameter = ExcelHelper.ParseDecimal(ws, r, colToolDiameter);
+            var flute = ExcelHelper.ParseDecimal(ws, r, colFluteLength);
+            var radius = ExcelHelper.ParseDecimal(ws, r, colCornerRad);
             if (string.IsNullOrWhiteSpace(systemName) && string.IsNullOrWhiteSpace(consumable)) continue;
             result.Add((systemName ?? "", consumable ?? "", supplier ?? "", diameter, flute, radius));
         }

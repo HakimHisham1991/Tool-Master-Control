@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using CNCToolingDatabase.Services;
 using System.Text;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
+using CNCToolingDatabase.Helpers;
+using ClosedXML.Excel;
 
 namespace CNCToolingDatabase.Controllers;
 
@@ -83,14 +83,12 @@ public class ToolCodeController : Controller
         
         var formatLower = format.ToLower();
         
-        // Handle Excel format with EPPlus
+        // Handle Excel format with ClosedXML
         if (formatLower == "excel")
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            using var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("Tool Codes");
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Tool Codes");
             
-            // Add column headers with color
             var headers = new[]
             {
                 "Tool No.", "Tool Name", "Consumable Tool Description", "Tool Supplier",
@@ -102,60 +100,39 @@ public class ToolCodeController : Controller
             
             int row = 1;
             int colCount = headers.Length;
-            for (int col = 1; col <= colCount; col++)
-            {
-                var cell = worksheet.Cells[row, col];
-                cell.Value = headers[col - 1];
-                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(204, 255, 255)); // RGB(204,255,255) = #CCFFFF
-                cell.Style.Font.Bold = true;
-            }
+            ExcelExportHelper.WriteHeaderRow(worksheet, row, headers);
             row++;
             
-            // Add data rows
             foreach (var tool in viewModel.Tools)
             {
-                worksheet.Cells[row, 1].Value = tool.ToolNumber;
-                worksheet.Cells[row, 2].Value = tool.ToolDescription;
-                worksheet.Cells[row, 3].Value = tool.ConsumableCode;
-                worksheet.Cells[row, 4].Value = tool.Supplier;
-                worksheet.Cells[row, 5].Value = tool.HolderExtensionCode;
-                worksheet.Cells[row, 6].Value = tool.Diameter;
-                worksheet.Cells[row, 7].Value = tool.FluteLength;
-                worksheet.Cells[row, 8].Value = tool.ProtrusionLength;
-                worksheet.Cells[row, 9].Value = tool.CornerRadius;
-                worksheet.Cells[row, 10].Value = tool.ArborCode;
-                worksheet.Cells[row, 11].Value = tool.PartNumber;
-                worksheet.Cells[row, 12].Value = tool.Operation;
-                worksheet.Cells[row, 13].Value = tool.Revision;
-                worksheet.Cells[row, 14].Value = tool.ToolListName;
-                worksheet.Cells[row, 15].Value = tool.ProjectCode;
-                worksheet.Cells[row, 16].Value = tool.MachineName;
-                worksheet.Cells[row, 17].Value = tool.MachineWorkcenter;
-                worksheet.Cells[row, 18].Value = tool.CreatedBy;
-                worksheet.Cells[row, 19].Value = tool.CreatedDate.ToString("yyyy-MM-dd HH:mm");
-                worksheet.Cells[row, 20].Value = tool.LastModifiedDate.ToString("yyyy-MM-dd HH:mm");
+                worksheet.Cell(row, 1).Value = tool.ToolNumber;
+                worksheet.Cell(row, 2).Value = tool.ToolDescription;
+                worksheet.Cell(row, 3).Value = tool.ConsumableCode;
+                worksheet.Cell(row, 4).Value = tool.Supplier;
+                worksheet.Cell(row, 5).Value = tool.HolderExtensionCode;
+                worksheet.Cell(row, 6).Value = tool.Diameter;
+                worksheet.Cell(row, 7).Value = tool.FluteLength;
+                worksheet.Cell(row, 8).Value = tool.ProtrusionLength;
+                worksheet.Cell(row, 9).Value = tool.CornerRadius;
+                worksheet.Cell(row, 10).Value = tool.ArborCode;
+                worksheet.Cell(row, 11).Value = tool.PartNumber;
+                worksheet.Cell(row, 12).Value = tool.Operation;
+                worksheet.Cell(row, 13).Value = tool.Revision;
+                worksheet.Cell(row, 14).Value = tool.ToolListName;
+                worksheet.Cell(row, 15).Value = tool.ProjectCode;
+                worksheet.Cell(row, 16).Value = tool.MachineName;
+                worksheet.Cell(row, 17).Value = tool.MachineWorkcenter;
+                worksheet.Cell(row, 18).Value = tool.CreatedBy;
+                worksheet.Cell(row, 19).Value = tool.CreatedDate.ToString("yyyy-MM-dd HH:mm");
+                worksheet.Cell(row, 20).Value = tool.LastModifiedDate.ToString("yyyy-MM-dd HH:mm");
                 row++;
             }
             
-            int tableEndRow = row - 1;
-            // All borders on table (headers + data)
-            for (int r = 1; r <= tableEndRow; r++)
-                for (int c = 1; c <= colCount; c++)
-                {
-                    var cell = worksheet.Cells[r, c];
-                    cell.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                }
-            
-            // Auto-fit columns
-            worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+            ExcelExportHelper.ApplyTableBorders(worksheet, 1, row - 1, colCount);
+            ExcelExportHelper.AutoFitColumns(worksheet);
             
             var fileName = $"ToolCodes_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-            var fileBytes = package.GetAsByteArray();
-            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return File(ExcelExportHelper.SaveToBytes(workbook), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
         
         // Handle CSV and TXT formats

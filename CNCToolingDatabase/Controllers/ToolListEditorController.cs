@@ -5,8 +5,8 @@ using CNCToolingDatabase.Models.ViewModels;
 using CNCToolingDatabase.Services;
 using CNCToolingDatabase.Data;
 using System.Text;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
+using CNCToolingDatabase.Helpers;
+using ClosedXML.Excel;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -393,50 +393,47 @@ public class ToolListEditorController : Controller
         
         var formatLower = format.ToLower();
         
-        // Handle Excel format with EPPlus
+        // Handle Excel format with ClosedXML
         if (formatLower == "excel")
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            using var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("Tool List");
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Tool List");
             
-            // Add header information
             int row = 1;
-            worksheet.Cells[row, 1].Value = "Tool List:";
-            worksheet.Cells[row, 2].Value = viewModel.ToolListName;
+            worksheet.Cell(row, 1).Value = "Tool List:";
+            worksheet.Cell(row, 2).Value = viewModel.ToolListName;
             row++;
-            worksheet.Cells[row, 1].Value = "Part Number:";
-            worksheet.Cells[row, 2].Value = viewModel.PartNumber;
+            worksheet.Cell(row, 1).Value = "Part Number:";
+            worksheet.Cell(row, 2).Value = viewModel.PartNumber;
             row++;
-            worksheet.Cells[row, 1].Value = "Operation:";
-            worksheet.Cells[row, 2].Value = viewModel.Operation;
+            worksheet.Cell(row, 1).Value = "Operation:";
+            worksheet.Cell(row, 2).Value = viewModel.Operation;
             row++;
-            worksheet.Cells[row, 1].Value = "Revision:";
-            worksheet.Cells[row, 2].Value = viewModel.Revision;
+            worksheet.Cell(row, 1).Value = "Revision:";
+            worksheet.Cell(row, 2).Value = viewModel.Revision;
             row++;
-            worksheet.Cells[row, 1].Value = "Project Code:";
-            worksheet.Cells[row, 2].Value = viewModel.ProjectCode;
+            worksheet.Cell(row, 1).Value = "Project Code:";
+            worksheet.Cell(row, 2).Value = viewModel.ProjectCode;
             row++;
-            worksheet.Cells[row, 1].Value = "Machine:";
-            worksheet.Cells[row, 2].Value = viewModel.MachineName;
+            worksheet.Cell(row, 1).Value = "Machine:";
+            worksheet.Cell(row, 2).Value = viewModel.MachineName;
             row++;
-            worksheet.Cells[row, 1].Value = "Workcenter:";
-            worksheet.Cells[row, 2].Value = viewModel.MachineWorkcenter;
+            worksheet.Cell(row, 1).Value = "Workcenter:";
+            worksheet.Cell(row, 2).Value = viewModel.MachineWorkcenter;
             row++;
-            worksheet.Cells[row, 1].Value = "Machine Model:";
-            worksheet.Cells[row, 2].Value = viewModel.MachineModel;
+            worksheet.Cell(row, 1).Value = "Machine Model:";
+            worksheet.Cell(row, 2).Value = viewModel.MachineModel;
             row++;
-            worksheet.Cells[row, 1].Value = "Approved By:";
-            worksheet.Cells[row, 2].Value = viewModel.ApprovedBy;
+            worksheet.Cell(row, 1).Value = "Approved By:";
+            worksheet.Cell(row, 2).Value = viewModel.ApprovedBy;
             row++;
-            worksheet.Cells[row, 1].Value = "CAM Programmer:";
-            worksheet.Cells[row, 2].Value = viewModel.CamProgrammer;
+            worksheet.Cell(row, 1).Value = "CAM Programmer:";
+            worksheet.Cell(row, 2).Value = viewModel.CamProgrammer;
             row++;
-            worksheet.Cells[row, 1].Value = "General Name:";
-            worksheet.Cells[row, 2].Value = viewModel.Material;
+            worksheet.Cell(row, 1).Value = "General Name:";
+            worksheet.Cell(row, 2).Value = viewModel.Material;
             row += 2;
             
-            // Add column headers with color
             var headers = new[]
             {
                 "Tool No.", "Tool Name", "Consumable Tool Description", "Tool Supplier",
@@ -447,54 +444,33 @@ public class ToolListEditorController : Controller
             
             int tableStartRow = row;
             int colCount = headers.Length;
-            for (int col = 1; col <= colCount; col++)
-            {
-                var cell = worksheet.Cells[row, col];
-                cell.Value = headers[col - 1];
-                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(204, 255, 255)); // RGB(204,255,255) = #CCFFFF
-                cell.Style.Font.Bold = true;
-            }
+            ExcelExportHelper.WriteHeaderRow(worksheet, row, headers);
             row++;
             
-            // Add data rows
             foreach (var detail in viewModel.Details.Where(d => 
                 !string.IsNullOrWhiteSpace(d.ToolNumber) || 
                 !string.IsNullOrWhiteSpace(d.ConsumableCode)))
             {
-                worksheet.Cells[row, 1].Value = detail.ToolNumber;
-                worksheet.Cells[row, 2].Value = detail.ToolDescription;
-                worksheet.Cells[row, 3].Value = detail.ConsumableCode;
-                worksheet.Cells[row, 4].Value = detail.Supplier;
-                worksheet.Cells[row, 5].Value = detail.HolderExtensionCode;
-                worksheet.Cells[row, 6].Value = detail.Diameter ?? 0;
-                worksheet.Cells[row, 7].Value = detail.FluteLength ?? 0;
-                worksheet.Cells[row, 8].Value = detail.ProtrusionLength ?? 0;
-                worksheet.Cells[row, 9].Value = detail.CornerRadius ?? 0;
-                worksheet.Cells[row, 10].Value = detail.ArborCode;
-                worksheet.Cells[row, 11].Value = detail.ToolPathTimeMinutes ?? 0;
-                worksheet.Cells[row, 12].Value = detail.Remarks ?? string.Empty;
+                worksheet.Cell(row, 1).Value = detail.ToolNumber;
+                worksheet.Cell(row, 2).Value = detail.ToolDescription;
+                worksheet.Cell(row, 3).Value = detail.ConsumableCode;
+                worksheet.Cell(row, 4).Value = detail.Supplier;
+                worksheet.Cell(row, 5).Value = detail.HolderExtensionCode;
+                worksheet.Cell(row, 6).Value = detail.Diameter ?? 0;
+                worksheet.Cell(row, 7).Value = detail.FluteLength ?? 0;
+                worksheet.Cell(row, 8).Value = detail.ProtrusionLength ?? 0;
+                worksheet.Cell(row, 9).Value = detail.CornerRadius ?? 0;
+                worksheet.Cell(row, 10).Value = detail.ArborCode;
+                worksheet.Cell(row, 11).Value = detail.ToolPathTimeMinutes ?? 0;
+                worksheet.Cell(row, 12).Value = detail.Remarks ?? string.Empty;
                 row++;
             }
             
-            int tableEndRow = row - 1;
-            // All borders on table (headers + data)
-            for (int r = tableStartRow; r <= tableEndRow; r++)
-                for (int c = 1; c <= colCount; c++)
-                {
-                    var cell = worksheet.Cells[r, c];
-                    cell.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                    cell.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                }
-            
-            // Auto-fit columns
-            worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+            ExcelExportHelper.ApplyTableBorders(worksheet, tableStartRow, row - 1, colCount);
+            ExcelExportHelper.AutoFitColumns(worksheet);
             
             var fileName = $"{viewModel.ToolListName}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-            var fileBytes = package.GetAsByteArray();
-            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return File(ExcelExportHelper.SaveToBytes(workbook), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
         
         // Handle PDF format

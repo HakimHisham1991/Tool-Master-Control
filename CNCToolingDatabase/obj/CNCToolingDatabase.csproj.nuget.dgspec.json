@@ -53,9 +53,9 @@
           "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
-            "EPPlus": {
+            "ClosedXML": {
               "target": "Package",
-              "version": "[7.5.2, )"
+              "version": "[0.105.0, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
