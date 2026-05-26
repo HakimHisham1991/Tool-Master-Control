@@ -96,7 +96,7 @@ public class ToolListEditorController : Controller
         header.ApprovedDate = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         var approvedDateFormatted = header.ApprovedDate?.ToString("dd/MM/yyyy") ?? "";
-        return Json(new { success = true, approvedByUserId = userId.Value, approvedDateFormatted });
+        return Json(new { success = true, approvedByUserId = userId.Value, approvedDateFormatted, approvedByName = displayName });
     }
     
     [HttpPost]
@@ -156,6 +156,7 @@ public class ToolListEditorController : Controller
     public async Task<IActionResult> ApproveToolRegister(int id)
     {
         var userId = HttpContext.Session.GetInt32("UserId");
+        var displayName = HttpContext.Session.GetString("DisplayName") ?? HttpContext.Session.GetString("Username") ?? "";
         if (!userId.HasValue)
             return Json(new { success = false, message = "You must be logged in to approve." });
         var header = await _context.ToolListHeaders.FindAsync(id);
@@ -169,7 +170,7 @@ public class ToolListEditorController : Controller
         header.ToolRegisterByDate = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         var approvedDateFormatted = header.ToolRegisterByDate?.ToString("dd/MM/yyyy") ?? "";
-        return Json(new { success = true, approvedByUserId = userId.Value, approvedDateFormatted });
+        return Json(new { success = true, approvedByUserId = userId.Value, approvedDateFormatted, approvedByName = displayName });
     }
     
     [HttpPost]
@@ -421,6 +422,9 @@ public class ToolListEditorController : Controller
             worksheet.Cell(row, 1).Value = "Part Number:";
             worksheet.Cell(row, 2).Value = viewModel.PartNumber;
             row++;
+            worksheet.Cell(row, 1).Value = "Part Description:";
+            worksheet.Cell(row, 2).Value = viewModel.PartDescription;
+            row++;
             worksheet.Cell(row, 1).Value = "Operation:";
             worksheet.Cell(row, 2).Value = viewModel.Operation;
             row++;
@@ -438,15 +442,6 @@ public class ToolListEditorController : Controller
             row++;
             worksheet.Cell(row, 1).Value = "Machine Model:";
             worksheet.Cell(row, 2).Value = viewModel.MachineModel;
-            row++;
-            worksheet.Cell(row, 1).Value = "Approved By:";
-            worksheet.Cell(row, 2).Value = viewModel.ApprovedBy;
-            row++;
-            worksheet.Cell(row, 1).Value = "CAM Programmer:";
-            worksheet.Cell(row, 2).Value = viewModel.CamProgrammer;
-            row++;
-            worksheet.Cell(row, 1).Value = "General Name:";
-            worksheet.Cell(row, 2).Value = viewModel.Material;
             row += 2;
             
             var headers = new[]
@@ -482,6 +477,15 @@ public class ToolListEditorController : Controller
             }
             
             ExcelExportHelper.ApplyTableBorders(worksheet, tableStartRow, row - 1, colCount);
+
+            // 3 blank rows of space, then the approval signatures below the table.
+            row += 3;
+            worksheet.Cell(row, 1).Value = "CAM Programmer:";
+            worksheet.Cell(row, 2).Value = viewModel.CamProgrammer;
+            row++;
+            worksheet.Cell(row, 1).Value = "Approved By:";
+            worksheet.Cell(row, 2).Value = viewModel.ApprovedBy;
+
             ExcelExportHelper.AutoFitColumns(worksheet);
             
             var fileName = $"{viewModel.ToolListName}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
@@ -494,7 +498,8 @@ public class ToolListEditorController : Controller
             var details = viewModel.Details
                 .Where(d => !string.IsNullOrWhiteSpace(d.ToolNumber) || !string.IsNullOrWhiteSpace(d.ConsumableCode))
                 .ToList();
-            // Fetch stamp images and display names for the three approval sections
+            // Fetch stamp images for the three approval sections.
+            // The Tool Register By display name is already resolved in ToolListService.
             byte[]? stamp1 = null;
             byte[]? stamp2 = null;
             byte[]? stamp3 = null;
@@ -533,6 +538,7 @@ public class ToolListEditorController : Controller
                 stamp1,
                 stamp2,
                 stamp3,
+                viewModel.ToolRegisterByName,
                 System.IO.File.Exists(logoPath) ? logoPath : null,
                 partImagePath,
                 System.IO.File.Exists(toolSpecsPath) ? toolSpecsPath : null);
@@ -546,13 +552,13 @@ public class ToolListEditorController : Controller
         
         content.AppendLine($"Tool List: {viewModel.ToolListName}");
         content.AppendLine($"Part Number: {viewModel.PartNumber}");
+        content.AppendLine($"Part Description: {viewModel.PartDescription}");
         content.AppendLine($"Operation: {viewModel.Operation}");
         content.AppendLine($"Revision: {viewModel.Revision}");
         content.AppendLine($"Project Code: {viewModel.ProjectCode}");
         content.AppendLine($"Machine: {viewModel.MachineName}");
         content.AppendLine($"Workcenter: {viewModel.MachineWorkcenter}");
         content.AppendLine($"Machine Model: {viewModel.MachineModel}");
-        content.AppendLine($"General Name: {viewModel.Material}");
         content.AppendLine();
         
         content.AppendLine(string.Join(separator, new[]
@@ -583,6 +589,13 @@ public class ToolListEditorController : Controller
                 EscapeField(detail.Remarks, separator)
             }));
         }
+
+        // 3 blank lines of space, then the approval signatures below the table.
+        content.AppendLine();
+        content.AppendLine();
+        content.AppendLine();
+        content.AppendLine($"CAM Programmer: {viewModel.CamProgrammer}");
+        content.AppendLine($"Approved By: {viewModel.ApprovedBy}");
         
         var fileNameText = $"{viewModel.ToolListName}_{DateTime.Now:yyyyMMdd_HHmmss}";
         var contentType = formatLower switch

@@ -246,6 +246,19 @@ public class ToolListService : IToolListService
                 .FirstOrDefaultAsync();
             partDescription = pn ?? "";
         }
+
+        var toolRegisterByName = "";
+        if (header.ToolRegisterByUserId.HasValue)
+        {
+            var u = await _context.Users
+                .Where(x => x.Id == header.ToolRegisterByUserId.Value)
+                .Select(x => new { x.DisplayName, x.Username })
+                .FirstOrDefaultAsync();
+            if (u != null)
+            {
+                toolRegisterByName = !string.IsNullOrWhiteSpace(u.DisplayName) ? u.DisplayName : (u.Username ?? "");
+            }
+        }
         
         return new ToolListEditorViewModel
         {
@@ -266,6 +279,7 @@ public class ToolListService : IToolListService
             CamLeaderApprovedDate = header.CamLeaderApprovedDate,
             ToolRegisterByUserId = header.ToolRegisterByUserId,
             ToolRegisterByDate = header.ToolRegisterByDate,
+            ToolRegisterByName = toolRegisterByName,
             CamProgrammer = header.CamProgrammer ?? "",
             MaterialSpecId = header.MaterialSpecId,
             Material = header.MaterialSpec?.Material ?? "",

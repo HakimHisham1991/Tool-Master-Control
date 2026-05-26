@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "targets": {
     "net10.0": {
       "ClosedXML/0.105.0": {
@@ -3004,23 +3004,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\User\\.nuget\\packages\\": {},
+    "C:\\Users\\hakim.hisham\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
+      "projectUniqueName": "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
       "projectName": "CNCToolingDatabase",
-      "projectPath": "c:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
-      "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\obj\\",
+      "projectPath": "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
+      "packagesPath": "C:\\Users\\hakim.hisham\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\hakim.hisham\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -3029,10 +3029,12 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {}
         }
@@ -3047,10 +3049,11 @@
         "auditLevel": "low",
         "auditMode": "all"
       },
-      "SdkAnalysisLevel": "10.0.200"
+      "SdkAnalysisLevel": "10.0.300"
     },
     "frameworks": {
       "net10.0": {
+        "framework": "net10.0",
         "targetAlias": "net10.0",
         "dependencies": {
           "ClosedXML": {
@@ -3091,7 +3094,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

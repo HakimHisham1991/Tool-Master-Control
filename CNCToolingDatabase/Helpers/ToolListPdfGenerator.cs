@@ -13,12 +13,28 @@ public static class ToolListPdfGenerator
     private static readonly Unit Margin = Unit.FromCentimeter(1.5);
     private static readonly Unit ImageRowHeight = Unit.FromPoint(45);
 
+    // A4 landscape page width minus left/right margins (29.7 - 2 * 1.5 cm).
+    private static readonly Unit ContentWidth = Unit.FromCentimeter(29.7 - 2 * 1.5);
+
+    // Original sum of the 12 column widths in CreateMainColumnTable. The columns are
+    // scaled by ContentWidth / OriginalMainTableWidth so the table fills the page width.
+    private static readonly Unit OriginalMainTableWidth =
+        Unit.FromPoint(45 + 40 + 40 + 40 + 45 + 55) + Unit.FromCentimeter(2.8 + 2.8 + 1.7 + 1.7 + 2.8 + 2.2);
+    private static readonly double WidthScale = ContentWidth.Point / OriginalMainTableWidth.Point;
+
+    // Total width of the main tool table after scaling = page content width.
+    // Keeping this in one place ensures the specs table above stays aligned with the
+    // rightmost border of the main tool table when the column layout changes.
+    private static readonly Unit MainTableWidth = ContentWidth;
+    private static readonly Unit SpecsLabelWidth = Unit.FromCentimeter(4);
+
     public static byte[] Generate(
         ToolListEditorViewModel viewModel,
         IReadOnlyList<ToolListDetailRow> details,
         byte[]? camProgrammerStamp,
         byte[]? approvedByStamp,
         byte[]? toolRegisterStamp,
+        string? toolRegisterByName,
         string? logoPath,
         string? partImagePath,
         string? toolSpecsPath)
@@ -42,9 +58,10 @@ public static class ToolListPdfGenerator
             AddHeader(section, logoPath);
             AddInfoTable(section, viewModel);
             AddSpacer(section, Unit.FromPoint(6));
+            AddSpecsTable(section, viewModel);
             AddImageRow(section, partImagePath, toolSpecsPath);
             AddToolTable(section, details);
-            AddStampSection(section, camProgrammerStamp, approvedByStamp, toolRegisterStamp, viewModel, tempFiles);
+            AddStampSection(section, camProgrammerStamp, approvedByStamp, toolRegisterStamp, toolRegisterByName, viewModel, tempFiles);
             AddFooter(section);
 
             using var stream = new MemoryStream();
@@ -132,6 +149,57 @@ public static class ToolListPdfGenerator
         paragraph.Format.SpaceAfter = height;
     }
 
+    private static void AddSpecsTable(Section section, ToolListEditorViewModel viewModel)
+    {
+        var table = section.AddTable();
+        table.Borders.Width = BorderWidth;
+        table.Borders.Color = Colors.Black;
+
+        table.AddColumn(SpecsLabelWidth);
+        table.AddColumn(MainTableWidth - SpecsLabelWidth);
+
+        var rows = new (string Label, string Value)[]
+        {
+            ("Tool List:", viewModel.ToolListName ?? ""),
+            ("Part Number:", viewModel.PartNumber ?? ""),
+            ("Part Description:", viewModel.PartDescription ?? ""),
+            ("Operation:", viewModel.Operation ?? ""),
+            ("Revision:", viewModel.Revision ?? ""),
+            ("Project Code:", viewModel.ProjectCode ?? ""),
+            ("Machine:", viewModel.MachineName ?? ""),
+            ("Workcenter:", viewModel.MachineWorkcenter ?? ""),
+            ("Machine Model:", viewModel.MachineModel ?? ""),
+        };
+
+        foreach (var (label, value) in rows)
+        {
+            var row = table.AddRow();
+            row.VerticalAlignment = VerticalAlignment.Center;
+            StyleSpecsLabelCell(row.Cells[0], label);
+            StyleSpecsValueCell(row.Cells[1], value);
+        }
+    }
+
+    private static void StyleSpecsLabelCell(Cell cell, string text)
+    {
+        cell.Shading.Color = HeaderFill;
+        cell.VerticalAlignment = VerticalAlignment.Center;
+        var paragraph = cell.AddParagraph(text);
+        paragraph.Format.Alignment = ParagraphAlignment.Left;
+        paragraph.Format.Font.Name = FontName;
+        paragraph.Format.Font.Size = 8;
+        paragraph.Format.Font.Bold = true;
+    }
+
+    private static void StyleSpecsValueCell(Cell cell, string text)
+    {
+        cell.VerticalAlignment = VerticalAlignment.Center;
+        var paragraph = cell.AddParagraph(text);
+        paragraph.Format.Alignment = ParagraphAlignment.Left;
+        paragraph.Format.Font.Name = FontName;
+        paragraph.Format.Font.Size = 8;
+    }
+
     private static void AddImageRow(Section section, string? partImagePath, string? toolSpecsPath)
     {
         var table = CreateMainColumnTable(section);
@@ -201,18 +269,18 @@ public static class ToolListPdfGenerator
         table.Borders.Width = BorderWidth;
         table.Borders.Color = Colors.Black;
 
-        table.AddColumn(Unit.FromPoint(45));
-        table.AddColumn(Unit.FromCentimeter(2.8));
-        table.AddColumn(Unit.FromCentimeter(2.8));
-        table.AddColumn(Unit.FromCentimeter(1.7));
-        table.AddColumn(Unit.FromCentimeter(1.7));
-        table.AddColumn(Unit.FromPoint(40));
-        table.AddColumn(Unit.FromPoint(40));
-        table.AddColumn(Unit.FromPoint(40));
-        table.AddColumn(Unit.FromPoint(45));
-        table.AddColumn(Unit.FromCentimeter(2.8));
-        table.AddColumn(Unit.FromPoint(55));
-        table.AddColumn(Unit.FromCentimeter(2.2));
+        table.AddColumn(Unit.FromPoint(45 * WidthScale));
+        table.AddColumn(Unit.FromCentimeter(2.8 * WidthScale));
+        table.AddColumn(Unit.FromCentimeter(2.8 * WidthScale));
+        table.AddColumn(Unit.FromCentimeter(1.7 * WidthScale));
+        table.AddColumn(Unit.FromCentimeter(1.7 * WidthScale));
+        table.AddColumn(Unit.FromPoint(40 * WidthScale));
+        table.AddColumn(Unit.FromPoint(40 * WidthScale));
+        table.AddColumn(Unit.FromPoint(40 * WidthScale));
+        table.AddColumn(Unit.FromPoint(45 * WidthScale));
+        table.AddColumn(Unit.FromCentimeter(2.8 * WidthScale));
+        table.AddColumn(Unit.FromPoint(55 * WidthScale));
+        table.AddColumn(Unit.FromCentimeter(2.2 * WidthScale));
         return table;
     }
 
@@ -257,6 +325,7 @@ public static class ToolListPdfGenerator
         byte[]? camProgrammerStamp,
         byte[]? approvedByStamp,
         byte[]? toolRegisterStamp,
+        string? toolRegisterByName,
         ToolListEditorViewModel viewModel,
         List<string> tempFiles)
     {
@@ -269,20 +338,25 @@ public static class ToolListPdfGenerator
         table.AddColumn(Unit.FromCentimeter(8.9));
 
         var row = table.AddRow();
-        AddStampCell(row.Cells[0], ParagraphAlignment.Left, "CAM Programmer:", camProgrammerStamp, viewModel.ApprovedDate, tempFiles);
-        AddStampCell(row.Cells[1], ParagraphAlignment.Center, "Approved by:", approvedByStamp, viewModel.CamLeaderApprovedDate, tempFiles);
-        AddStampCell(row.Cells[2], ParagraphAlignment.Right, "Tool Register By:", toolRegisterStamp, viewModel.ToolRegisterByDate, tempFiles);
+        AddStampCell(row.Cells[0], ParagraphAlignment.Left, "CAM Programmer:", viewModel.CamProgrammer ?? "", camProgrammerStamp, viewModel.ApprovedDate, tempFiles);
+        AddStampCell(row.Cells[1], ParagraphAlignment.Center, "Approved by:", viewModel.ApprovedBy ?? "", approvedByStamp, viewModel.CamLeaderApprovedDate, tempFiles);
+        AddStampCell(row.Cells[2], ParagraphAlignment.Right, "Tool Register By:", toolRegisterByName ?? "", toolRegisterStamp, viewModel.ToolRegisterByDate, tempFiles);
     }
 
-    private static void AddStampCell(Cell cell, ParagraphAlignment alignment, string label, byte[]? stampBytes, DateTime? date, List<string> tempFiles)
+    private static void AddStampCell(Cell cell, ParagraphAlignment alignment, string label, string name, byte[]? stampBytes, DateTime? date, List<string> tempFiles)
     {
         cell.VerticalAlignment = VerticalAlignment.Top;
-        var labelParagraph = cell.AddParagraph(label);
+        var labelParagraph = cell.AddParagraph();
         labelParagraph.Format.Alignment = alignment;
         labelParagraph.Format.Font.Name = FontName;
         labelParagraph.Format.Font.Size = 9;
-        labelParagraph.Format.Font.Bold = true;
         labelParagraph.Format.SpaceAfter = Unit.FromPoint(4);
+        var labelText = labelParagraph.AddFormattedText(label);
+        labelText.Bold = true;
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            labelParagraph.AddText($" {name}");
+        }
 
         var stampPath = WriteTempImage(stampBytes, tempFiles);
         if (stampPath != null)
