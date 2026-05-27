@@ -29,8 +29,7 @@ jobs:
 
       # ====================== STOP THE SITE ======================
       - name: Create app_offline.htm locally
-        run: |
-          Set-Content -Path ./app_offline.htm -Value "<!DOCTYPE html><html><body><h2>Site is updating, please wait...</h2></body></html>"
+        run: Set-Content -Path ./app_offline.htm -Value "<!DOCTYPE html><html><body><h2>Site is updating, please wait...</h2></body></html>"
 
       - name: Upload app_offline.htm to stop site
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -49,6 +48,8 @@ jobs:
         run: Start-Sleep -Seconds 15
 
       # ====================== DEPLOY FILES ======================
+      # FTP-Deploy automatically removes app_offline.htm at end of sync
+      # since it is not present in ./publish/ folder
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
@@ -58,12 +59,3 @@ jobs:
           local-dir: ./publish/
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           dangerous-clean-slate: false
-
-      # ====================== START THE SITE ======================
-      - name: Remove app_offline.htm to restart site
-        run: |
-          $ftp = [System.Net.FtpWebRequest]::Create("ftp://${{ secrets.FTP_SERVER }}/wwwroot/app_offline.htm")
-          $ftp.Method = [System.Net.WebRequestMethods+Ftp]::DeleteFile
-          $ftp.Credentials = New-Object System.Net.NetworkCredential("${{ secrets.FTP_USERNAME }}", "${{ secrets.FTP_PASSWORD }}")
-          $ftp.GetResponse() | Out-Null
-          Write-Host "app_offline.htm removed, site is back online."
