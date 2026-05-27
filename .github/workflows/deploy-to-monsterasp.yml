@@ -26,11 +26,11 @@ jobs:
 
       - name: Publish
         run: |
-          dotnet publish CNCToolingDatabase/CNctoolingDatabase.csproj \
-            --configuration Release \
-            --output ./publish \
-            --runtime win-x64 \
-            --self-contained false \
+          dotnet publish CNCToolingDatabase/CNctoolingDatabase.csproj `
+            --configuration Release `
+            --output ./publish `
+            --runtime win-x64 `
+            --self-contained false `
             -p:PublishTrimmed=false
 
       # ====================== STOP THE SITE ======================
