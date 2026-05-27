@@ -1123,16 +1123,28 @@ select.form-control {
 .copy-toast.show {
     opacity: 1;
 }
+.app-title {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+    margin: 0;
+}
+
+.app-title-main {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+}
+
+.app-title-sub,
 .app-title-revision {
     font-size: 11px;
     font-weight: 400;
-    color: #9CA3AF;
-    margin-top: 2px;
+    color: #E5E7EB;           /* Brighter color for dark background */
+    margin-top: 1px;
+    letter-spacing: 0.4px;
 }
+
 .app-title-revision {
-    font-family: inherit;
-    letter-spacing: 0.5px;
-}
-.app-title-revision:hover {
-    color: #D1D5DB;
+    opacity: 0.9;
 }
