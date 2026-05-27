@@ -3,7 +3,7 @@ name: Build & Deploy to MonsterASP
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:   # Manual trigger option
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -25,51 +25,13 @@ jobs:
         run: dotnet build CNCToolingDatabase/CNctoolingDatabase.csproj --configuration Release --no-restore
 
       - name: Publish
-        run: |
-          dotnet publish CNCToolingDatabase/CNctoolingDatabase.csproj `
-            --configuration Release `
-            --output ./publish `
-            --runtime win-x64 `
-            --self-contained false `
-            -p:PublishTrimmed=false
+        run: dotnet publish CNCToolingDatabase/CNctoolingDatabase.csproj --configuration Release --output ./publish --runtime win-x64 --self-contained false -p:PublishTrimmed=false
 
-      # ====================== STOP THE SITE ======================
-      - name: Stop site (upload app_offline.htm)
-        run: |
-          $request = [System.Net.FtpWebRequest]::Create("ftp://${{ secrets.FTP_SERVER }}/wwwroot/app_offline.htm")
-          $request.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
-          $request.Credentials = New-Object System.Net.NetworkCredential("${{ secrets.FTP_USERNAME }}", "${{ secrets.FTP_PASSWORD }}")
-          $content = [System.Text.Encoding]::UTF8.GetBytes("<!DOCTYPE html><html><body><h2>Site is updating, please wait...</h2></body></html>")
-          $request.ContentLength = $content.Length
-          $stream = $request.GetRequestStream()
-          $stream.Write($content, 0, $content.Length)
-          $stream.Close()
-          $request.GetResponse()
-
-      - name: Wait for app to shutdown
-        run: Start-Sleep -Seconds 10
-
-      # ====================== DEPLOY NEW FILES ======================
       - name: Deploy via WebDeploy
-        run: |
-          & "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" `
-            -verb:sync `
-            -source:contentPath="./publish" `
-            -dest:contentPath="${{ secrets.WEBSITE_NAME }}",`
-              computerName="https://${{ secrets.SERVER_COMPUTER_NAME }}/msdeploy.axd?site=${{ secrets.WEBSITE_NAME }}",`
-              userName="${{ secrets.SERVER_USERNAME }}",`
-              password="${{ secrets.SERVER_PASSWORD }}",`
-              authtype="Basic" `
-            -allowUntrusted `
-            -enableRule:AppOffline
-
-      # ====================== START THE SITE ======================
-      - name: Start site (remove app_offline.htm)
-        run: |
-          $request = [System.Net.FtpWebRequest]::Create("ftp://${{ secrets.FTP_SERVER }}/wwwroot/app_offline.htm")
-          $request.Method = [System.Net.WebRequestMethods+Ftp]::DeleteFile
-          $request.Credentials = New-Object System.Net.NetworkCredential("${{ secrets.FTP_USERNAME }}", "${{ secrets.FTP_PASSWORD }}")
-          $request.GetResponse()
-
-      - name: Final Wait & Health Check
-        run: Start-Sleep -Seconds 5
+        run: >-
+          & "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          -verb:sync
+          -source:contentPath="$(Resolve-Path ./publish)"
+          "-dest:contentPath=${{ secrets.WEBSITE_NAME }},computerName=https://${{ secrets.SERVER_COMPUTER_NAME }}/msdeploy.axd?site=${{ secrets.WEBSITE_NAME }},userName=${{ secrets.SERVER_USERNAME }},password=${{ secrets.SERVER_PASSWORD }},authtype=Basic"
+          -allowUntrusted
+          -enableRule:AppOffline
