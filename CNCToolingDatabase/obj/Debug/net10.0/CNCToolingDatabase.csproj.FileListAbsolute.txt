@@ -196,4 +196,4 @@ c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net10.0\CNCToolingDatabase.pdb
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net10.0\CNCToolingDatabase.genruntimeconfig.cache
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net10.0\ref\CNCToolingDatabase.dll
-C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net10.0\compressed\rmnmy7j1wa-{0}-301h0k6vq0-301h0k6vq0.gz
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net10.0\compressed\rmnmy7j1wa-{0}-p7s2x8m6pa-p7s2x8m6pa.gz
