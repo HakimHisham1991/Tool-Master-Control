@@ -414,9 +414,13 @@ public class ToolListEditorController : Controller
         // Handle Excel format with ClosedXML
         if (formatLower == "excel")
         {
+            var tempFiles = new List<string>();
+            try
+            {
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Tool List");
             
+            const int imageRow = 10;
             int row = 1;
             worksheet.Cell(row, 1).Value = "Tool List:";
             worksheet.Cell(row, 2).Value = viewModel.ToolListName;
@@ -444,7 +448,10 @@ public class ToolListEditorController : Controller
             row++;
             worksheet.Cell(row, 1).Value = "Machine Model:";
             worksheet.Cell(row, 2).Value = viewModel.MachineModel;
-            row += 2;
+            row++;
+
+            ExcelExportHelper.WritePartImageRow(worksheet, imageRow, viewModel.PartNumber, tempFiles);
+            row = imageRow + 1;
             
             var headers = new[]
             {
@@ -487,11 +494,22 @@ public class ToolListEditorController : Controller
             row++;
             worksheet.Cell(row, 1).Value = "Approved By:";
             worksheet.Cell(row, 2).Value = viewModel.ApprovedBy;
+            var lastRow = row;
 
+            ExcelExportHelper.ApplyTextAlignment(worksheet, 1, lastRow, colCount);
             ExcelExportHelper.AutoFitColumns(worksheet);
+            ExcelExportHelper.EnsurePartImageRowHeight(worksheet, imageRow);
             
             var fileName = $"{viewModel.ToolListName}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             return File(ExcelExportHelper.SaveToBytes(workbook), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            finally
+            {
+                foreach (var tempFile in tempFiles)
+                {
+                    try { System.IO.File.Delete(tempFile); } catch { /* best effort */ }
+                }
+            }
         }
         
         // Handle PDF format
