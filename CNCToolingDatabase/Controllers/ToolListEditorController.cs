@@ -14,11 +14,13 @@ public class ToolListEditorController : Controller
 {
     private readonly IToolListService _toolListService;
     private readonly ApplicationDbContext _context;
+    private readonly PdfLayoutService _pdfLayoutService;
     
-    public ToolListEditorController(IToolListService toolListService, ApplicationDbContext context)
+    public ToolListEditorController(IToolListService toolListService, ApplicationDbContext context, PdfLayoutService pdfLayoutService)
     {
         _toolListService = toolListService;
         _context = context;
+        _pdfLayoutService = pdfLayoutService;
     }
     
     public async Task<IActionResult> Index(int? id)
@@ -532,6 +534,7 @@ public class ToolListEditorController : Controller
                 }
             }
             var toolSpecsPath = Path.Combine(baseDir, "Data", "PDF_EXPORT", "TOOL_SPECS.png");
+            var activeLayout = await _pdfLayoutService.GetActiveDocumentAsync();
             var pdfBytes = ToolListPdfGenerator.Generate(
                 viewModel,
                 details,
@@ -541,7 +544,8 @@ public class ToolListEditorController : Controller
                 viewModel.ToolRegisterByName,
                 System.IO.File.Exists(logoPath) ? logoPath : null,
                 partImagePath,
-                System.IO.File.Exists(toolSpecsPath) ? toolSpecsPath : null);
+                System.IO.File.Exists(toolSpecsPath) ? toolSpecsPath : null,
+                activeLayout);
             var pdfFileName = $"{viewModel.ToolListName}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
             return File(pdfBytes, "application/pdf", pdfFileName);
         }

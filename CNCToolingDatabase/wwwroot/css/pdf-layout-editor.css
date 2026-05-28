@@ -1,0 +1,358 @@
+.ple-header {
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.ple-back-link {
+    display: inline-block;
+    font-size: 0.85rem;
+    color: #007bff;
+    text-decoration: none;
+    margin-bottom: 0.25rem;
+}
+
+.ple-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ple-name-input {
+    min-width: 220px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.ple-default-check {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.ple-workspace {
+    display: grid;
+    grid-template-columns: 240px 1fr 280px;
+    gap: 1rem;
+    margin-top: 1rem;
+    min-height: calc(100vh - 180px);
+}
+
+.ple-panel {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 160px);
+}
+
+.ple-panel h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #666;
+    margin: 0 0 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid #eee;
+}
+
+.ple-panel h3:not(:first-child) {
+    margin-top: 1.25rem;
+}
+
+.ple-add-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+}
+
+.ple-add-buttons button {
+    padding: 0.45rem;
+    border: 1px solid #ced4da;
+    background: #f8f9fa;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.ple-add-buttons button:hover {
+    background: #e9ecef;
+    border-color: #007bff;
+}
+
+.ple-form-group {
+    margin-bottom: 0.65rem;
+}
+
+.ple-form-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: #555;
+    margin-bottom: 0.2rem;
+}
+
+.ple-form-group input,
+.ple-form-group select,
+.ple-form-group textarea {
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.ple-element-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ple-element-list li {
+    padding: 0.45rem 0.5rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin-bottom: 0.35rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ple-element-list li:hover {
+    background: #f8f9fa;
+}
+
+.ple-element-list li.selected {
+    border-color: #007bff;
+    background: #e7f1ff;
+}
+
+.ple-element-list .ple-el-type {
+    color: #888;
+    font-size: 0.75rem;
+}
+
+.ple-canvas-area {
+    display: flex;
+    flex-direction: column;
+    background: #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+}
+
+.ple-canvas-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.ple-zoom {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.ple-zoom button {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #ced4da;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.ple-canvas-scroll {
+    flex: 1;
+    overflow: auto;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.ple-canvas-wrapper {
+    transform-origin: top center;
+}
+
+.ple-canvas {
+    position: relative;
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    border: 1px solid #ccc;
+}
+
+.ple-element {
+    position: absolute;
+    border: 1px dashed #adb5bd;
+    background: rgba(255, 255, 255, 0.92);
+    cursor: move;
+    overflow: hidden;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+.ple-element.selected {
+    border: 2px solid #007bff;
+    z-index: 1000 !important;
+}
+
+.ple-element.type-text { background: rgba(255, 255, 240, 0.95); }
+.ple-element.type-image { background: rgba(240, 248, 255, 0.95); }
+.ple-element.type-box { background: rgba(245, 245, 245, 0.95); }
+.ple-element.type-cell { background: rgba(255, 240, 245, 0.95); }
+.ple-element.type-table { background: rgba(240, 255, 240, 0.95); }
+
+.ple-element-inner {
+    padding: 4px 6px;
+    font-size: 11px;
+    line-height: 1.3;
+    pointer-events: none;
+    height: 100%;
+    overflow: hidden;
+}
+
+.ple-element-label {
+    position: absolute;
+    top: -18px;
+    left: 0;
+    font-size: 10px;
+    color: #007bff;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0 4px;
+    white-space: nowrap;
+}
+
+.ple-resize-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #007bff;
+    border: 1px solid #fff;
+    border-radius: 2px;
+    z-index: 10;
+}
+
+.ple-resize-se { right: -5px; bottom: -5px; cursor: se-resize; }
+.ple-resize-e { right: -5px; top: 50%; margin-top: -5px; cursor: e-resize; }
+.ple-resize-s { bottom: -5px; left: 50%; margin-left: -5px; cursor: s-resize; }
+
+.ple-properties .ple-hint {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.ple-prop-row {
+    margin-bottom: 0.6rem;
+}
+
+.ple-prop-row label {
+    display: block;
+    font-size: 0.78rem;
+    color: #555;
+    margin-bottom: 0.15rem;
+}
+
+.ple-prop-row input,
+.ple-prop-row select,
+.ple-prop-row textarea {
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.ple-prop-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+}
+
+.ple-delete-btn {
+    margin-top: 0.75rem;
+    width: 100%;
+    padding: 0.45rem;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.ple-columns-editor {
+    margin-top: 0.5rem;
+    border-top: 1px solid #eee;
+    padding-top: 0.5rem;
+}
+
+.ple-col-item {
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 0.4rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.78rem;
+}
+
+.modal-lg {
+    max-width: 960px;
+    width: 95%;
+}
+
+@media (max-width: 1100px) {
+    .ple-workspace {
+        grid-template-columns: 1fr;
+    }
+    .ple-panel {
+        max-height: none;
+    }
+}
+
+/* PDF preview modal — sized to match editor canvas aspect ratio */
+.ple-preview-modal .ple-preview-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    max-width: none;
+    width: var(--ple-preview-width, min(96vw, 1200px));
+    height: var(--ple-preview-height, min(92vh, 860px));
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.ple-preview-modal .modal-header {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.ple-preview-modal .ple-preview-body {
+    flex: 1;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #525659;
+}
+
+.ple-preview-modal #previewFrame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background: #525659;
+}

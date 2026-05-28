@@ -19,6 +19,13 @@ static bool ColumnExists(DbConnection conn, string table, string column)
     return false;
 }
 
+static void EnsureTable(DbConnection conn, string createSql)
+{
+    using var cmd = conn.CreateCommand();
+    cmd.CommandText = createSql;
+    cmd.ExecuteNonQuery();
+}
+
 static void EnsureColumn(DbConnection conn, string table, string column, string typeAndDefault)
 {
     if (ColumnExists(conn, table, column)) return;
@@ -53,6 +60,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IToolCodeService, ToolCodeService>();
 builder.Services.AddScoped<IToolCodeUniqueService, ToolCodeUniqueService>();
 builder.Services.AddScoped<IToolListService, ToolListService>();
+builder.Services.AddScoped<PdfLayoutService>();
 
 // Standalone/local binding only — shared hosts (e.g. MonsterASP) preconfigure ASPNETCORE_URLS.
 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
@@ -84,12 +92,27 @@ using (var scope = app.Services.CreateScope())
         EnsureColumn(conn, "MaterialSpecs", "MaterialType", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(conn, "Users", "IsActive", "INTEGER NOT NULL DEFAULT 1");
         EnsureColumn(conn, "ToolCodeUniques", "ItemCategory", "TEXT NOT NULL DEFAULT ''");
+        EnsureTable(conn, """
+            CREATE TABLE IF NOT EXISTS PdfLayouts (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL,
+                LayoutJson TEXT NOT NULL,
+                IsDefault INTEGER NOT NULL DEFAULT 0,
+                IsActive INTEGER NOT NULL DEFAULT 1,
+                CreatedDate TEXT NOT NULL,
+                UpdatedDate TEXT NOT NULL,
+                CreatedBy TEXT NOT NULL DEFAULT ''
+            );
+            """);
     }
     finally
     {
         if (conn.State == ConnectionState.Open) conn.Close();
     }
     DbSeeder.Seed(context);
+
+    var pdfLayoutService = scope.ServiceProvider.GetRequiredService<PdfLayoutService>();
+    await pdfLayoutService.EnsureDefaultLayoutAsync();
 }
 
 if (!app.Environment.IsDevelopment())

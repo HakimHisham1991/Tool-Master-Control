@@ -11,11 +11,14 @@ public static class ExcelHelper
     public static int GetUsedRowCount(IXLWorksheet sheet) =>
         sheet.LastRowUsed()?.RowNumber() ?? 0;
 
-    public static int GetColumn(IXLWorksheet sheet, int totalCols, params string[] headerNames)
+    public static int GetColumn(IXLWorksheet sheet, int totalCols, params string[] headerNames) =>
+        GetColumn(sheet, 1, totalCols, headerNames);
+
+    public static int GetColumn(IXLWorksheet sheet, int headerRow, int totalCols, params string[] headerNames)
     {
         for (int c = 1; c <= totalCols; c++)
         {
-            var v = GetString(sheet, 1, c);
+            var v = GetString(sheet, headerRow, c);
             if (string.IsNullOrEmpty(v)) continue;
             foreach (var h in headerNames)
             {
@@ -28,6 +31,9 @@ public static class ExcelHelper
 
     public static int GetColumn(IXLWorksheet sheet, int totalCols, string headerName) =>
         GetColumn(sheet, totalCols, new[] { headerName });
+
+    public static int GetColumn(IXLWorksheet sheet, int headerRow, int totalCols, string headerName) =>
+        GetColumn(sheet, headerRow, totalCols, new[] { headerName });
 
     public static string GetString(IXLWorksheet sheet, int row, int col)
     {

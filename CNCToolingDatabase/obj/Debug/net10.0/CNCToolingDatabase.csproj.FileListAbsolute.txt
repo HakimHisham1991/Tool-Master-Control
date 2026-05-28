@@ -197,3 +197,11 @@ c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net10.0\CNCToolingDatabase.genruntimeconfig.cache
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net10.0\ref\CNCToolingDatabase.dll
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net10.0\compressed\rmnmy7j1wa-{0}-p7s2x8m6pa-p7s2x8m6pa.gz
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net10.0\compressed\bjlqt7xsh0-{0}-bxbgwc776t-bxbgwc776t.gz
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\Data\STAMP\sample_stamp.PNG
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\obj\Debug\net10.0\compressed\jb7o4mwkb7-{0}-67w8ivlfq3-67w8ivlfq3.gz
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\Data\TOOL_LIST_SAMPLE.xlsx
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\Data\PART_IMAGE_SEED\SAMPLE.jpg
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\_LoaderTest\obj\LoaderTest.csproj.nuget.dgspec.json
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\_LoaderTest\obj\project.assets.json
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\Data\PART_IMAGE\SAMPLE.jpg

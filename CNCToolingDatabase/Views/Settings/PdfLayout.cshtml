@@ -1,0 +1,154 @@
+@model List<CNCToolingDatabase.Models.PdfLayoutConfig>
+@{
+    ViewData["Title"] = "Settings - PDF Layout Editor";
+}
+
+<div class="module-header">
+    <h2>PDF Layout Editor</h2>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="/Settings/PdfLayoutEditor" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Create New Layout
+        </a>
+    </div>
+</div>
+
+<p class="text-muted" style="margin-bottom: 1.5rem;">
+    Manage PDF export layouts for Master Tooling List. Preview, duplicate, edit, and set the active default layout used when exporting tool lists.
+</p>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Updated</th>
+                <th>Created By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr>
+                    <td colspan="5" class="empty-state">
+                        <p>No layouts found. Create a new layout to get started.</p>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var layout in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@layout.Name</strong>
+                        </td>
+                        <td>
+                            @if (layout.IsDefault)
+                            {
+                                <span class="badge badge-success">Default</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-secondary">Custom</span>
+                            }
+                        </td>
+                        <td>@layout.UpdatedDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@layout.CreatedBy</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="/Settings/PdfLayoutEditor?id=@layout.Id" class="btn btn-sm btn-primary">Edit</a>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="previewLayout(@layout.Id)">Preview</button>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="duplicateLayout(@layout.Id)">Duplicate</button>
+                                @if (!layout.IsDefault)
+                                {
+                                    <button type="button" class="btn btn-sm btn-secondary" onclick="setDefault(@layout.Id)">Set Default</button>
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteLayout(@layout.Id, '@layout.Name.Replace("'", "\\'")')">Delete</button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div id="previewModal" class="modal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3>PDF Preview</h3>
+            <button type="button" class="modal-close" onclick="closePreview()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 0; height: 70vh;">
+            <iframe id="previewFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+    </div>
+</div>
+
+<style>
+.badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+.badge-success { background: #d4edda; color: #155724; }
+.badge-secondary { background: #e9ecef; color: #495057; }
+.action-buttons { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.modal-lg { max-width: 900px; width: 95%; }
+.text-muted { color: #666; }
+</style>
+
+@section Scripts {
+<script>
+    function previewLayout(id) {
+        document.getElementById('previewFrame').src = '/Settings/PdfLayoutPreview?id=' + id + '&t=' + Date.now();
+        document.getElementById('previewModal').classList.add('active');
+    }
+    function closePreview() {
+        document.getElementById('previewModal').classList.remove('active');
+        document.getElementById('previewFrame').src = '';
+    }
+    function duplicateLayout(id) {
+        fetch('/Settings/DuplicatePdfLayout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + id
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '/Settings/PdfLayoutEditor?id=' + data.id;
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    }
+    function setDefault(id) {
+        fetch('/Settings/SetDefaultPdfLayout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + id
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) location.reload();
+            else alert('Error: ' + data.message);
+        });
+    }
+    function deleteLayout(id, name) {
+        if (!confirm('Delete layout "' + name + '"?')) return;
+        fetch('/Settings/DeletePdfLayout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + id
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) location.reload();
+            else alert('Error: ' + data.message);
+        });
+    }
+</script>
+}

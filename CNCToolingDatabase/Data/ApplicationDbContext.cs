@@ -25,6 +25,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<MaterialSpec> MaterialSpecs { get; set; }
     public DbSet<ToolCodeUnique> ToolCodeUniques { get; set; }
     public DbSet<ToolSupplier> ToolSuppliers { get; set; }
+    public DbSet<PdfLayoutConfig> PdfLayouts { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -143,6 +144,12 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<PdfLayoutConfig>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Name);
         });
     }
 }

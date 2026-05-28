@@ -37,8 +37,17 @@ public static class ToolListPdfGenerator
         string? toolRegisterByName,
         string? logoPath,
         string? partImagePath,
-        string? toolSpecsPath)
+        string? toolSpecsPath,
+        Models.PdfLayout.PdfLayoutDocument? layout = null)
     {
+        if (layout != null)
+        {
+            return PdfLayoutRenderer.Generate(
+                layout, viewModel, details,
+                camProgrammerStamp, approvedByStamp, toolRegisterStamp,
+                toolRegisterByName, logoPath, partImagePath, toolSpecsPath);
+        }
+
         var tempFiles = new List<string>();
         try
         {

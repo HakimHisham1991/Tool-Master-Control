@@ -2,16 +2,22 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Models;
+using CNCToolingDatabase.Models.PdfLayout;
+using CNCToolingDatabase.Models.ViewModels;
+using CNCToolingDatabase.Services;
+using CNCToolingDatabase.Helpers;
 
 namespace CNCToolingDatabase.Controllers;
 
 public class SettingsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly PdfLayoutService _pdfLayoutService;
     
-    public SettingsController(ApplicationDbContext context)
+    public SettingsController(ApplicationDbContext context, PdfLayoutService pdfLayoutService)
     {
         _context = context;
+        _pdfLayoutService = pdfLayoutService;
     }
     
     public IActionResult Index()
@@ -1602,5 +1608,165 @@ public class SettingsController : Controller
         if (!string.IsNullOrEmpty(sortColumn)) qb.Add("sortColumn=" + Uri.EscapeDataString(sortColumn));
         if (!string.IsNullOrEmpty(sortDirection)) qb.Add("sortDirection=" + Uri.EscapeDataString(sortDirection));
         return string.Join("&", qb);
+    }
+
+    // PDF Layout Editor
+    public async Task<IActionResult> PdfLayout()
+    {
+        var layouts = await _pdfLayoutService.GetAllAsync();
+        return View(layouts);
+    }
+
+    public async Task<IActionResult> PdfLayoutEditor(int? id)
+    {
+        PdfLayoutConfig? layout = null;
+        PdfLayoutDocument document;
+
+        if (id.HasValue)
+        {
+            layout = await _pdfLayoutService.GetByIdAsync(id.Value);
+            if (layout == null) return NotFound();
+            document = PdfLayoutDocument.Parse(layout.LayoutJson) ?? DefaultPdfLayoutFactory.Create();
+        }
+        else
+        {
+            document = DefaultPdfLayoutFactory.Create();
+        }
+
+        ViewBag.LayoutId = layout?.Id;
+        ViewBag.LayoutName = layout?.Name ?? "New Layout";
+        ViewBag.IsDefault = layout?.IsDefault ?? false;
+        ViewBag.LayoutJson = document.ToJson();
+        return View(document);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPdfLayout(int id)
+    {
+        var layout = await _pdfLayoutService.GetByIdAsync(id);
+        if (layout == null)
+            return Json(new { success = false, message = "Layout not found" });
+
+        return Json(new
+        {
+            success = true,
+            id = layout.Id,
+            name = layout.Name,
+            isDefault = layout.IsDefault,
+            layoutJson = layout.LayoutJson
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreatePdfLayout(string name, string layoutJson)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Json(new { success = false, message = "Name is required" });
+
+        var document = PdfLayoutDocument.Parse(layoutJson);
+        if (document == null)
+            return Json(new { success = false, message = "Invalid layout JSON" });
+
+        var createdBy = HttpContext.Session.GetString("DisplayName") ?? "Unknown";
+        var layout = await _pdfLayoutService.CreateAsync(name.Trim(), document, createdBy);
+        return Json(new { success = true, message = "Layout created", id = layout.Id });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdatePdfLayout(int id, string name, string layoutJson, bool? isDefault)
+    {
+        var document = PdfLayoutDocument.Parse(layoutJson);
+        if (document == null)
+            return Json(new { success = false, message = "Invalid layout JSON" });
+
+        var layout = await _pdfLayoutService.UpdateAsync(id, name.Trim(), document, isDefault);
+        if (layout == null)
+            return Json(new { success = false, message = "Layout not found" });
+
+        return Json(new { success = true, message = "Layout saved", id = layout.Id });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DuplicatePdfLayout(int id)
+    {
+        var createdBy = HttpContext.Session.GetString("DisplayName") ?? "Unknown";
+        var layout = await _pdfLayoutService.DuplicateAsync(id, createdBy);
+        if (layout == null)
+            return Json(new { success = false, message = "Layout not found" });
+
+        return Json(new { success = true, message = "Layout duplicated", id = layout.Id });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeletePdfLayout(int id)
+    {
+        var deleted = await _pdfLayoutService.DeleteAsync(id);
+        if (!deleted)
+            return Json(new { success = false, message = "Cannot delete layout (not found or last default layout)" });
+
+        return Json(new { success = true, message = "Layout deleted" });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SetDefaultPdfLayout(int id)
+    {
+        var ok = await _pdfLayoutService.SetDefaultAsync(id);
+        if (!ok)
+            return Json(new { success = false, message = "Layout not found" });
+
+        return Json(new { success = true, message = "Default layout updated" });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> PdfLayoutPreview(int? id)
+    {
+        PdfLayoutDocument document;
+        if (id.HasValue)
+        {
+            document = await _pdfLayoutService.GetDocumentByIdAsync(id.Value)
+                       ?? DefaultPdfLayoutFactory.Create();
+        }
+        else
+        {
+            document = await _pdfLayoutService.GetActiveDocumentAsync();
+        }
+
+        var pdfBytes = BuildSamplePdf(document);
+        return File(pdfBytes, "application/pdf");
+    }
+
+    [HttpPost]
+    public IActionResult PdfLayoutPreviewDraft([FromBody] PdfLayoutDocument? document)
+    {
+        if (document == null)
+            return BadRequest("Invalid layout");
+
+        var pdfBytes = BuildSamplePdf(document);
+        return File(pdfBytes, "application/pdf");
+    }
+
+    private byte[] BuildSamplePdf(PdfLayoutDocument document)
+    {
+        var (sampleVm, sampleDetails) = ToolListSampleLoader.Load();
+        var details = sampleDetails
+            .Where(d => !string.IsNullOrWhiteSpace(d.ToolNumber) || !string.IsNullOrWhiteSpace(d.ConsumableCode))
+            .ToList();
+
+        var logoPath = DataFileResolver.Resolve("Data", "LOGO", "ZENIX.png");
+        var toolSpecsPath = PdfPreviewHelper.GetExistingToolSpecsPath();
+        var partImagePath = PdfPreviewHelper.GetExistingSamplePartImagePath();
+        var sampleStamp = PdfPreviewHelper.LoadSampleStampBytes();
+
+        return ToolListPdfGenerator.Generate(
+            sampleVm,
+            details,
+            sampleStamp,
+            sampleStamp,
+            sampleStamp,
+            sampleVm.ToolRegisterByName,
+            System.IO.File.Exists(logoPath) ? logoPath : null,
+            partImagePath,
+            toolSpecsPath,
+            document);
     }
 }

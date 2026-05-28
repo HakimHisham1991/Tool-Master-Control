@@ -1,0 +1,115 @@
+@model CNCToolingDatabase.Models.PdfLayout.PdfLayoutDocument
+@{
+    ViewData["Title"] = "Settings - PDF Layout Editor";
+    var layoutId = ViewBag.LayoutId as int?;
+    var layoutName = ViewBag.LayoutName as string ?? "New Layout";
+    var isDefault = ViewBag.IsDefault as bool? ?? false;
+    var layoutJson = ViewBag.LayoutJson as string ?? "{}";
+}
+
+<link rel="stylesheet" href="~/css/pdf-layout-editor.css" asp-append-version="true" />
+
+<div class="module-header ple-header">
+    <div>
+        <a href="/Settings/PdfLayout" class="ple-back-link">&larr; Back to layouts</a>
+        <h2>PDF Layout Editor</h2>
+    </div>
+    <div class="ple-toolbar">
+        <input type="text" id="layoutName" value="@layoutName" class="ple-name-input" placeholder="Layout name" />
+        <label class="ple-default-check">
+            <input type="checkbox" id="isDefault" @(isDefault ? "checked" : "") /> Default layout
+        </label>
+        <button type="button" class="btn btn-secondary" id="btnPreview">Preview PDF</button>
+        @if (layoutId.HasValue)
+        {
+            <button type="button" class="btn btn-secondary" id="btnDuplicate">Duplicate</button>
+        }
+        <button type="button" class="btn btn-primary" id="btnSave">Save Layout</button>
+    </div>
+</div>
+
+<div class="ple-workspace">
+    <aside class="ple-panel ple-panel-left">
+        <h3>Add Element</h3>
+        <div class="ple-add-buttons">
+            <button type="button" data-add="text">Text</button>
+            <button type="button" data-add="image">Image</button>
+            <button type="button" data-add="box">Box</button>
+            <button type="button" data-add="cell">Cell</button>
+            <button type="button" data-add="table">Table</button>
+        </div>
+
+        <h3>Page Setup</h3>
+        <div class="ple-form-group">
+            <label>Orientation</label>
+            <select id="pageOrientation">
+                <option value="Landscape" selected="@(Model.PageSetup.Orientation == "Landscape")">Landscape</option>
+                <option value="Portrait" selected="@(Model.PageSetup.Orientation == "Portrait")">Portrait</option>
+            </select>
+        </div>
+        <div class="ple-form-group">
+            <label>Margin (cm)</label>
+            <input type="number" id="pageMargin" step="0.1" min="0" value="@Model.PageSetup.MarginCm" />
+        </div>
+
+        <h3>Global Styles</h3>
+        <div class="ple-form-group">
+            <label>Font</label>
+            <input type="text" id="styleFont" value="@Model.Styles.FontName" />
+        </div>
+        <div class="ple-form-group">
+            <label>Header Fill</label>
+            <input type="color" id="styleHeaderFill" value="@Model.Styles.HeaderFill" />
+        </div>
+        <div class="ple-form-group">
+            <label>Border (pt)</label>
+            <input type="number" id="styleBorder" step="0.1" min="0" value="@Model.Styles.BorderWidthPt" />
+        </div>
+
+        <h3>Elements</h3>
+        <ul id="elementList" class="ple-element-list"></ul>
+    </aside>
+
+    <main class="ple-canvas-area">
+        <div class="ple-canvas-toolbar">
+            <span id="canvasInfo">A4 Landscape — drag to move, handles to resize</span>
+            <div class="ple-zoom">
+                <button type="button" id="zoomOut">−</button>
+                <span id="zoomLabel">100%</span>
+                <button type="button" id="zoomIn">+</button>
+            </div>
+        </div>
+        <div class="ple-canvas-scroll">
+            <div id="canvasWrapper" class="ple-canvas-wrapper">
+                <div id="layoutCanvas" class="ple-canvas"></div>
+            </div>
+        </div>
+    </main>
+
+    <aside class="ple-panel ple-panel-right">
+        <h3>Properties</h3>
+        <div id="propertiesPanel" class="ple-properties">
+            <p class="ple-hint">Select an element to edit its properties.</p>
+        </div>
+    </aside>
+</div>
+
+<div id="previewModal" class="modal ple-preview-modal">
+    <div class="modal-content ple-preview-content">
+        <div class="modal-header">
+            <h3>PDF Preview</h3>
+            <button type="button" class="modal-close" id="closePreview">&times;</button>
+        </div>
+        <div class="modal-body ple-preview-body">
+            <iframe id="previewFrame" title="PDF Preview"></iframe>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.PDF_LAYOUT_EDITOR = {
+        layoutId: @(layoutId.HasValue ? layoutId.Value.ToString() : "null"),
+        initialLayout: @Html.Raw(layoutJson)
+    };
+</script>
+<script src="~/js/pdf-layout-editor.js" asp-append-version="true"></script>
