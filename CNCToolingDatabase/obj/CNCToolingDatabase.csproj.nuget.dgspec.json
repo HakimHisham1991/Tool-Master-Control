@@ -70,6 +70,10 @@
             "PDFsharp-MigraDoc": {
               "target": "Package",
               "version": "[6.2.4, )"
+            },
+            "SixLabors.ImageSharp": {
+              "target": "Package",
+              "version": "[3.1.11, )"
             }
           },
           "imports": [

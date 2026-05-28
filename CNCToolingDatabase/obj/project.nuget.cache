@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "Kskko60FX9k=",
+  "dgSpecHash": "G3SUShHw6/Y=",
   "success": true,
   "projectFilePath": "C:\\Users\\Public\\Documents\\Tool-Master-Control\\Tool-Master-Control\\CNCToolingDatabase\\CNCToolingDatabase.csproj",
   "expectedPackageFiles": [
@@ -33,6 +33,7 @@
     "C:\\Users\\hakim.hisham\\.nuget\\packages\\pdfsharp-migradoc\\6.2.4\\pdfsharp-migradoc.6.2.4.nupkg.sha512",
     "C:\\Users\\hakim.hisham\\.nuget\\packages\\rbush.signed\\4.0.0\\rbush.signed.4.0.0.nupkg.sha512",
     "C:\\Users\\hakim.hisham\\.nuget\\packages\\sixlabors.fonts\\1.0.0\\sixlabors.fonts.1.0.0.nupkg.sha512",
+    "C:\\Users\\hakim.hisham\\.nuget\\packages\\sixlabors.imagesharp\\3.1.11\\sixlabors.imagesharp.3.1.11.nupkg.sha512",
     "C:\\Users\\hakim.hisham\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.11\\sqlitepclraw.bundle_e_sqlite3.2.1.11.nupkg.sha512",
     "C:\\Users\\hakim.hisham\\.nuget\\packages\\sqlitepclraw.core\\2.1.11\\sqlitepclraw.core.2.1.11.nupkg.sha512",
     "C:\\Users\\hakim.hisham\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.11\\sqlitepclraw.lib.e_sqlite3.2.1.11.nupkg.sha512",

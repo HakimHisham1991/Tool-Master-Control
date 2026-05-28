@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using CNCToolingDatabase.Data;
 using CNCToolingDatabase.Models;
 using CNCToolingDatabase.Models.PdfLayout;
@@ -1736,8 +1737,12 @@ public class SettingsController : Controller
     }
 
     [HttpPost]
-    public IActionResult PdfLayoutPreviewDraft([FromBody] PdfLayoutDocument? document)
+    public IActionResult PdfLayoutPreviewDraft([FromBody] JsonElement? body)
     {
+        if (body == null || body.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return BadRequest("Invalid layout");
+
+        var document = PdfLayoutDocument.Parse(body.Value.GetRawText());
         if (document == null)
             return BadRequest("Invalid layout");
 

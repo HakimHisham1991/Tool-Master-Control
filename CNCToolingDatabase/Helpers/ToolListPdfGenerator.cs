@@ -16,12 +16,6 @@ public static class ToolListPdfGenerator
     // A4 landscape page width minus left/right margins (29.7 - 2 * 1.5 cm).
     private static readonly Unit ContentWidth = Unit.FromCentimeter(29.7 - 2 * 1.5);
 
-    // Original sum of the 12 column widths in CreateMainColumnTable. The columns are
-    // scaled by ContentWidth / OriginalMainTableWidth so the table fills the page width.
-    private static readonly Unit OriginalMainTableWidth =
-        Unit.FromPoint(45 + 40 + 40 + 40 + 45 + 55) + Unit.FromCentimeter(2.8 + 2.8 + 1.7 + 1.7 + 2.8 + 2.2);
-    private static readonly double WidthScale = ContentWidth.Point / OriginalMainTableWidth.Point;
-
     // Total width of the main tool table after scaling = page content width.
     // Keeping this in one place ensures the specs table above stays aligned with the
     // rightmost border of the main tool table when the column layout changes.
@@ -64,11 +58,11 @@ public static class ToolListPdfGenerator
             section.PageSetup.TopMargin = Margin;
             section.PageSetup.BottomMargin = Margin;
 
-            AddHeader(section, logoPath);
+            AddHeader(section, logoPath, tempFiles);
             AddInfoTable(section, viewModel);
             AddSpacer(section, Unit.FromPoint(6));
             AddSpecsTable(section, viewModel);
-            AddImageRow(section, partImagePath, toolSpecsPath);
+            AddImageRow(section, partImagePath, toolSpecsPath, tempFiles);
             AddToolTable(section, details);
             AddStampSection(section, camProgrammerStamp, approvedByStamp, toolRegisterStamp, toolRegisterByName, viewModel, tempFiles);
             AddFooter(section);
@@ -88,7 +82,7 @@ public static class ToolListPdfGenerator
         }
     }
 
-    private static void AddHeader(Section section, string? logoPath)
+    private static void AddHeader(Section section, string? logoPath, List<string> tempFiles)
     {
         var table = section.AddTable();
         table.Borders.Visible = false;
@@ -100,11 +94,12 @@ public static class ToolListPdfGenerator
 
         var logoCell = row.Cells[0];
         logoCell.VerticalAlignment = VerticalAlignment.Center;
-        if (!string.IsNullOrEmpty(logoPath) && File.Exists(logoPath))
+        var preparedLogo = PdfImageHelper.PrepareImagePath(logoPath, tempFiles);
+        if (preparedLogo != null)
         {
             var paragraph = logoCell.AddParagraph();
             paragraph.Format.Alignment = ParagraphAlignment.Left;
-            var image = paragraph.AddImage(logoPath);
+            var image = paragraph.AddImage(preparedLogo);
             image.Width = Unit.FromCentimeter(2.5);
             image.LockAspectRatio = true;
         }
@@ -209,9 +204,9 @@ public static class ToolListPdfGenerator
         paragraph.Format.Font.Size = 8;
     }
 
-    private static void AddImageRow(Section section, string? partImagePath, string? toolSpecsPath)
+    private static void AddImageRow(Section section, string? partImagePath, string? toolSpecsPath, List<string> tempFiles)
     {
-        var table = CreateMainColumnTable(section);
+        var table = ToolListMainTableHelper.CreateMainTable(section, ContentWidth, BorderWidth.Point);
 
         var row = table.AddRow();
         row.Height = ImageRowHeight;
@@ -220,97 +215,16 @@ public static class ToolListPdfGenerator
 
         row.Cells[0].MergeRight = 10;
         StyleCell(row.Cells[0], ParagraphAlignment.Center);
-        AddImageToCell(row.Cells[0], partImagePath, ImageRowHeight);
+        AddImageToCell(row.Cells[0], partImagePath, ImageRowHeight, tempFiles);
 
         StyleCell(row.Cells[11], ParagraphAlignment.Center);
-        AddImageToCell(row.Cells[11], toolSpecsPath, ImageRowHeight);
+        AddImageToCell(row.Cells[11], toolSpecsPath, ImageRowHeight, tempFiles);
     }
 
     private static void AddToolTable(Section section, IReadOnlyList<ToolListDetailRow> details)
     {
-        var table = CreateMainColumnTable(section);
-
-        var headers = new[]
-        {
-            "Tool No.", "Tool Name", "Consumable Tool Description", "Tool Supplier", "Tool Holder",
-            "Tool Diameter (D1)", "Flute Length (L1)", "Tool Ext. Length (L2)", "Tool Corner Radius",
-            "Arbor Description (or equivalent specs)", "Tool Path Time in Minutes", "Remarks"
-        };
-
-        var headerRow = table.AddRow();
-        headerRow.HeadingFormat = true;
-        headerRow.VerticalAlignment = VerticalAlignment.Center;
-        for (int i = 0; i < headers.Length; i++)
-        {
-            StyleHeaderCell(headerRow.Cells[i], headers[i]);
-        }
-
-        foreach (var detail in details)
-        {
-            var row = table.AddRow();
-            row.VerticalAlignment = VerticalAlignment.Center;
-            var values = new[]
-            {
-                detail.ToolNumber ?? "",
-                detail.ToolDescription ?? "",
-                detail.ConsumableCode ?? "",
-                detail.Supplier ?? "",
-                detail.HolderExtensionCode ?? "",
-                (detail.Diameter ?? 0).ToString("0.##"),
-                (detail.FluteLength ?? 0).ToString("0.##"),
-                (detail.ProtrusionLength ?? 0).ToString("0.##"),
-                (detail.CornerRadius ?? 0).ToString("0.##"),
-                detail.ArborCode ?? "",
-                (detail.ToolPathTimeMinutes ?? 0).ToString("0.##"),
-                detail.Remarks ?? ""
-            };
-
-            for (int i = 0; i < values.Length; i++)
-            {
-                StyleDataCell(row.Cells[i], values[i]);
-            }
-        }
-    }
-
-    private static Table CreateMainColumnTable(Section section)
-    {
-        var table = section.AddTable();
-        table.Borders.Width = BorderWidth;
-        table.Borders.Color = Colors.Black;
-
-        table.AddColumn(Unit.FromPoint(45 * WidthScale));
-        table.AddColumn(Unit.FromCentimeter(2.8 * WidthScale));
-        table.AddColumn(Unit.FromCentimeter(2.8 * WidthScale));
-        table.AddColumn(Unit.FromCentimeter(1.7 * WidthScale));
-        table.AddColumn(Unit.FromCentimeter(1.7 * WidthScale));
-        table.AddColumn(Unit.FromPoint(40 * WidthScale));
-        table.AddColumn(Unit.FromPoint(40 * WidthScale));
-        table.AddColumn(Unit.FromPoint(40 * WidthScale));
-        table.AddColumn(Unit.FromPoint(45 * WidthScale));
-        table.AddColumn(Unit.FromCentimeter(2.8 * WidthScale));
-        table.AddColumn(Unit.FromPoint(55 * WidthScale));
-        table.AddColumn(Unit.FromCentimeter(2.2 * WidthScale));
-        return table;
-    }
-
-    private static void StyleHeaderCell(Cell cell, string text)
-    {
-        cell.Shading.Color = HeaderFill;
-        cell.VerticalAlignment = VerticalAlignment.Center;
-        var paragraph = cell.AddParagraph(text);
-        paragraph.Format.Alignment = ParagraphAlignment.Center;
-        paragraph.Format.Font.Name = FontName;
-        paragraph.Format.Font.Size = 6;
-        paragraph.Format.Font.Bold = true;
-    }
-
-    private static void StyleDataCell(Cell cell, string text)
-    {
-        cell.VerticalAlignment = VerticalAlignment.Center;
-        var paragraph = cell.AddParagraph(text);
-        paragraph.Format.Alignment = ParagraphAlignment.Center;
-        paragraph.Format.Font.Name = FontName;
-        paragraph.Format.Font.Size = 6;
+        var table = ToolListMainTableHelper.CreateMainTable(section, ContentWidth, BorderWidth.Point);
+        ToolListMainTableHelper.AddToolRows(table, details, FontName, HeaderFill);
     }
 
     private static void StyleCell(Cell cell, ParagraphAlignment alignment)
@@ -319,12 +233,13 @@ public static class ToolListPdfGenerator
         cell.Format.Alignment = alignment;
     }
 
-    private static void AddImageToCell(Cell cell, string? path, Unit maxHeight)
+    private static void AddImageToCell(Cell cell, string? path, Unit maxHeight, List<string> tempFiles)
     {
-        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
+        var prepared = PdfImageHelper.PrepareImagePath(path, tempFiles);
+        if (prepared == null) return;
         var paragraph = cell.AddParagraph();
         paragraph.Format.Alignment = ParagraphAlignment.Center;
-        var image = paragraph.AddImage(path);
+        var image = paragraph.AddImage(prepared);
         image.Height = maxHeight;
         image.LockAspectRatio = true;
     }
@@ -394,14 +309,8 @@ public static class ToolListPdfGenerator
         }
     }
 
-    private static string? WriteTempImage(byte[]? imageBytes, List<string> tempFiles)
-    {
-        if (imageBytes is not { Length: > 0 }) return null;
-        var path = Path.Combine(Path.GetTempPath(), $"tooling-stamp-{Guid.NewGuid():N}.png");
-        File.WriteAllBytes(path, imageBytes);
-        tempFiles.Add(path);
-        return path;
-    }
+    private static string? WriteTempImage(byte[]? imageBytes, List<string> tempFiles) =>
+        PdfImageHelper.PrepareImageBytes(imageBytes, tempFiles);
 
     private static void AddFooter(Section section)
     {

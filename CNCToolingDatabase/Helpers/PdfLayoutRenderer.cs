@@ -141,8 +141,8 @@ public static class PdfLayoutRenderer
 
         var logoCell = row.Cells[0];
         logoCell.VerticalAlignment = VerticalAlignment.Center;
-        var logoPath = ResolveImagePath(logoEl?.ImageSource ?? "logo", ctx);
-        if (!string.IsNullOrEmpty(logoPath) && File.Exists(logoPath))
+        var logoPath = PdfImageHelper.PrepareImagePath(ResolveImagePath(logoEl?.ImageSource ?? "logo", ctx), ctx.TempFiles);
+        if (logoPath != null)
         {
             var logoParagraph = logoCell.AddParagraph();
             logoParagraph.Format.Alignment = ParagraphAlignment.Left;
@@ -245,7 +245,7 @@ public static class PdfLayoutRenderer
 
     private static void RenderFlowImage(Section section, PdfLayoutElement element, RenderContext ctx)
     {
-        var path = ResolveImagePath(element.ImageSource, ctx);
+        var path = PdfImageHelper.PrepareImagePath(ResolveImagePath(element.ImageSource, ctx), ctx.TempFiles);
         if (path == null) return;
         var paragraph = section.AddParagraph();
         paragraph.Format.Alignment = ToAlignment(element.Align);
@@ -279,7 +279,7 @@ public static class PdfLayoutRenderer
 
     private static void RenderImageInFrame(TextFrame frame, PdfLayoutElement element, RenderContext ctx)
     {
-        var path = ResolveImagePath(element.ImageSource, ctx);
+        var path = PdfImageHelper.PrepareImagePath(ResolveImagePath(element.ImageSource, ctx), ctx.TempFiles);
         if (path == null) return;
         var paragraph = frame.AddParagraph();
         paragraph.Format.Alignment = ToAlignment(element.Align);
@@ -328,7 +328,7 @@ public static class PdfLayoutRenderer
 
     private static void RenderTableCore(DocumentObject container, PdfLayoutElement element, RenderContext ctx)
     {
-        switch (element.TableKind)
+        switch (element.TableKind?.ToLowerInvariant())
         {
             case "info":
                 RenderInfoTable(container, element, ctx);
@@ -336,7 +336,7 @@ public static class PdfLayoutRenderer
             case "specs":
                 RenderSpecsTable(container, element, ctx);
                 break;
-            case "imageRow":
+            case "imagerow":
                 RenderImageRowTable(container, element, ctx);
                 break;
             case "tool":
@@ -407,94 +407,27 @@ public static class PdfLayoutRenderer
 
     private static void RenderImageRowTable(DocumentObject container, PdfLayoutElement element, RenderContext ctx)
     {
-        var table = CreateScaledColumnTable(container, element, ctx);
+        var table = ToolListMainTableHelper.CreateMainTable(container, ctx.ContentWidth, ctx.Layout.Styles.BorderWidthPt);
         var row = table.AddRow();
         row.Height = Unit.FromPoint(45);
         row.HeightRule = RowHeightRule.AtLeast;
         row.VerticalAlignment = VerticalAlignment.Center;
 
         row.Cells[0].MergeRight = 10;
-        AddImageToCell(row.Cells[0], ctx.PartImagePath, row.Height);
+        AddImageToCell(row.Cells[0], ctx.PartImagePath, row.Height, ctx);
 
         if (row.Cells.Count > 11)
-            AddImageToCell(row.Cells[11], ctx.ToolSpecsPath, row.Height);
+            AddImageToCell(row.Cells[11], ctx.ToolSpecsPath, row.Height, ctx);
     }
 
     private static void RenderToolTable(DocumentObject container, PdfLayoutElement element, RenderContext ctx)
     {
-        var table = CreateScaledColumnTable(container, element, ctx);
-        var columns = GetToolTableColumns(element);
-
-        var headerRow = table.AddRow();
-        headerRow.HeadingFormat = true;
-        headerRow.VerticalAlignment = VerticalAlignment.Center;
-        for (int i = 0; i < columns.Count && i < headerRow.Cells.Count; i++)
-        {
-            var col = columns[i];
-            var cell = headerRow.Cells[i];
-            ApplyCellBackground(cell, ctx.Layout.Styles.HeaderFill);
-            cell.VerticalAlignment = VerticalAlignment.Center;
-            var p = cell.AddParagraph(col.Header);
-            p.Format.Alignment = ToAlignment(col.HeaderAlign);
-            p.Format.Font.Name = ctx.Layout.Styles.FontName;
-            p.Format.Font.Size = col.HeaderFontSize;
-            p.Format.Font.Bold = col.HeaderBold;
-        }
-
-        foreach (var detail in ctx.Details)
-        {
-            var row = table.AddRow();
-            row.VerticalAlignment = VerticalAlignment.Center;
-            for (int i = 0; i < columns.Count && i < row.Cells.Count; i++)
-            {
-                var col = columns[i];
-                var value = GetDetailFieldValue(detail, col.DataField);
-                var cell = row.Cells[i];
-                cell.VerticalAlignment = VerticalAlignment.Center;
-                var p = cell.AddParagraph(value);
-                p.Format.Alignment = ToAlignment(col.DataAlign);
-                p.Format.Font.Name = ctx.Layout.Styles.FontName;
-                p.Format.Font.Size = col.DataFontSize;
-            }
-        }
-    }
-
-    private static List<PdfTableColumn> GetToolTableColumns(PdfLayoutElement element)
-    {
-        var defaults = DefaultPdfLayoutFactory.Create().Elements
-            .First(e => e.Id == "tool-table").Columns!
-            .Where(c => c.Visible)
-            .ToList();
-
-        var source = (element.Columns ?? new List<PdfTableColumn>()).Where(c => c.Visible).ToList();
-        if (source.Count == 0)
-            return defaults;
-
-        var merged = new List<PdfTableColumn>();
-        for (int i = 0; i < source.Count; i++)
-        {
-            var src = source[i];
-            var def = defaults.FirstOrDefault(d =>
-                string.Equals(d.Header, src.Header, StringComparison.OrdinalIgnoreCase))
-                ?? (i < defaults.Count ? defaults[i] : defaults[^1]);
-
-            merged.Add(new PdfTableColumn
-            {
-                Id = src.Id,
-                Header = string.IsNullOrWhiteSpace(src.Header) ? def.Header : src.Header,
-                DataField = def.DataField,
-                Width = src.Width > 0 ? src.Width : def.Width,
-                WidthUnit = string.IsNullOrWhiteSpace(src.WidthUnit) ? def.WidthUnit : src.WidthUnit,
-                Visible = src.Visible,
-                HeaderFontSize = src.HeaderFontSize > 0 ? src.HeaderFontSize : def.HeaderFontSize,
-                DataFontSize = src.DataFontSize > 0 ? src.DataFontSize : def.DataFontSize,
-                HeaderBold = src.HeaderBold,
-                HeaderAlign = src.HeaderAlign,
-                DataAlign = src.DataAlign
-            });
-        }
-
-        return merged;
+        var table = ToolListMainTableHelper.CreateMainTable(container, ctx.ContentWidth, ctx.Layout.Styles.BorderWidthPt);
+        ToolListMainTableHelper.AddToolRows(
+            table,
+            ctx.Details,
+            ctx.Layout.Styles.FontName,
+            ParseColor(ctx.Layout.Styles.HeaderFill));
     }
 
     private static void RenderStampTable(DocumentObject container, PdfLayoutElement element, RenderContext ctx)
@@ -571,33 +504,6 @@ public static class PdfLayoutRenderer
         }
     }
 
-    private static Table CreateScaledColumnTable(DocumentObject container, PdfLayoutElement element, RenderContext ctx)
-    {
-        var table = AddTable(container);
-        ApplyTableBorder(table, element, ctx);
-
-        var columns = string.Equals(element.TableKind, "tool", StringComparison.OrdinalIgnoreCase)
-            ? GetToolTableColumns(element)
-            : (element.Columns ?? new List<PdfTableColumn>()).Where(c => c.Visible).ToList();
-        if (columns.Count == 0)
-            columns = DefaultPdfLayoutFactory.Create().Elements.First(e => e.Id == "tool-table").Columns!
-                .Where(c => c.Visible).ToList();
-
-        var originalWidthPt = columns.Sum(c =>
-            c.WidthUnit == "pt" ? c.Width : Unit.FromCentimeter(c.Width).Point);
-        var scale = originalWidthPt > 0 ? ctx.ContentWidth.Point / originalWidthPt : 1;
-
-        foreach (var col in columns)
-        {
-            var width = col.WidthUnit == "pt"
-                ? Unit.FromPoint(col.Width * scale)
-                : Unit.FromCentimeter(col.Width * scale);
-            table.AddColumn(width);
-        }
-
-        return table;
-    }
-
     private static Table AddTable(DocumentObject container)
     {
         return container switch
@@ -662,25 +568,20 @@ public static class PdfLayoutRenderer
         }
     }
 
-    private static void AddImageToCell(Cell cell, string? path, Unit maxHeight)
+    private static void AddImageToCell(Cell cell, string? path, Unit maxHeight, RenderContext ctx)
     {
-        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
+        var prepared = PdfImageHelper.PrepareImagePath(path, ctx.TempFiles);
+        if (prepared == null) return;
         cell.VerticalAlignment = VerticalAlignment.Center;
         var paragraph = cell.AddParagraph();
         paragraph.Format.Alignment = ParagraphAlignment.Center;
-        var image = paragraph.AddImage(path);
+        var image = paragraph.AddImage(prepared);
         image.Height = maxHeight;
         image.LockAspectRatio = true;
     }
 
-    private static string? WriteTempImage(byte[]? imageBytes, List<string> tempFiles)
-    {
-        if (imageBytes is not { Length: > 0 }) return null;
-        var path = Path.Combine(Path.GetTempPath(), $"tooling-stamp-{Guid.NewGuid():N}.png");
-        File.WriteAllBytes(path, imageBytes);
-        tempFiles.Add(path);
-        return path;
-    }
+    private static string? WriteTempImage(byte[]? imageBytes, List<string> tempFiles) =>
+        PdfImageHelper.PrepareImageBytes(imageBytes, tempFiles);
 
     private static string ResolveText(PdfLayoutElement element, RenderContext ctx)
     {
@@ -730,43 +631,6 @@ public static class PdfLayoutRenderer
                 "ToolRegisterByName" => ctx.ToolRegisterByName,
                 "MM" => "MM",
                 _ => binding
-            }
-        };
-    }
-
-    private static string GetDetailFieldValue(ToolListDetailRow detail, string? field)
-    {
-        if (string.IsNullOrWhiteSpace(field)) return "";
-
-        return field.Trim().ToLowerInvariant() switch
-        {
-            "toolnumber" or "tool no." or "tool no" => detail.ToolNumber ?? "",
-            "tooldescription" or "tool name" => detail.ToolDescription ?? "",
-            "consumablecode" or "consumable tool description" => detail.ConsumableCode ?? "",
-            "supplier" or "tool supplier" => detail.Supplier ?? "",
-            "holderextensioncode" or "tool holder" => detail.HolderExtensionCode ?? "",
-            "diameter" or "tool diameter (d1)" => (detail.Diameter ?? 0).ToString("0.##"),
-            "flutelength" or "flute length (l1)" => (detail.FluteLength ?? 0).ToString("0.##"),
-            "protrusionlength" or "tool ext. length (l2)" => (detail.ProtrusionLength ?? 0).ToString("0.##"),
-            "cornerradius" or "tool corner radius" => (detail.CornerRadius ?? 0).ToString("0.##"),
-            "arborcode" or "arbor description (or equivalent specs)" or "arbor description" => detail.ArborCode ?? "",
-            "toolpathtimeminutes" or "tool path time in minutes" => (detail.ToolPathTimeMinutes ?? 0).ToString("0.##"),
-            "remarks" => detail.Remarks ?? "",
-            _ => field switch
-            {
-                "ToolNumber" => detail.ToolNumber ?? "",
-                "ToolDescription" => detail.ToolDescription ?? "",
-                "ConsumableCode" => detail.ConsumableCode ?? "",
-                "Supplier" => detail.Supplier ?? "",
-                "HolderExtensionCode" => detail.HolderExtensionCode ?? "",
-                "Diameter" => (detail.Diameter ?? 0).ToString("0.##"),
-                "FluteLength" => (detail.FluteLength ?? 0).ToString("0.##"),
-                "ProtrusionLength" => (detail.ProtrusionLength ?? 0).ToString("0.##"),
-                "CornerRadius" => (detail.CornerRadius ?? 0).ToString("0.##"),
-                "ArborCode" => detail.ArborCode ?? "",
-                "ToolPathTimeMinutes" => (detail.ToolPathTimeMinutes ?? 0).ToString("0.##"),
-                "Remarks" => detail.Remarks ?? "",
-                _ => ""
             }
         };
     }

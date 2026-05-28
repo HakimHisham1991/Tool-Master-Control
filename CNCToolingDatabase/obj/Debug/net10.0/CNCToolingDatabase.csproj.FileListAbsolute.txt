@@ -26,7 +26,6 @@ c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\Data\MASTER - TOOL LIST.xlsx
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\CNCToolingDatabase.staticwebassets.runtime.json
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\CNCToolingDatabase.staticwebassets.endpoints.json
-c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\CNCToolingDatabase.exe
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\CNCToolingDatabase.deps.json
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\CNCToolingDatabase.runtimeconfig.json
 c:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\CNCToolingDatabase.dll
@@ -205,3 +204,7 @@ C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingData
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\_LoaderTest\obj\LoaderTest.csproj.nuget.dgspec.json
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\_LoaderTest\obj\project.assets.json
 C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\Data\PART_IMAGE\SAMPLE.jpg
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\Tools\PdfSmoke\obj\PdfSmoke.csproj.nuget.dgspec.json
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\Tools\PdfSmoke\obj\project.assets.json
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\SixLabors.ImageSharp.dll
+C:\Users\Public\Documents\Tool-Master-Control\Tool-Master-Control\CNCToolingDatabase\bin\Debug\net10.0\CNCToolingDatabase.exe

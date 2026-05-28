@@ -73,6 +73,7 @@
     </PackageReference>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.4" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
   </ItemGroup>
 
 </Project>
